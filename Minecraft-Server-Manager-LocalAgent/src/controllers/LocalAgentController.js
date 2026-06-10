@@ -29,12 +29,26 @@ export default class LocalAgentController {
   }
 
   setupConnectionListeners() {
+    this.connectionService.on('connected', () => {
+      console.log('✅ Local Agent conectado exitosamente al Cloud API.');
+    });
+
+    this.connectionService.on('disconnected', () => {
+      console.log('❌ Conexión perdida con el Cloud API. Reintentando...');
+    });
+
+    this.connectionService.on('error', (err) => {
+      console.error('⚠️ Error de conexión con el API:', err.message || err);
+    });
+
     this.connectionService.on('command_start', async (serverConfig) => {
+      console.log(`Recibida orden de inicio para el servidor: ${serverConfig.id}`);
       this.currentServerId = serverConfig.id;
       await this.handleStartCommand(serverConfig);
     });
 
     this.connectionService.on('command_stop', () => {
+      console.log('Recibida orden de apagado.');
       this.handleStopCommand();
     });
   }
