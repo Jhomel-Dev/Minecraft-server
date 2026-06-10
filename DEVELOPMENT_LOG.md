@@ -39,9 +39,17 @@
   - Creación de plantilla `.env.example`.
 
 ## Feature: Cloud API - Prisma ORM Setup
-- **Status:** In Progress
+- **Status:** Completed
 - **Details:**
   - Instalación de `@prisma/client` y `prisma`.
   - Inicialización de Prisma (`prisma init`).
   - Creación del archivo `schema.prisma` definiendo los modelos `User` (Jugador) y `Server` (Servidor de Minecraft).
   - Configuración de la URL de conexión en `.env.example`.
+
+## Feature: Cloud API - User Authentication
+- **Status:** Completed
+- **Details:**
+  - Instalación de dependencias: `bcryptjs`, `jsonwebtoken` y `vitest`.
+  - Implementación de `AuthService.js` manejando registro (hashing) y login (emisión de JWT).
+  - Integración con Prisma Client.
+  - Pruebas unitarias completas en `AuthService.test.js`.
