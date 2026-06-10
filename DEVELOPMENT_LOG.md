@@ -70,3 +70,11 @@
   - Creación de `AuthController.js` y `ServerController.js` para exponer los servicios vía HTTP.
   - Registro de las rutas `/api/auth` y `/api/servers` en el `index.js`.
   - Inyección de la instancia de `Socket.io` en Express (`app.set('io', io)`) para permitir a los controladores emitir eventos al Agente Local.
+
+## Feature: Full Stack - Real-Time Console Logs
+- **Status:** Completed
+- **Details:**
+  - **Local Agent:** `DockerService.js` ahora se acopla al stream de logs del contenedor Docker (stdout/stderr), limpia las cabeceras binarias y emite cada nueva línea de texto.
+  - **Local Agent:** `LocalAgentController.js` atrapa estos logs y los envía al Cloud API bajo el evento `SERVER_LOG` etiquetados con su `serverId`.
+  - **Cloud API:** `socket-handler-services.js` fue refactorizado para aceptar tanto WebSockets de Agentes como WebSockets del Frontend (autenticados con JWT).
+  - **Cloud API:** Cuando el Frontend se conecta a la vista de consola, se une a un "Room" (`JOIN_SERVER_CONSOLE`). Cualquier log que envíe el Agente, el API lo retransmite (`broadcast.to(room)`) al milisegundo directamente a la pantalla del usuario (`CONSOLE_LOG`).
