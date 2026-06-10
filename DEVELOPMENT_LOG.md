@@ -23,3 +23,10 @@
   - Instalación de `socket.io-client`.
   - Implementación de `ConnectionService.js` manejando autenticación y eventos.
   - Pruebas unitarias correspondientes en `ConnectionService.test.js`.
+
+## Feature: Local Agent - Orchestrator (Controller)
+- **Status:** Completed
+- **Details:**
+  - Implementación de `LocalAgentController.js` para coordinar los servicios.
+  - El controlador une WebSockets, Docker y Tunnel de forma reactiva (event-driven).
+  - Pruebas unitarias en `LocalAgentController.test.js` mockeando los tres servicios.
