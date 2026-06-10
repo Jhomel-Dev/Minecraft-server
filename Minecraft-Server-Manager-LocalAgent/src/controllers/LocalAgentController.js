@@ -21,6 +21,7 @@ export default class LocalAgentController {
   initialize() {
     this.setupConnectionListeners();
     this.setupTunnelListeners();
+    this.setupDockerListeners();
   }
 
   start() {
@@ -29,11 +30,20 @@ export default class LocalAgentController {
 
   setupConnectionListeners() {
     this.connectionService.on('command_start', async (serverConfig) => {
+      this.currentServerId = serverConfig.id;
       await this.handleStartCommand(serverConfig);
     });
 
     this.connectionService.on('command_stop', () => {
       this.handleStopCommand();
+    });
+  }
+
+  setupDockerListeners() {
+    this.dockerService.on('log', (logLine) => {
+      if (this.currentServerId) {
+        this.connectionService.sendLog({ serverId: this.currentServerId, logLine });
+      }
     });
   }
 

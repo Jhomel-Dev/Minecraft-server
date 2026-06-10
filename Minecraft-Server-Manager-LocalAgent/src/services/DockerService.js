@@ -1,16 +1,40 @@
 import Docker from 'dockerode';
+import { EventEmitter } from 'events';
 
-export default class DockerService {
+export default class DockerService extends EventEmitter {
   constructor() {
+    super();
     this.docker = new Docker();
+    this.container = null;
   }
 
   async startMinecraftServer(config) {
     this.validateConfig(config);
     await this.pullServerImage();
-    const container = await this.createContainer(config);
-    await container.start();
-    return container.id;
+    this.container = await this.createContainer(config);
+    await this.container.start();
+    
+    this.attachToLogs();
+    
+    return this.container.id;
+  }
+
+  async attachToLogs() {
+    if (!this.container) return;
+    
+    const stream = await this.container.logs({
+      follow: true,
+      stdout: true,
+      stderr: true
+    });
+    
+    stream.on('data', (chunk) => {
+      // Limpiar cabeceras binarias de Docker y emitir
+      const logLine = chunk.toString('utf8').replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, '');
+      if (logLine.trim()) {
+        this.emit('log', logLine);
+      }
+    });
   }
 
   validateConfig(config) {
