@@ -1,7 +1,7 @@
-const { spawn } = require('child_process');
-const EventEmitter = require('events');
+import { spawn } from 'child_process';
+import EventEmitter from 'events';
 
-class TunnelService extends EventEmitter {
+export default class TunnelService extends EventEmitter {
   constructor() {
     super();
     this.playitProcess = null;
@@ -65,5 +65,3 @@ class TunnelService extends EventEmitter {
     if (match) this.emit('address_assigned', match[1]);
   }
 }
-
-module.exports = TunnelService;

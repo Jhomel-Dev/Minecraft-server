@@ -1,8 +1,8 @@
-const DockerService = require('../services/DockerService');
-const TunnelService = require('../services/TunnelService');
-const ConnectionService = require('../services/ConnectionService');
+import DockerService from '../services/DockerService.js';
+import TunnelService from '../services/TunnelService.js';
+import ConnectionService from '../services/ConnectionService.js';
 
-class LocalAgentController {
+export default class LocalAgentController {
   constructor(config) {
     this.validateConfig(config);
     this.dockerService = new DockerService();
@@ -60,5 +60,3 @@ class LocalAgentController {
     this.tunnelService.stopTunnel();
   }
 }
-
-module.exports = LocalAgentController;

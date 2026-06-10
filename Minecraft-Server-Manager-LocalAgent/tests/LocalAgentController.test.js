@@ -1,11 +1,12 @@
-const LocalAgentController = require('../src/controllers/LocalAgentController');
-const DockerService = require('../src/services/DockerService');
-const TunnelService = require('../src/services/TunnelService');
-const ConnectionService = require('../src/services/ConnectionService');
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
+import LocalAgentController from '../src/controllers/LocalAgentController.js';
+import DockerService from '../src/services/DockerService.js';
+import TunnelService from '../src/services/TunnelService.js';
+import ConnectionService from '../src/services/ConnectionService.js';
 
-jest.mock('../src/services/DockerService');
-jest.mock('../src/services/TunnelService');
-jest.mock('../src/services/ConnectionService');
+vi.mock('../src/services/DockerService.js');
+vi.mock('../src/services/TunnelService.js');
+vi.mock('../src/services/ConnectionService.js');
 
 describe('LocalAgentController', () => {
   let controller;
@@ -17,7 +18,7 @@ describe('LocalAgentController', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test('constructor validates config', () => {
@@ -26,7 +27,7 @@ describe('LocalAgentController', () => {
 
   test('start initiates connection', () => {
     controller.start();
-    const connectionInstance = ConnectionService.mock.instances[0];
+    const connectionInstance = vi.mocked(ConnectionService).mock.instances[0];
     expect(connectionInstance.connect).toHaveBeenCalled();
   });
 
@@ -34,16 +35,16 @@ describe('LocalAgentController', () => {
     const serverConfig = { name: 'test', port: 25565, dataDir: '/tmp', tunnelSecret: 'secret' };
     await controller.handleStartCommand(serverConfig);
     
-    const dockerInstance = DockerService.mock.instances[0];
-    const tunnelInstance = TunnelService.mock.instances[0];
+    const dockerInstance = vi.mocked(DockerService).mock.instances[0];
+    const tunnelInstance = vi.mocked(TunnelService).mock.instances[0];
     
     expect(dockerInstance.startMinecraftServer).toHaveBeenCalledWith(serverConfig);
     expect(tunnelInstance.startTunnel).toHaveBeenCalledWith('secret');
   });
 
   test('tunnel address_assigned sends info via connection', () => {
-    const tunnelInstance = TunnelService.mock.instances[0];
-    const connectionInstance = ConnectionService.mock.instances[0];
+    const tunnelInstance = vi.mocked(TunnelService).mock.instances[0];
+    const connectionInstance = vi.mocked(ConnectionService).mock.instances[0];
     
     // Simulate tunnel event
     const eventHandler = tunnelInstance.on.mock.calls.find(call => call[0] === 'address_assigned')[1];

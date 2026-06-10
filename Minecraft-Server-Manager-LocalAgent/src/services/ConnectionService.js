@@ -1,7 +1,7 @@
-const { io } = require('socket.io-client');
-const EventEmitter = require('events');
+import { io } from 'socket.io-client';
+import EventEmitter from 'events';
 
-class ConnectionService extends EventEmitter {
+export default class ConnectionService extends EventEmitter {
   constructor(apiUrl, agentToken) {
     super();
     this.apiUrl = apiUrl;
@@ -60,5 +60,3 @@ class ConnectionService extends EventEmitter {
     }
   }
 }
-
-module.exports = ConnectionService;

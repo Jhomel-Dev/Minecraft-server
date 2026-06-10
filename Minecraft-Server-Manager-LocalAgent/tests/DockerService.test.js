@@ -1,6 +1,7 @@
-const DockerService = require('../src/services/DockerService');
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import DockerService from '../src/services/DockerService.js';
 
-jest.mock('dockerode');
+vi.mock('dockerode');
 
 describe('DockerService', () => {
   let service;

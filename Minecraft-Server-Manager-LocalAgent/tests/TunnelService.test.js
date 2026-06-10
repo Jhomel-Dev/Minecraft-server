@@ -1,4 +1,5 @@
-const TunnelService = require('../src/services/TunnelService');
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import TunnelService from '../src/services/TunnelService.js';
 
 describe('TunnelService', () => {
   let service;
@@ -18,19 +19,23 @@ describe('TunnelService', () => {
     expect(args).toContain('my-secret');
   });
 
-  test('checkForClaimLink emits claim_link event', (done) => {
-    service.on('claim_link', (link) => {
-      expect(link).toBe('https://playit.gg/claim/1234abc');
-      done();
+  test('checkForClaimLink emits claim_link event', () => {
+    return new Promise((resolve) => {
+      service.on('claim_link', (link) => {
+        expect(link).toBe('https://playit.gg/claim/1234abc');
+        resolve();
+      });
+      service.checkForClaimLink('Please visit https://playit.gg/claim/1234abc to claim');
     });
-    service.checkForClaimLink('Please visit https://playit.gg/claim/1234abc to claim');
   });
 
-  test('checkForAssignedAddress emits address_assigned event', (done) => {
-    service.on('address_assigned', (address) => {
-      expect(address).toBe('tunnel.playit.gg:12345');
-      done();
+  test('checkForAssignedAddress emits address_assigned event', () => {
+    return new Promise((resolve) => {
+      service.on('address_assigned', (address) => {
+        expect(address).toBe('tunnel.playit.gg:12345');
+        resolve();
+      });
+      service.checkForAssignedAddress('Tunnel address: tunnel.playit.gg:12345');
     });
-    service.checkForAssignedAddress('Tunnel address: tunnel.playit.gg:12345');
   });
 });

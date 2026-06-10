@@ -1,5 +1,5 @@
-require('dotenv').config();
-const LocalAgentController = require('./src/controllers/LocalAgentController');
+import 'dotenv/config';
+import LocalAgentController from './src/controllers/LocalAgentController.js';
 
 function bootstrap() {
   const config = extractConfig();

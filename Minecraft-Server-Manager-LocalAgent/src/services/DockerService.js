@@ -1,6 +1,6 @@
-const Docker = require('dockerode');
+import Docker from 'dockerode';
 
-class DockerService {
+export default class DockerService {
   constructor() {
     this.docker = new Docker();
   }
@@ -61,5 +61,3 @@ class DockerService {
     };
   }
 }
-
-module.exports = DockerService;

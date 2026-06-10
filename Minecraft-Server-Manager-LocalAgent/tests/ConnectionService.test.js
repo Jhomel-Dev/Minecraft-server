@@ -1,7 +1,8 @@
-const ConnectionService = require('../src/services/ConnectionService');
-const { io } = require('socket.io-client');
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import ConnectionService from '../src/services/ConnectionService.js';
+import { io } from 'socket.io-client';
 
-jest.mock('socket.io-client');
+vi.mock('socket.io-client');
 
 describe('ConnectionService', () => {
   let service;
@@ -9,9 +10,9 @@ describe('ConnectionService', () => {
 
   beforeEach(() => {
     mockSocket = {
-      on: jest.fn(),
-      emit: jest.fn(),
-      disconnect: jest.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
+      disconnect: vi.fn(),
       connected: true
     };
     io.mockReturnValue(mockSocket);

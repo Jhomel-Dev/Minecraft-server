@@ -5,18 +5,18 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "jest"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "dockerode": "^5.0.0",
     "dotenv": "^17.4.2",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
-    "jest": "^30.4.2"
+    "vitest": "^4.1.8"
   }
 }
