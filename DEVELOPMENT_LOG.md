@@ -37,3 +37,11 @@
   - Instalación de `dotenv` para carga de configuración.
   - Creación de `index.js` como punto de arranque principal (`npm start`).
   - Creación de plantilla `.env.example`.
+
+## Feature: Cloud API - Prisma ORM Setup
+- **Status:** In Progress
+- **Details:**
+  - Instalación de `@prisma/client` y `prisma`.
+  - Inicialización de Prisma (`prisma init`).
+  - Creación del archivo `schema.prisma` definiendo los modelos `User` (Jugador) y `Server` (Servidor de Minecraft).
+  - Configuración de la URL de conexión en `.env.example`.

@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  servers   Server[]
+}
+
+model Server {
+  id           String   @id @default(uuid())
+  name         String
+  type         String   @default("VANILLA")
+  version      String   @default("LATEST")
+  memory       String   @default("2G")
+  port         Int      @default(25565)
+  status       String   @default("OFFLINE")
+  tunnelIp     String?
+  tunnelSecret String?
+  isCloud      Boolean  @default(false)
+  
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
