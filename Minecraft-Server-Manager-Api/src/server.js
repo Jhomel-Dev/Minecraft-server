@@ -17,8 +17,8 @@ const io = new Server(httpServer, {
     transports: ['websocket', 'polling']
 });
 
-
 handleSocketEvents(io);
+app.set('io', io);
 
 
 const port = process.env.PORT || 3000;

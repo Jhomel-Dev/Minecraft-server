@@ -62,3 +62,11 @@
   - Método `startServer` que cambia el estado a STARTING y emite el evento `START_SERVER` vía Socket.io al Agente Local.
   - Método `stopServer` que cambia el estado a STOPPING y emite `STOP_SERVER`.
   - Pruebas unitarias en `ServerService.test.js` mockeando el servidor WebSocket.
+
+## Feature: Cloud API - Express Routes & Controllers
+- **Status:** Completed
+- **Details:**
+  - Creación de `authMiddleware.js` para proteger rutas con JWT.
+  - Creación de `AuthController.js` y `ServerController.js` para exponer los servicios vía HTTP.
+  - Registro de las rutas `/api/auth` y `/api/servers` en el `index.js`.
+  - Inyección de la instancia de `Socket.io` en Express (`app.set('io', io)`) para permitir a los controladores emitir eventos al Agente Local.
