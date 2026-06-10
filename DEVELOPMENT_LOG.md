@@ -53,3 +53,12 @@
   - Implementación de `AuthService.js` manejando registro (hashing) y login (emisión de JWT).
   - Integración con Prisma Client.
   - Pruebas unitarias completas en `AuthService.test.js`.
+
+## Feature: Cloud API - Server Management Service
+- **Status:** Completed
+- **Details:**
+  - Implementación de `ServerService.js`.
+  - Método `createServer` que guarda la configuración del servidor en Prisma.
+  - Método `startServer` que cambia el estado a STARTING y emite el evento `START_SERVER` vía Socket.io al Agente Local.
+  - Método `stopServer` que cambia el estado a STOPPING y emite `STOP_SERVER`.
+  - Pruebas unitarias en `ServerService.test.js` mockeando el servidor WebSocket.
