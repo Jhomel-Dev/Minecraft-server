@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "jest"
   },
   "keywords": [],
@@ -12,6 +13,7 @@
   "type": "commonjs",
   "dependencies": {
     "dockerode": "^5.0.0",
+    "dotenv": "^17.4.2",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {

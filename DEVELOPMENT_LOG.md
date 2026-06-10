@@ -30,3 +30,10 @@
   - Implementación de `LocalAgentController.js` para coordinar los servicios.
   - El controlador une WebSockets, Docker y Tunnel de forma reactiva (event-driven).
   - Pruebas unitarias en `LocalAgentController.test.js` mockeando los tres servicios.
+
+## Feature: Local Agent - Application Entry Point
+- **Status:** Completed
+- **Details:**
+  - Instalación de `dotenv` para carga de configuración.
+  - Creación de `index.js` como punto de arranque principal (`npm start`).
+  - Creación de plantilla `.env.example`.
