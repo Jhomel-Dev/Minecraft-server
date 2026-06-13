@@ -78,3 +78,65 @@
   - **Local Agent:** `LocalAgentController.js` atrapa estos logs y los envía al Cloud API bajo el evento `SERVER_LOG` etiquetados con su `serverId`.
   - **Cloud API:** `socket-handler-services.js` fue refactorizado para aceptar tanto WebSockets de Agentes como WebSockets del Frontend (autenticados con JWT).
   - **Cloud API:** Cuando el Frontend se conecta a la vista de consola, se une a un "Room" (`JOIN_SERVER_CONSOLE`). Cualquier log que envíe el Agente, el API lo retransmite (`broadcast.to(room)`) al milisegundo directamente a la pantalla del usuario (`CONSOLE_LOG`).
+
+## Feature: Web UI - Blocky Theme & Navigation
+- **Status:** Completed
+- **Details:**
+  - Implementación de un diseño estético "Voxel/Blocky" inspirado en la UI de Minecraft.
+  - Creación de sistema de temas (Overworld Mode y The End Mode).
+  - Creación de Landing Page (`Landing.jsx`) con información de producto y flujo hacia Login.
+  - Sidebar interactivo en el Dashboard con links para Files, Mods, Backups y Settings.
+  - Integración de avatares automáticos usando Pixel Art (DiceBear) basados en el nombre de usuario.
+
+## Feature: Full Stack - Authentication SystemA
+- **Status:** Completed
+- **Details:**
+  - **Base de Datos:** Migración local a SQLite para simplificar el desarrollo (`dev.db`). Actualización de esquema con `googleId` y `refreshToken`.
+  - **Google OAuth:** Integración completa de `@react-oauth/google` en el Frontend y `google-auth-library` en el API para verificar tokens de manera segura.
+  - **Traditional Auth:** Formularios estándar de inicio de sesión y registro. Manejo seguro de contraseñas inexistentes (para usuarios creados vía Google).
+  - **Refresh Tokens:** Implementación de flujo seguro de sesiones. Emisión de `accessToken` (body) y `refreshToken` (cookie httpOnly). Endpoint para auto-login al recargar la app.
+
+## Feature: Full Stack - Server Console Input
+- **Status:** Completed
+- **Details:**
+  - **Web UI:** Se añadió estado en React (`commandInput`) y evento `onKeyDown` para detectar la tecla Enter y emitir el evento WebSocket `SEND_COMMAND`.
+  - **Cloud API:** Se actualizó `socket-handler-services.js` para recibir `SEND_COMMAND` de clientes y retransmitirlo a los Agentes Locales.
+  - **Local Agent:** Se actualizó `ConnectionService.js` y `LocalAgentController.js` para escuchar el nuevo evento y pasarlo al contenedor Docker.
+  - **Local Agent:** Se añadió `sendCommand` en `DockerService.js` para ejecutar de manera segura comandos en el servidor Minecraft vía `rcon-cli` usando Docker Exec API.
+
+## Feature: Full Stack - File Manager
+- **Status:** Completed
+- **Details:**
+  - **Local Agent:** Creación de `FileService.js` que se encarga de las operaciones del sistema de archivos (`list`, `read`, `write`, `delete`) garantizando que todas las rutas sean seguras y no escapen del directorio del servidor (`path traversal prevention`).
+  - **Local Agent:** `ConnectionService.js` ahora expone el listener `FS_OPERATION` soportando ACKs de Socket.io.
+  - **Cloud API:** Nuevo endpoint en `ServerController.js` (`POST /api/servers/:id/fs`) que enruta peticiones HTTP como peticiones de Socket hacia el Agente Local correspondiente, esperando su respuesta.
+  - **Web UI:** Se creó el componente `FileManager.jsx` con interfaz tipo explorador, permitiendo navegación de directorios, visualización de tamaños, eliminación, edición de texto y guardado en tiempo real.
+
+## Feature: Native Server Migration (Zero-Copy Architecture)
+- **Status:** Completed
+- **Details:**
+  - **Local Agent:** Migración de contenedores Docker a procesos nativos (Java) mediante `NativeServerService.js`.
+  - **Local Agent:** Implementación de arquitectura Zero-Copy centralizando los `.jar` en un Vault global (`C:\CraftControl\Vault\JARs`) para ahorro de espacio.
+  - **Cloud API:** Adaptación de las rutas para soportar la ejecución nativa y descarga automática de versiones.
+
+## Feature: Web UI - Tailwind CSS Migration
+- **Status:** Completed
+- **Details:**
+  - Refactorización masiva de estilos desde CSS tradicional hacia Tailwind CSS.
+  - Implementación del patrón Singleton en los servicios de API y Servidor para evitar instancias redundantes.
+  - Reestructuración del layout clásico en el Dashboard (controles a la izquierda, consola completa a la derecha).
+  - Corrección de la carga útil del inicio de sesión de Google (de `token` a `credential`).
+
+## Feature: Full Stack - User Profile Section
+- **Status:** Completed
+- **Details:**
+  - **Cloud API:** Creación de `UserController.js` y `userRoutes.js` para exponer el endpoint `PUT /api/users/profile`.
+  - **Web UI:** Construcción de `ProfilePage.jsx` para visualizar el avatar, listado de servidores y resumen de respaldos.
+  - **Web UI:** Integración de formulario in-line para cambio de nombre de usuario de forma segura con regeneración de token JWT en tiempo real.
+
+## Feature: Full Stack - Console Logs Persistence
+- **Status:** Completed
+- **Details:**
+  - **Cloud API:** Implementación de un búfer circular en memoria dentro de `socket-handler-services.js` para retener las últimas 200 líneas de consola por cada servidor.
+  - **Cloud API:** Emisión del evento `CONSOLE_LOG_HISTORY` cuando un cliente se une a la sala de consola.
+  - **Web UI:** Actualización de `DashboardPage.jsx` para precargar el historial, solucionando el borrado de logs al cambiar entre pestañas de la SPA.
