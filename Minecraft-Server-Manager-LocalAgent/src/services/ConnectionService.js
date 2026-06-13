@@ -36,7 +36,12 @@ export default class ConnectionService extends EventEmitter {
     this.socket.on('connect_error', (err) => this.emit('error', err));
     
     this.socket.on('START_SERVER', (config) => this.emit('command_start', config));
-    this.socket.on('STOP_SERVER', () => this.emit('command_stop'));
+    this.socket.on('STOP_SERVER', (payload) => this.emit('command_stop', payload));
+    this.socket.on('SEND_COMMAND', (cmd) => this.emit('server_command', cmd));
+    
+    this.socket.on('FS_OPERATION', (payload, callback) => {
+      this.emit('fs_operation', payload, callback);
+    });
   }
 
   sendTelemetry(stats) {
@@ -52,6 +57,11 @@ export default class ConnectionService extends EventEmitter {
   sendTunnelInfo(info) {
     this.verifyConnection();
     this.socket.emit('TUNNEL_INFO', info);
+  }
+
+  sendStateUpdate(payload) {
+    this.verifyConnection();
+    this.socket.emit('STATUS_UPDATE', payload);
   }
 
   verifyConnection() {

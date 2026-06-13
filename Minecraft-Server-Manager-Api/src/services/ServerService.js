@@ -5,9 +5,19 @@ export default class ServerService {
     this.io = io;
   }
 
-  async createServer(userId, name, type, version, memory) {
+  async createServer(userId, name, type, version, memory, compatibilityMode = false) {
     this.validateCreationInputs(userId, name);
     await this.ensureUserExists(userId);
+
+    const userServers = await prisma.server.findMany({
+      where: { userId }
+    });
+    
+    let port = 25565;
+    if (userServers.length > 0) {
+      const maxPort = Math.max(...userServers.map(s => s.port));
+      port = maxPort + 1;
+    }
 
     return prisma.server.create({
       data: {
@@ -16,7 +26,31 @@ export default class ServerService {
         type: type || 'VANILLA',
         version: version || 'LATEST',
         memory: memory || '2G',
-        status: 'OFFLINE'
+        port,
+        status: 'OFFLINE',
+        compatibilityMode
+      }
+    });
+  }
+
+  async getMyServers(userId) {
+    return prisma.server.findMany({ where: { userId } });
+  }
+
+  async updateSettings(serverId, userId, { maxPlayers, whitelist, onlineMode, version, type, memory, compatibilityMode }) {
+    const server = await this.findServerById(serverId);
+    if (server.userId !== userId) throw new Error('Unauthorized');
+    
+    return prisma.server.update({
+      where: { id: serverId },
+      data: {
+        maxPlayers: maxPlayers !== undefined ? Number(maxPlayers) : server.maxPlayers,
+        whitelist: whitelist !== undefined ? Boolean(whitelist) : server.whitelist,
+        onlineMode: onlineMode !== undefined ? Boolean(onlineMode) : server.onlineMode,
+        version: version !== undefined ? version : server.version,
+        type: type !== undefined ? type : server.type,
+        memory: memory !== undefined ? memory : server.memory,
+        compatibilityMode: compatibilityMode !== undefined ? Boolean(compatibilityMode) : server.compatibilityMode,
       }
     });
   }
@@ -34,6 +68,11 @@ export default class ServerService {
 
   async stopServer(serverId) {
     const server = await this.findServerById(serverId);
+    
+    if (server.status === 'STOPPING') {
+      await this.updateServerStatus(serverId, 'OFFLINE');
+      return await this.findServerById(serverId);
+    }
     
     await this.updateServerStatus(serverId, 'STOPPING');
     
@@ -88,7 +127,11 @@ export default class ServerService {
       memory: server.memory,
       port: server.port,
       dataDir: `./servers/${server.id}`,
-      tunnelSecret: server.tunnelSecret
+      tunnelSecret: server.tunnelSecret,
+      maxPlayers: server.maxPlayers,
+      whitelist: server.whitelist,
+      onlineMode: server.onlineMode,
+      compatibilityMode: server.compatibilityMode
     };
 
     this.io.emit('START_SERVER', config);

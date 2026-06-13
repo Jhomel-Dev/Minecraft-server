@@ -1,13 +1,15 @@
-import DockerService from '../services/DockerService.js';
+import NativeServerService from '../services/NativeServerService.js';
 import TunnelService from '../services/TunnelService.js';
 import ConnectionService from '../services/ConnectionService.js';
+import FileService from '../services/FileService.js';
 
 export default class LocalAgentController {
   constructor(config) {
     this.validateConfig(config);
-    this.dockerService = new DockerService();
+    this.nativeServerService = new NativeServerService();
     this.tunnelService = new TunnelService();
     this.connectionService = new ConnectionService(config.apiUrl, config.agentToken);
+    this.fileService = new FileService();
     
     this.initialize();
   }
@@ -21,7 +23,7 @@ export default class LocalAgentController {
   initialize() {
     this.setupConnectionListeners();
     this.setupTunnelListeners();
-    this.setupDockerListeners();
+    this.setupServerListeners();
   }
 
   start() {
@@ -47,14 +49,31 @@ export default class LocalAgentController {
       await this.handleStartCommand(serverConfig);
     });
 
-    this.connectionService.on('command_stop', () => {
+    this.connectionService.on('command_stop', (payload) => {
       console.log('Recibida orden de apagado.');
-      this.handleStopCommand();
+      this.handleStopCommand(payload?.id);
+    });
+
+    this.connectionService.on('server_command', async (cmd) => {
+      try {
+        await this.nativeServerService.sendCommand(cmd);
+      } catch (err) {
+        console.error('Error enviando comando:', err);
+      }
+    });
+
+    this.connectionService.on('fs_operation', async (payload, callback) => {
+      try {
+        const result = await this.fileService.execute(payload);
+        callback({ success: true, data: result });
+      } catch (error) {
+        callback({ success: false, error: error.message });
+      }
     });
   }
 
-  setupDockerListeners() {
-    this.dockerService.on('log', (logLine) => {
+  setupServerListeners() {
+    this.nativeServerService.on('log', (logLine) => {
       if (this.currentServerId) {
         this.connectionService.sendLog({ serverId: this.currentServerId, logLine });
       }
@@ -73,14 +92,31 @@ export default class LocalAgentController {
 
   async handleStartCommand(serverConfig) {
     try {
-      await this.dockerService.startMinecraftServer(serverConfig);
+      this.connectionService.sendLog({ serverId: this.currentServerId, logLine: '[System] Booting Native server...' });
+      await this.nativeServerService.startMinecraftServer(serverConfig);
       this.tunnelService.startTunnel(serverConfig.tunnelSecret);
+      this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'ONLINE' });
     } catch (error) {
-      this.connectionService.sendLog(`Error starting server: ${error.message}`);
+      this.connectionService.sendLog({ serverId: this.currentServerId, logLine: `Error starting server: ${error.message}` });
+      this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'OFFLINE' });
     }
   }
 
-  handleStopCommand() {
-    this.tunnelService.stopTunnel();
+  async handleStopCommand(requestedServerId) {
+    const targetId = requestedServerId || this.currentServerId;
+    if (!targetId) return;
+
+    try {
+      this.tunnelService.stopTunnel();
+      await this.nativeServerService.stopMinecraftServer();
+      this.connectionService.sendLog({ serverId: targetId, logLine: '[System] Servidor y Túnel detenidos localmente.' });
+    } catch (error) {
+      this.connectionService.sendLog({ serverId: targetId, logLine: `[System] Error al detener servidor: ${error.message}` });
+    } finally {
+      this.connectionService.sendStateUpdate({ serverId: targetId, status: 'OFFLINE' });
+      if (this.currentServerId === targetId) {
+        this.currentServerId = null;
+      }
+    }
   }
 }

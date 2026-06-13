@@ -7,8 +7,11 @@ const serverController = new ServerController();
 
 router.use(verifyToken);
 
+router.get('/', serverController.getMyServers);
 router.post('/create', serverController.createServer);
+router.put('/:id/settings', serverController.updateSettings);
 router.post('/:id/start', serverController.startServer);
 router.post('/:id/stop', serverController.stopServer);
+router.post('/:id/fs', serverController.handleFileSystem);
 
 export default router;

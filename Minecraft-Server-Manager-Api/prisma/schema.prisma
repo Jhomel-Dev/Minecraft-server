@@ -28,9 +28,13 @@ model Server {
   memory       String   @default("2G")
   port         Int      @default(25565)
   status       String   @default("OFFLINE")
+  maxPlayers   Int      @default(20)
+  whitelist    Boolean  @default(false)
+  onlineMode   Boolean  @default(true)
   tunnelIp     String?
   tunnelSecret String?
   isCloud      Boolean  @default(false)
+  compatibilityMode Boolean @default(false)
   
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
