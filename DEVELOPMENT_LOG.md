@@ -140,3 +140,25 @@
   - **Cloud API:** Implementación de un búfer circular en memoria dentro de `socket-handler-services.js` para retener las últimas 200 líneas de consola por cada servidor.
   - **Cloud API:** Emisión del evento `CONSOLE_LOG_HISTORY` cuando un cliente se une a la sala de consola.
   - **Web UI:** Actualización de `DashboardPage.jsx` para precargar el historial, solucionando el borrado de logs al cambiar entre pestañas de la SPA.
+
+## Feature: Core - Linux Zero-Copy Architecture & CORS
+- **Status:** Completed
+- **Details:**
+  - **Local Agent:** Migración definitiva a Linux soportando el Vault de Zero-Copy.
+  - **Cloud API:** Modificación de políticas CORS para admitir puertos de Next.js (`3000`, `3001`). Inyección de variables criptográficas (`JWT_SECRET`, `JWT_REFRESH_SECRET`) y el `GOOGLE_CLIENT_ID`.
+
+## Feature: Web UI - Next.js Rebuild & FSD Pattern (Feature 1)
+- **Status:** Completed
+- **Details:**
+  - Reconstrucción completa del frontend usando `Next.js 14+` (App Router).
+  - Implementación de **Feature-Sliced Design (FSD)** asegurando un código limpio, aislado por dominios funcionales y reglas estrictas de Clean Code sin comentarios.
+  - Soporte de temas duales avanzados: **Overworld Theme** (Light) y **Enderman Theme** (Dark) vía `next-themes` y `Tailwind CSS v4`.
+  - Creación de rutas de Auth, integración de `@react-oauth/google` para inicio de sesión, y estructura base del `DashboardLayout` con menú lateral dinámico (`DashboardSidebar`).
+
+## Feature: Web UI - Real-time Console Module (Feature 2)
+- **Status:** Completed
+- **Details:**
+  - Creación del Custom Hook `useServerConsole.js` integrando `socket.io-client` y utilizando principios de Clean Code y Guard Clauses.
+  - Creación de `ConsoleOutput.jsx` con auto-scroll a los logs más recientes.
+  - Creación de `ConsoleInput.jsx` previniendo envíos vacíos.
+  - Ensamblado final de la vista principal del Dashboard (`app/dashboard/[serverId]/page.js`) unificando autenticación y estado en tiempo real.
