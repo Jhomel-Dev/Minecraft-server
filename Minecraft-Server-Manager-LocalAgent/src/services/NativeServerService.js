@@ -2,13 +2,15 @@ import { EventEmitter } from 'events';
 import { spawn, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { pipeline } from 'stream/promises';
 
 export default class NativeServerService extends EventEmitter {
   constructor() {
     super();
     this.process = null;
-    this.vaultDir = 'C:\\CraftControl\\Vault';
+    const managerDir = path.join(os.homedir(), '.minecraft-manager');
+    this.vaultDir = process.env.VAULT_DIR || path.join(managerDir, 'vault');
     this.javaDir = path.join(this.vaultDir, 'JDKs');
     this.jarsDir = path.join(this.vaultDir, 'JARs');
 
@@ -27,20 +29,36 @@ export default class NativeServerService extends EventEmitter {
     const javaVersion = this.getRequiredJavaVersion(config.version);
     const javaExe = await this.ensureJavaIsInstalled(javaVersion);
 
-    let jarPath = await this.ensureServerJarIsInstalled(config);
+    let softwareConfig = await this.ensureServerSoftwareIsInstalled(config);
     
     // Modo de Compatibilidad (Desactivar Zero-Copy)
-    if (config.compatibilityMode) {
+    if (config.compatibilityMode && softwareConfig.type === 'jar') {
       this.emit('log', '[Compatibility Mode] Copiando servidor localmente para evitar conflictos...');
       const localJarPath = path.join(config.dataDir, 'server.jar');
-      fs.copyFileSync(jarPath, localJarPath);
-      jarPath = localJarPath;
+      fs.copyFileSync(softwareConfig.path, localJarPath);
+      softwareConfig.path = localJarPath;
     }
 
     this.acceptEula(config.dataDir);
     this.createProperties(config);
 
-    this.process = spawn(javaExe, ['-Xmx' + (config.memory || '2G'), '-jar', jarPath, 'nogui'], {
+    const memString = config.memory ? (config.memory.endsWith('G') || config.memory.endsWith('M') ? config.memory : `${config.memory}M`) : '2G';
+    const memoryArgXmx = '-Xmx' + memString;
+    const memoryArgXms = '-Xms' + memString;
+    let spawnArgs = [memoryArgXms, memoryArgXmx, '-XX:+AlwaysPreTouch'];
+
+    if (softwareConfig.type === 'jar') {
+      spawnArgs.push('-jar', softwareConfig.path, 'nogui');
+    } else if (softwareConfig.type === 'args') {
+      // Necesitamos crear el archivo @user_jvm_args.txt si no existe
+      const userJvmArgsFile = path.join(config.dataDir, 'user_jvm_args.txt');
+      if (!fs.existsSync(userJvmArgsFile)) {
+        fs.writeFileSync(userJvmArgsFile, `${memoryArgXms}\n${memoryArgXmx}\n-XX:+AlwaysPreTouch\n`);
+      }
+      spawnArgs.push(...softwareConfig.args, 'nogui');
+    }
+
+    this.process = spawn(javaExe, spawnArgs, {
       cwd: config.dataDir,
       stdio: ['pipe', 'pipe', 'pipe']
     });
@@ -99,7 +117,18 @@ export default class NativeServerService extends EventEmitter {
   }
 
   getRequiredJavaVersion(minecraftVersion) {
-    const minor = parseInt(minecraftVersion.split('.')[1]);
+    const parts = minecraftVersion.split('.');
+    
+    // Si la versión usa el nuevo formato de 2026 (ej: 26.2 en lugar de 1.26.2)
+    if (parts[0] !== '1') {
+      const major = parseInt(parts[0]);
+      if (major >= 26) return 25; // Minecraft 26+ requiere Java 25
+      return 21;
+    }
+
+    // Formato clásico (ej: 1.20.4)
+    const minor = parseInt(parts[1]);
+    if (minor >= 26) return 25; 
     if (minor >= 20.5) return 21;
     if (minor >= 17) return 17;
     if (minor >= 16) return 16;
@@ -109,7 +138,7 @@ export default class NativeServerService extends EventEmitter {
 
   async ensureJavaIsInstalled(version) {
     const javaDir = path.join(this.javaDir, version.toString());
-    const expectedExe = path.join(javaDir, 'bin', 'java.exe');
+    const expectedExe = path.join(javaDir, 'bin', 'java');
 
     if (fs.existsSync(expectedExe)) {
       return expectedExe;
@@ -117,15 +146,15 @@ export default class NativeServerService extends EventEmitter {
 
     this.emit('log', `Downloading Java ${version}...`);
 
-    const downloadUrl = `https://api.adoptium.net/v3/binary/latest/${version}/ga/windows/x64/jdk/hotspot/normal/eclipse`;
-    const zipPath = path.join(this.javaDir, `java${version}.zip`);
+    const downloadUrl = `https://api.adoptium.net/v3/binary/latest/${version}/ga/linux/x64/jdk/hotspot/normal/eclipse`;
+    const archivePath = path.join(this.javaDir, `java${version}.tar.gz`);
     const extractPath = path.join(this.javaDir, `extract_${version}`);
 
-    await this.downloadFile(downloadUrl, zipPath);
+    await this.downloadFile(downloadUrl, archivePath);
 
     this.emit('log', `Extracting Java ${version}...`);
     if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath, { recursive: true });
-    execSync(`tar -xf "${zipPath}" -C "${extractPath}"`);
+    execSync(`tar -xzf "${archivePath}" -C "${extractPath}"`);
 
     const extractedFolders = fs.readdirSync(extractPath);
     const jdkFolder = path.join(extractPath, extractedFolders[0]);
@@ -133,17 +162,141 @@ export default class NativeServerService extends EventEmitter {
     fs.renameSync(jdkFolder, javaDir);
 
     fs.rmSync(extractPath, { recursive: true, force: true });
-    fs.rmSync(zipPath, { force: true });
+    fs.rmSync(archivePath, { force: true });
+    execSync(`chmod +x "${expectedExe}"`);
 
     this.emit('log', `Java ${version} installed successfully.`);
     return expectedExe;
   }
 
-  async ensureServerJarIsInstalled(config) {
-    if (config.type === 'FABRIC') {
-      return await this.ensureFabricIsInstalled(config.version, config.dataDir);
-    }
+  async ensureServerSoftwareIsInstalled(config) {
+    if (config.type === 'FABRIC') return await this.ensureFabricIsInstalled(config.version, config.dataDir);
+    if (config.type === 'FORGE') return await this.ensureForgeIsInstalled(config.version, config);
+    if (config.type === 'NEOFORGE') return await this.ensureNeoForgeIsInstalled(config.version, config);
+    if (config.type === 'PURPUR') return await this.ensurePurpurIsInstalled(config.version);
+    if (config.type === 'FOLIA') return await this.ensureFoliaIsInstalled(config.version);
+    if (config.type === 'VANILLA') return await this.ensureVanillaIsInstalled(config.version);
     return await this.ensurePaperIsInstalled(config.version);
+  }
+
+  async ensureVanillaIsInstalled(version) {
+    this.emit('log', `Fetching Vanilla metadata for ${version}...`);
+    const manifestRes = await fetch('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json');
+    const manifest = await manifestRes.json();
+    const vInfo = manifest.versions.find(v => v.id === version);
+    if (!vInfo) throw new Error(`Vanilla version ${version} not found`);
+    
+    const detailsRes = await fetch(vInfo.url);
+    const details = await detailsRes.json();
+    const downloadUrl = details.downloads?.server?.url;
+    if (!downloadUrl) throw new Error(`No server download for Vanilla ${version}`);
+
+    const jarName = `vanilla-${version}.jar`;
+    const jarPath = path.join(this.jarsDir, jarName);
+
+    if (!fs.existsSync(jarPath)) {
+      this.emit('log', `Downloading Vanilla ${version}...`);
+      await this.downloadFile(downloadUrl, jarPath);
+    }
+    return { type: 'jar', path: jarPath };
+  }
+
+  async ensurePurpurIsInstalled(version) {
+    this.emit('log', `Fetching Purpur builds for ${version}...`);
+    const res = await fetch(`https://api.purpurmc.org/v2/purpur/${version}`);
+    if (!res.ok) throw new Error(`Failed to fetch Purpur metadata: ${res.status}`);
+    const data = await res.json();
+    const latestBuild = data.builds.latest;
+    const jarName = `purpur-${version}-b${latestBuild}.jar`;
+    const jarPath = path.join(this.jarsDir, jarName);
+
+    if (!fs.existsSync(jarPath)) {
+      this.emit('log', `Downloading Purpur ${version}...`);
+      const downloadUrl = `https://api.purpurmc.org/v2/purpur/${version}/${latestBuild}/download`;
+      await this.downloadFile(downloadUrl, jarPath);
+    }
+    return { type: 'jar', path: jarPath };
+  }
+
+  async ensureFoliaIsInstalled(version) {
+    this.emit('log', `Fetching Folia builds for ${version}...`);
+    const res = await fetch(`https://api.papermc.io/v2/projects/folia/versions/${version}`);
+    if (!res.ok) throw new Error(`Failed to fetch Folia metadata`);
+    const data = await res.json();
+    const latestBuild = data.builds[data.builds.length - 1];
+    const jarName = `folia-${version}-b${latestBuild}.jar`;
+    const jarPath = path.join(this.jarsDir, jarName);
+
+    if (!fs.existsSync(jarPath)) {
+      this.emit('log', `Downloading Folia ${version}...`);
+      const downloadUrl = `https://api.papermc.io/v2/projects/folia/versions/${version}/builds/${latestBuild}/downloads/folia-${version}-${latestBuild}.jar`;
+      await this.downloadFile(downloadUrl, jarPath);
+    }
+    return { type: 'jar', path: jarPath };
+  }
+
+  async ensureForgeIsInstalled(fullVersion, config) {
+    const [mcVer, forgeVer] = fullVersion.split('-');
+    const forgeDir = path.join(this.jarsDir, `Forge-${fullVersion}`);
+    const librariesDir = path.join(forgeDir, 'libraries');
+    const unixArgsFile = path.join(forgeDir, 'libraries', 'net', 'minecraftforge', 'forge', fullVersion, 'unix_args.txt');
+    const legacyJar = path.join(forgeDir, `forge-${fullVersion}.jar`);
+
+    if (!fs.existsSync(librariesDir) && !fs.existsSync(legacyJar)) {
+      this.emit('log', `Downloading Forge installer for ${fullVersion}...`);
+      const installerUrl = `https://maven.minecraftforge.net/net/minecraftforge/forge/${fullVersion}/forge-${fullVersion}-installer.jar`;
+      const installerPath = path.join(this.jarsDir, `forge-installer-${fullVersion}.jar`);
+      await this.downloadFile(installerUrl, installerPath);
+      
+      this.emit('log', `Installing Forge ${fullVersion} to Vault...`);
+      if (!fs.existsSync(forgeDir)) fs.mkdirSync(forgeDir, { recursive: true });
+      
+      const javaExe = await this.ensureJavaIsInstalled(this.getRequiredJavaVersion(mcVer));
+      execSync(`"${javaExe}" -jar "${installerPath}" --installServer`, { cwd: forgeDir });
+      
+      fs.unlinkSync(installerPath);
+      this.emit('log', `Forge ${fullVersion} installed in Vault.`);
+    }
+
+    this.emit('log', `Linking Forge libraries to server...`);
+    const serverLibsDir = path.join(config.dataDir, 'libraries');
+    this.smartLink(librariesDir, serverLibsDir, config.compatibilityMode);
+
+    if (fs.existsSync(unixArgsFile)) {
+      return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/minecraftforge/forge/${fullVersion}/unix_args.txt`] };
+    } else {
+      // Legacy Forge
+      return { type: 'jar', path: legacyJar };
+    }
+  }
+
+  async ensureNeoForgeIsInstalled(fullVersion, config) {
+    const [mcVer, neoVer] = fullVersion.split('-');
+    const neoDir = path.join(this.jarsDir, `NeoForge-${fullVersion}`);
+    const librariesDir = path.join(neoDir, 'libraries');
+    const unixArgsFile = path.join(neoDir, 'libraries', 'net', 'neoforged', 'neoforge', fullVersion, 'unix_args.txt');
+
+    if (!fs.existsSync(librariesDir)) {
+      this.emit('log', `Downloading NeoForge installer for ${fullVersion}...`);
+      const installerUrl = `https://maven.neoforged.net/releases/net/neoforged/neoforge/${fullVersion}/neoforge-${fullVersion}-installer.jar`;
+      const installerPath = path.join(this.jarsDir, `neoforge-installer-${fullVersion}.jar`);
+      await this.downloadFile(installerUrl, installerPath);
+      
+      this.emit('log', `Installing NeoForge ${fullVersion} to Vault...`);
+      if (!fs.existsSync(neoDir)) fs.mkdirSync(neoDir, { recursive: true });
+      
+      const javaExe = await this.ensureJavaIsInstalled(this.getRequiredJavaVersion(mcVer));
+      execSync(`"${javaExe}" -jar "${installerPath}" --installServer`, { cwd: neoDir });
+      
+      fs.unlinkSync(installerPath);
+      this.emit('log', `NeoForge ${fullVersion} installed in Vault.`);
+    }
+
+    this.emit('log', `Linking NeoForge libraries to server...`);
+    const serverLibsDir = path.join(config.dataDir, 'libraries');
+    this.smartLink(librariesDir, serverLibsDir, config.compatibilityMode);
+
+    return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/neoforged/neoforge/${fullVersion}/unix_args.txt`] };
   }
 
   async ensurePaperIsInstalled(version) {
@@ -166,7 +319,7 @@ export default class NativeServerService extends EventEmitter {
 
     this.cleanupOldJars(version, jarName);
 
-    return jarPath;
+    return { type: 'jar', path: jarPath };
   }
 
   cleanupOldJars(version, currentJarName) {
@@ -213,31 +366,32 @@ export default class NativeServerService extends EventEmitter {
 
     this.emit('log', `Linking Fabric libraries to server...`);
     const serverLibsDir = path.join(dataDir, 'libraries');
-    this.smartLink(librariesDir, serverLibsDir, config?.compatibilityMode);
+    this.smartLink(librariesDir, serverLibsDir);
 
-    return launchJar;
+    return { type: 'jar', path: launchJar };
   }
 
   smartLink(sourcePath, destPath, forceCopy = false) {
     if (!fs.existsSync(sourcePath)) return;
     if (fs.existsSync(destPath)) return;
 
-    const stat = fs.statSync(sourcePath);
-    if (stat.isDirectory()) {
-      fs.mkdirSync(destPath, { recursive: true });
-      const items = fs.readdirSync(sourcePath);
-      for (const item of items) {
-        this.smartLink(path.join(sourcePath, item), path.join(destPath, item), forceCopy);
+    if (forceCopy) {
+      const stat = fs.statSync(sourcePath);
+      if (stat.isDirectory()) {
+        fs.mkdirSync(destPath, { recursive: true });
+        const items = fs.readdirSync(sourcePath);
+        for (const item of items) {
+          this.smartLink(path.join(sourcePath, item), path.join(destPath, item), true);
+        }
+      } else {
+        fs.copyFileSync(sourcePath, destPath);
       }
     } else {
-      if (forceCopy) {
-        fs.copyFileSync(sourcePath, destPath);
-      } else {
-        try {
-          fs.linkSync(sourcePath, destPath);
-        } catch (err) {
-          fs.copyFileSync(sourcePath, destPath);
-        }
+      try {
+        fs.symlinkSync(sourcePath, destPath);
+      } catch (err) {
+        this.emit('log', `[Warning] symlink failed for ${sourcePath}, falling back to copy.`);
+        this.smartLink(sourcePath, destPath, true);
       }
     }
   }

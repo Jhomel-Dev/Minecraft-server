@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 
 export default class FileService {
   
@@ -7,7 +8,8 @@ export default class FileService {
     const { serverId, action, filePath, content } = payload;
     this.validateInputs(serverId, filePath);
     
-    const baseDir = path.resolve(process.cwd(), 'servers', serverId);
+    const managerDir = path.join(os.homedir(), '.minecraft-manager');
+    const baseDir = path.resolve(managerDir, 'servers', serverId);
     await this.ensureDirectory(baseDir);
     
     const targetPath = this.getSafePath(baseDir, filePath || '/');

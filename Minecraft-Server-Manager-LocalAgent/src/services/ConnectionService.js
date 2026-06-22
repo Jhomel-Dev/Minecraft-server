@@ -37,6 +37,7 @@ export default class ConnectionService extends EventEmitter {
     
     this.socket.on('START_SERVER', (config) => this.emit('command_start', config));
     this.socket.on('STOP_SERVER', (payload) => this.emit('command_stop', payload));
+    this.socket.on('DELETE_SERVER', (payload) => this.emit('delete_server', payload));
     this.socket.on('SEND_COMMAND', (cmd) => this.emit('server_command', cmd));
     
     this.socket.on('FS_OPERATION', (payload, callback) => {

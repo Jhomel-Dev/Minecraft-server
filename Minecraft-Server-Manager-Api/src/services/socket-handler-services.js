@@ -51,6 +51,11 @@ const registerClientEvents = (socket) => {
     }
   });
   socket.on('LEAVE_SERVER_CONSOLE', (serverId) => socket.leave(serverId));
+  socket.on('CLEAR_SERVER_CONSOLE', (serverId) => {
+    if (serverLogsBuffer.has(serverId)) {
+      serverLogsBuffer.set(serverId, []);
+    }
+  });
   socket.on('SEND_COMMAND', (payload) => {
     socket.broadcast.emit('SEND_COMMAND', payload.command);
   });
@@ -93,6 +98,16 @@ const handleTunnelInfo = (socket, info) => {
   // Pending: Save Tunnel IP to Database
 };
 
-const handleDisconnect = (socket, reason) => {
-  // Pending: Mark server as offline
+const handleDisconnect = async (socket, reason) => {
+  if (socket.isAgent) {
+    try {
+      await prisma.server.updateMany({
+        data: { status: 'OFFLINE' }
+      });
+      // Notificamos a todos los clientes que el agente se cayó
+      socket.broadcast.emit('STATUS_UPDATE', 'OFFLINE');
+    } catch (e) {
+      console.error('Error marking servers offline on agent disconnect', e);
+    }
+  }
 };

@@ -11,9 +11,18 @@ export default class TunnelService extends EventEmitter {
     this.verifyNotRunning();
 
     const args = this.buildArgs(secretKey);
-    this.playitProcess = spawn('playit', args);
+    try {
+      this.playitProcess = spawn('playit', args);
+      
+      this.playitProcess.on('error', (err) => {
+        this.emit('log', `[Tunnel] Error: Playit no está instalado o falló al iniciar. El servidor seguirá localmente. (Detalle: ${err.message})`);
+        this.playitProcess = null;
+      });
 
-    this.attachProcessListeners();
+      this.attachProcessListeners();
+    } catch (err) {
+      this.emit('log', `[Tunnel] Error iniciando el túnel: ${err.message}`);
+    }
   }
 
   stopTunnel() {

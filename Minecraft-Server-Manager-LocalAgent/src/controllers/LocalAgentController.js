@@ -2,6 +2,8 @@ import NativeServerService from '../services/NativeServerService.js';
 import TunnelService from '../services/TunnelService.js';
 import ConnectionService from '../services/ConnectionService.js';
 import FileService from '../services/FileService.js';
+import os from 'os';
+import path from 'path';
 
 export default class LocalAgentController {
   constructor(config) {
@@ -54,6 +56,19 @@ export default class LocalAgentController {
       this.handleStopCommand(payload?.id);
     });
 
+    this.connectionService.on('delete_server', async (payload) => {
+      console.log(`Recibida orden de eliminar servidor: ${payload?.id}`);
+      try {
+        const managerDir = path.join(os.homedir(), '.minecraft-manager');
+        const targetDir = path.join(managerDir, 'servers', payload.id);
+        const fs = await import('fs/promises');
+        await fs.rm(targetDir, { recursive: true, force: true });
+        console.log(`Directorio ${targetDir} eliminado.`);
+      } catch (err) {
+        console.error('Error eliminando directorio de servidor:', err);
+      }
+    });
+
     this.connectionService.on('server_command', async (cmd) => {
       try {
         await this.nativeServerService.sendCommand(cmd);
@@ -88,15 +103,32 @@ export default class LocalAgentController {
     this.tunnelService.on('claim_link', (link) => {
       this.connectionService.sendTunnelInfo({ claimLink: link });
     });
+
+    this.tunnelService.on('log', (logLine) => {
+      if (this.currentServerId) {
+        this.connectionService.sendLog({ serverId: this.currentServerId, logLine });
+      }
+    });
+
+    this.tunnelService.on('error', (err) => {
+      console.error('[Tunnel Error]:', err);
+      if (this.currentServerId) {
+        this.connectionService.sendLog({ serverId: this.currentServerId, logLine: `[Tunnel Error]: ${err}` });
+      }
+    });
   }
 
   async handleStartCommand(serverConfig) {
     try {
+      const managerDir = path.join(os.homedir(), '.minecraft-manager');
+      serverConfig.dataDir = path.join(managerDir, 'servers', serverConfig.id);
+
       this.connectionService.sendLog({ serverId: this.currentServerId, logLine: '[System] Booting Native server...' });
       await this.nativeServerService.startMinecraftServer(serverConfig);
       this.tunnelService.startTunnel(serverConfig.tunnelSecret);
       this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'ONLINE' });
     } catch (error) {
+      console.error("Error in handleStartCommand:", error);
       this.connectionService.sendLog({ serverId: this.currentServerId, logLine: `Error starting server: ${error.message}` });
       this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'OFFLINE' });
     }

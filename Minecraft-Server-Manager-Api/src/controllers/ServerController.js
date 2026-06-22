@@ -66,6 +66,21 @@ export default class ServerController {
     }
   };
 
+  deleteServer = async (req, res) => {
+    try {
+      const serverService = this.getServerService(req);
+      const userId = req.user.id;
+      const serverId = req.params.id;
+      const { keepFiles } = req.body || {}; // Si keepFiles es true, no borramos los archivos
+      
+      await serverService.deleteServer(serverId, userId, !keepFiles);
+      
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      this.handleError(res, error);
+    }
+  };
+
   handleFileSystem = async (req, res) => {
     try {
       const serverService = this.getServerService(req);
