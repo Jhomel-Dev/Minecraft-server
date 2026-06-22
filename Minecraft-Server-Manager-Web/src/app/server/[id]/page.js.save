@@ -1,0 +1,53 @@
+"use client";
+import { useEffect } from "react";
+import { useServerConsole } from "@/features/servers/hooks/useServerConsole";
+import { ConsoleOutput } from "@/features/servers/components/ConsoleOutput";
+import { ConsoleInput } from "@/features/servers/components/ConsoleInput";
+import { Server, Activity } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+export default function ServerConsolePage({ params }) {
+  const serverId = params.serverId;
+  const router = useRouter();
+  const { logs, isConnected, sendCommand } = useServerConsole(serverId);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      router.push("/login");
+    }
+  }, [router]);
+
+  return (
+    <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6 h-full animate-in fade-in">
+      
+      <div className="flex items-center justify-between bg-surface p-6 rounded-blocky border-2 border-surface-border shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary/10 text-primary rounded-blocky">
+            <Server className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black">{serverId}</h1>
+            <p className="text-foreground/70 font-semibold">Panel de Control Principal</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 px-4 py-2 bg-background rounded-blocky border-2 border-surface-border">
+          <Activity className={`w-5 h-5 ${isConnected ? "text-primary animate-pulse" : "text-danger"}`} />
+          <span className="font-bold text-sm">
+            {isConnected ? "En línea" : "Desconectado"}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col flex-1">
+        <ConsoleOutput logs={logs} />
+        <ConsoleInput onSend={sendCommand} disabled={!isConnected} />
+      </div>
+
+    </div>
+  );
+
+
+
+xxxxx}
