@@ -4,3 +4,7 @@ coverage/
 logs/
 data/
 servers/
+
+# Local tests & Zero-Copy Vault
+vault/
+ServerNavidenoTest/

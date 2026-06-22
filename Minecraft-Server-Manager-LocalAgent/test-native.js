@@ -1,11 +1,12 @@
 import NativeServerService from './src/services/NativeServerService.js';
 import fs from 'fs';
+import path from 'path';
 
 async function runTest() {
   console.log('--- INICIANDO PRUEBA NATIVA ---');
   const service = new NativeServerService();
   
-  const testDataDir = 'C:\\Users\\User\\Desktop\\Server navideño';
+  const testDataDir = path.join(process.cwd(), 'ServerNavidenoTest');
   
   if (!fs.existsSync(testDataDir)) {
     fs.mkdirSync(testDataDir, { recursive: true });

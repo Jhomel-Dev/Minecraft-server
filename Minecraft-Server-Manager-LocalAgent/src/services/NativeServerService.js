@@ -8,7 +8,7 @@ export default class NativeServerService extends EventEmitter {
   constructor() {
     super();
     this.process = null;
-    this.vaultDir = 'C:\\CraftControl\\Vault';
+    this.vaultDir = process.env.VAULT_DIR || path.join(process.cwd(), 'vault');
     this.javaDir = path.join(this.vaultDir, 'JDKs');
     this.jarsDir = path.join(this.vaultDir, 'JARs');
 
@@ -109,7 +109,7 @@ export default class NativeServerService extends EventEmitter {
 
   async ensureJavaIsInstalled(version) {
     const javaDir = path.join(this.javaDir, version.toString());
-    const expectedExe = path.join(javaDir, 'bin', 'java.exe');
+    const expectedExe = path.join(javaDir, 'bin', 'java');
 
     if (fs.existsSync(expectedExe)) {
       return expectedExe;
@@ -117,15 +117,15 @@ export default class NativeServerService extends EventEmitter {
 
     this.emit('log', `Downloading Java ${version}...`);
 
-    const downloadUrl = `https://api.adoptium.net/v3/binary/latest/${version}/ga/windows/x64/jdk/hotspot/normal/eclipse`;
-    const zipPath = path.join(this.javaDir, `java${version}.zip`);
+    const downloadUrl = `https://api.adoptium.net/v3/binary/latest/${version}/ga/linux/x64/jdk/hotspot/normal/eclipse`;
+    const archivePath = path.join(this.javaDir, `java${version}.tar.gz`);
     const extractPath = path.join(this.javaDir, `extract_${version}`);
 
-    await this.downloadFile(downloadUrl, zipPath);
+    await this.downloadFile(downloadUrl, archivePath);
 
     this.emit('log', `Extracting Java ${version}...`);
     if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath, { recursive: true });
-    execSync(`tar -xf "${zipPath}" -C "${extractPath}"`);
+    execSync(`tar -xzf "${archivePath}" -C "${extractPath}"`);
 
     const extractedFolders = fs.readdirSync(extractPath);
     const jdkFolder = path.join(extractPath, extractedFolders[0]);
@@ -133,7 +133,8 @@ export default class NativeServerService extends EventEmitter {
     fs.renameSync(jdkFolder, javaDir);
 
     fs.rmSync(extractPath, { recursive: true, force: true });
-    fs.rmSync(zipPath, { force: true });
+    fs.rmSync(archivePath, { force: true });
+    execSync(`chmod +x "${expectedExe}"`);
 
     this.emit('log', `Java ${version} installed successfully.`);
     return expectedExe;
@@ -222,22 +223,23 @@ export default class NativeServerService extends EventEmitter {
     if (!fs.existsSync(sourcePath)) return;
     if (fs.existsSync(destPath)) return;
 
-    const stat = fs.statSync(sourcePath);
-    if (stat.isDirectory()) {
-      fs.mkdirSync(destPath, { recursive: true });
-      const items = fs.readdirSync(sourcePath);
-      for (const item of items) {
-        this.smartLink(path.join(sourcePath, item), path.join(destPath, item), forceCopy);
+    if (forceCopy) {
+      const stat = fs.statSync(sourcePath);
+      if (stat.isDirectory()) {
+        fs.mkdirSync(destPath, { recursive: true });
+        const items = fs.readdirSync(sourcePath);
+        for (const item of items) {
+          this.smartLink(path.join(sourcePath, item), path.join(destPath, item), true);
+        }
+      } else {
+        fs.copyFileSync(sourcePath, destPath);
       }
     } else {
-      if (forceCopy) {
-        fs.copyFileSync(sourcePath, destPath);
-      } else {
-        try {
-          fs.linkSync(sourcePath, destPath);
-        } catch (err) {
-          fs.copyFileSync(sourcePath, destPath);
-        }
+      try {
+        fs.symlinkSync(sourcePath, destPath);
+      } catch (err) {
+        this.emit('log', `[Warning] symlink failed for ${sourcePath}, falling back to copy.`);
+        this.smartLink(sourcePath, destPath, true);
       }
     }
   }
