@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+:root {
+  /* Overworld Theme (Light Mode) */
+  --background: #E0F6FF; /* Cielo azul claro */
+  --foreground: #2E2218; /* Marrón oscuro tierra */
+  
+  --surface: #F4FBF3; /* Verde muy clarito, como pasto iluminado */
+  --surface-hover: #E4F2E2;
+  --surface-border: #B2CCAF;
+
+  --primary: #10B981; /* Verde esmeralda */
+  --primary-foreground: #FFFFFF;
+  
+  --secondary: #8B5A2B; /* Marrón madera */
+  --secondary-foreground: #FFFFFF;
+  
+  --danger: #EF4444; /* Rojo redstone */
+  
+  --radius: 0.25rem; /* Esquinas sutilmente bloqueadas */
+}
+
+.dark {
+  /* Enderman Theme (Dark Mode) */
+  --background: #110B19; /* Púrpura súper oscuro, casi negro */
+  --foreground: #F1F1F1; /* Blanco roto */
+  
+  --surface: #1E1628; /* Púrpura grafito (superficies y cards) */
+  --surface-hover: #2D213B;
+  --surface-border: #3D2C54;
+
+  --primary: #B452FF; /* Morado neón brillante */
+  --primary-foreground: #FFFFFF;
+  
+  --secondary: #443258; /* Púrpura apagado */
+  --secondary-foreground: #FFFFFF;
+  
+  --danger: #FF4444;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-border: var(--surface-border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-danger: var(--danger);
+  
+  --radius-blocky: var(--radius);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Scrollbar blocky */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-border);
+  border-radius: var(--radius);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
