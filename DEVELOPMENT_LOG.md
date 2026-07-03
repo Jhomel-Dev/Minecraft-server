@@ -159,6 +159,30 @@
 - **Status:** Completed
 - **Details:**
   - Creación del Custom Hook `useServerConsole.js` integrando `socket.io-client` y utilizando principios de Clean Code y Guard Clauses.
-  - Creación de `ConsoleOutput.jsx` con auto-scroll a los logs más recientes.
   - Creación de `ConsoleInput.jsx` previniendo envíos vacíos.
   - Ensamblado final de la vista principal del Dashboard (`app/dashboard/[serverId]/page.js`) unificando autenticación y estado en tiempo real.
+
+## Feature: Web UI - Player Statistics Module
+- **Status:** Completed
+- **Details:**
+  - Implementación de `PlayerStatsService.js` en el Local Agent para leer archivos `.dat` de inventarios (NBT) de los jugadores y sus UUIDs.
+  - Creación de vista completa en `app/server/[id]/players/page.js` mostrando lista de jugadores del servidor.
+  - Transmisión puente de NBT desde Local Agent -> Cloud API -> Panel Web.
+
+## Feature: File System - Large Chunking & Auto Directory
+- **Status:** Completed
+- **Details:**
+  - Actualización de `FileService.js` del Local Agent para auto-crear carpetas con `fs.mkdir({ recursive: true })` previniendo crashes con `ENOENT`.
+  - Sistema de subida por chunks de `2MB` en `ModList.jsx` para evitar saturación de memoria RAM al subir Modpacks de más de 100MB.
+
+## Feature: Cloud API - PaperMC v3 Migration
+- **Status:** Completed
+- **Details:**
+  - Migración de la API caída de Paper (`v2`) a la nueva API oficial `fill.papermc.io/v3/projects/paper`.
+  - Aplanamiento JSON avanzado y cabecera de `User-Agent` obligatoria para eludir bloqueos WAF de Cloudflare.
+
+## Feature: Web UI - Hybrid Mod/Plugin Split
+- **Status:** Completed
+- **Details:**
+  - Separación formal de las interfaces para `Mods` y `Plugins` en `DashboardSidebar.jsx`.
+  - Ajuste robusto a la API de Modrinth para forzar la búsqueda en `categories:paper`, `spigot` o `bukkit` cuando el modo es `plugins`, previniendo descargas de versiones erróneas.

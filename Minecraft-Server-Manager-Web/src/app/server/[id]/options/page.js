@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, use } from "react";
-import { getMyServers, updateSettings, deleteServer } from "@/features/servers/services/serverApi";
+import { getMyServers, updateSettings, deleteServer, fsOperation } from "@/features/servers/services/serverApi";
 import { Settings, Save, ShieldCheck, Users, HardDrive, Wifi, ShieldAlert, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
@@ -21,8 +21,16 @@ export default function ServerOptionsPage({ params }) {
     memory: "2048"
   });
 
+  const [properties, setProperties] = useState({});
+  const [rawPropertiesOrder, setRawPropertiesOrder] = useState([]);
+
   useEffect(() => {
-    getMyServers().then(servers => {
+    loadData();
+  }, [serverId]);
+
+  const loadData = async () => {
+    try {
+      const servers = await getMyServers();
       const server = servers.find(s => s.id === serverId);
       if (server) {
         setSettings({
@@ -33,17 +41,60 @@ export default function ServerOptionsPage({ params }) {
           memory: server.memory ?? "2048"
         });
       }
+
+      const fileRes = await fsOperation(serverId, { action: "read", filePath: "/server.properties" });
+      if (fileRes && fileRes.content) {
+        const lines = fileRes.content.split("\n");
+        const parsed = {};
+        const order = [];
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith("#")) {
+            const [key, ...rest] = trimmed.split("=");
+            const val = rest.join("=").trim();
+            parsed[key.trim()] = val;
+            order.push(key.trim());
+          }
+        }
+        setProperties(parsed);
+        setRawPropertiesOrder(order);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
       setLoading(false);
-    }).catch(console.error);
-  }, [serverId]);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await updateSettings(serverId, settings);
-      // Podríamos añadir un toast de éxito aquí
+      
+      // Sync DB settings to properties
+      const mergedProps = {
+        ...properties,
+        "max-players": settings.maxPlayers.toString(),
+        "white-list": settings.whitelist.toString(),
+        "online-mode": settings.onlineMode.toString()
+      };
+      
+      // Determine keys to save (preserve original order, plus any new keys added via UI)
+      const keysToSave = new Set([...rawPropertiesOrder, ...Object.keys(mergedProps)]);
+      
+      // Build properties string
+      const propsString = Array.from(keysToSave).map(key => {
+        return `${key}=${mergedProps[key] ?? ""}`;
+      }).join("\n");
+      
+      await fsOperation(serverId, {
+        action: "write",
+        filePath: "/server.properties",
+        content: propsString
+      });
     } catch (error) {
-      console.error("Failed to save settings", error);
+      console.error(error);
     } finally {
       setSaving(false);
     }
@@ -59,7 +110,7 @@ export default function ServerOptionsPage({ params }) {
       await deleteServer(serverId, keepFiles);
       router.push("/servers");
     } catch (error) {
-      alert("Error al eliminar: " + error.message);
+      alert("Error: " + error.message);
       setDeleting(false);
       setShowDeleteModal(false);
     }
@@ -67,6 +118,10 @@ export default function ServerOptionsPage({ params }) {
 
   const toggleSetting = (key) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const updateProperty = (key, value) => {
+    setProperties(prev => ({ ...prev, [key]: value }));
   };
 
   if (loading) {
@@ -170,6 +225,74 @@ export default function ServerOptionsPage({ params }) {
             />
           </div>
         </div>
+
+        {/* server.properties Avanzado */}
+        <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky shadow-sm flex flex-col gap-4 md:col-span-2 mt-4">
+          <div className="flex items-center gap-3 border-b-2 border-surface-border pb-4">
+            <Settings className="w-6 h-6 text-primary" />
+            <h2 className="text-xl font-bold">Opciones Avanzadas (server.properties)</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Campos visuales dedicados para propiedades comunes */}
+              
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label className="font-bold text-sm text-foreground/80">Mensaje del Día (MOTD)</label>
+                <Input 
+                  value={properties["motd"] ?? ""}
+                  onChange={(e) => updateProperty("motd", e.target.value)}
+                  placeholder="A Minecraft Server"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-sm text-foreground/80">Dificultad</label>
+                <select 
+                  value={properties["difficulty"] ?? "easy"}
+                  onChange={(e) => updateProperty("difficulty", e.target.value)}
+                  className="bg-background border-2 border-surface-border rounded-blocky px-4 py-2 font-semibold text-foreground focus:outline-none focus:border-primary transition-colors appearance-none"
+                >
+                  <option value="peaceful">Pacífico</option>
+                  <option value="easy">Fácil</option>
+                  <option value="normal">Normal</option>
+                  <option value="hard">Difícil</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-sm text-foreground/80">Modo de Juego</label>
+                <select 
+                  value={properties["gamemode"] ?? "survival"}
+                  onChange={(e) => updateProperty("gamemode", e.target.value)}
+                  className="bg-background border-2 border-surface-border rounded-blocky px-4 py-2 font-semibold text-foreground focus:outline-none focus:border-primary transition-colors appearance-none"
+                >
+                  <option value="survival">Supervivencia</option>
+                  <option value="creative">Creativo</option>
+                  <option value="adventure">Aventura</option>
+                  <option value="spectator">Espectador</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-sm text-foreground/80">Distancia de Visión (Chunks)</label>
+                <Input 
+                  type="number" 
+                  min="2" 
+                  max="32"
+                  value={properties["view-distance"] ?? "10"}
+                  onChange={(e) => updateProperty("view-distance", e.target.value)}
+                />
+              </div>
+
+              <ToggleOption 
+                title="PVP" 
+                description="Permitir daño entre jugadores."
+                checked={properties["pvp"] === "true"}
+                onToggle={() => updateProperty("pvp", properties["pvp"] === "true" ? "false" : "true")}
+                icon={<ShieldAlert className="w-5 h-5" />}
+              />
+            </div>
+          </div>
 
         {/* Zona de Peligro */}
         <div className="bg-red-500/10 border-2 border-red-500/30 p-6 rounded-blocky shadow-sm flex flex-col gap-4 md:col-span-2 mt-4">

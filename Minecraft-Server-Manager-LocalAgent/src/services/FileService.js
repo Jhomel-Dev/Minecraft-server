@@ -85,8 +85,13 @@ export default class FileService {
   }
 
   async readFile(targetPath) {
-    const content = await fs.readFile(targetPath, 'utf-8');
-    return { content };
+    try {
+      const content = await fs.readFile(targetPath, 'utf-8');
+      return { content };
+    } catch (err) {
+      if (err.code === 'ENOENT') return { content: '' };
+      throw err;
+    }
   }
 
   async writeFile(targetPath, content, isBase64 = false) {

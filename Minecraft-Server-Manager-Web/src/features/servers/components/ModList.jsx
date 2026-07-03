@@ -9,13 +9,11 @@ import { Input } from "@/shared/ui/Input";
 export function ModList({ serverId, mode = "mods" }) {
   const [mods, setMods] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("installed"); // installed, store
   const defaultFolder = mode === "plugins" ? "/plugins" : "/mods";
   const [targetFolder, setTargetFolder] = useState(defaultFolder);
   
   const [serverInfo, setServerInfo] = useState(null);
   
-  // Store state
   const [searchQuery, setSearchQuery] = useState("");
   const [storeResults, setStoreResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -26,7 +24,6 @@ export function ModList({ serverId, mode = "mods" }) {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    // Obtener info del servidor para saber su versión y software
     getMyServers().then(servers => {
       const srv = servers.find(s => s.id === serverId);
       if (srv) setServerInfo(srv);
@@ -42,14 +39,12 @@ export function ModList({ serverId, mode = "mods" }) {
   const loadMods = async () => {
     setLoading(true);
     try {
-      // Load Metadata
       try {
         const metaRes = await fsOperation(serverId, { action: "read", filePath: "/mods-metadata.json" });
         if (metaRes && metaRes.content) {
           const parsed = JSON.parse(metaRes.content);
           setModMetadata(parsed);
           
-          // Recuperar estado de instalados para la Store
           const ids = new Set();
           Object.values(parsed).forEach(m => {
             if (m.project_id) ids.add(m.project_id);
@@ -57,7 +52,6 @@ export function ModList({ serverId, mode = "mods" }) {
           setInstalledProjects(ids);
         }
       } catch (e) {
-        // Archivo no existe aún, ignorar
       }
 
       let data = [];
@@ -90,7 +84,6 @@ export function ModList({ serverId, mode = "mods" }) {
 
     setUploading(true);
     try {
-      const CHUNK_SIZE = 1024 * 1024 * 2; // 2MB
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
       const filePath = `${targetFolder}/${file.name}`;
       
@@ -126,7 +119,6 @@ export function ModList({ serverId, mode = "mods" }) {
       
       loadMods();
       setUploading(false);
-      event.target.value = ''; // Reset input
     } catch (err) {
       console.error("Error subiendo el mod:", err);
       setUploading(false);
@@ -137,7 +129,6 @@ export function ModList({ serverId, mode = "mods" }) {
     try {
       await fsOperation(serverId, { action: "delete", filePath: `${targetFolder}/${filename}` });
       
-      // Eliminar metadata para que se desmarque en la store
       try {
         let meta = {};
         const metaRes = await fsOperation(serverId, { action: "read", filePath: "/mods-metadata.json" });
@@ -195,7 +186,6 @@ export function ModList({ serverId, mode = "mods" }) {
     let projectId = typeof projectOrId === 'string' ? projectOrId : projectOrId.project_id;
     let project = typeof projectOrId === 'string' ? null : projectOrId;
     
-    // Evitar descargar el mismo mod si ya fue instalado en esta sesión
     if (installedProjects.has(projectId)) return;
     
     try {
@@ -243,7 +233,6 @@ export function ModList({ serverId, mode = "mods" }) {
         return next;
       });
       
-      // Instalar dependencias requeridas
       if (version.dependencies && version.dependencies.length > 0) {
         for (const dep of version.dependencies) {
           if (dep.dependency_type === "required" && dep.project_id) {
