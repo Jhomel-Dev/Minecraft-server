@@ -104,6 +104,12 @@ export default class LocalAgentController {
         this.connectionService.sendLog({ serverId: this.currentServerId, logLine });
       }
     });
+
+    this.nativeServerService.on('telemetry', (stats) => {
+      if (this.currentServerId) {
+        this.connectionService.sendTelemetry({ serverId: this.currentServerId, stats });
+      }
+    });
   }
 
   setupTunnelListeners() {
