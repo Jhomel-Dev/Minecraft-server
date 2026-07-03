@@ -43,6 +43,10 @@ export default class ConnectionService extends EventEmitter {
     this.socket.on('FS_OPERATION', (payload, callback) => {
       this.emit('fs_operation', payload, callback);
     });
+    
+    this.socket.on('get_player_stats', (payload, callback) => {
+      this.emit('get_player_stats', payload, callback);
+    });
   }
 
   sendTelemetry(stats) {
