@@ -161,4 +161,19 @@ export default class ServerService {
     if (!this.io) throw new Error('WebSocket instance not configured');
     this.io.emit('STOP_SERVER', { id: server.id });
   }
+
+  async executeCommand(serverId, command) {
+    if (!serverId) throw new Error('Server ID is required');
+    if (!command) throw new Error('Command is required');
+    
+    const server = await this.findServerById(serverId);
+    if (server.status !== 'ONLINE') {
+      throw new Error('Server must be ONLINE to execute commands');
+    }
+    
+    if (!this.io) throw new Error('WebSocket instance not configured');
+    this.io.emit('SEND_COMMAND', command);
+    
+    return { success: true, message: 'Command sent' };
+  }
 }
