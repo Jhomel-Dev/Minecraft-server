@@ -10,6 +10,7 @@ export default class NativeServerService extends EventEmitter {
   constructor() {
     super();
     this.process = null;
+    this.onlinePlayers = new Set();
     const managerDir = path.join(os.homedir(), '.minecraft-manager');
     this.vaultDir = process.env.VAULT_DIR || path.join(managerDir, 'vault');
     this.javaDir = path.join(this.vaultDir, 'JDKs');
@@ -64,9 +65,21 @@ export default class NativeServerService extends EventEmitter {
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
+    this.onlinePlayers.clear();
+
     this.process.stdout.on('data', (data) => {
-      const logLine = data.toString('utf8').trim();
-      if (logLine) this.emit('log', logLine);
+      const lines = data.toString('utf8').split('\n');
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+        this.emit('log', line);
+
+        const joinMatch = line.match(/\]: (?:\[.*?\] )?([a-zA-Z0-9_]{3,16}) joined the game/);
+        if (joinMatch) this.onlinePlayers.add(joinMatch[1]);
+        
+        const leaveMatch = line.match(/\]: (?:\[.*?\] )?([a-zA-Z0-9_]{3,16}) left the game/);
+        if (leaveMatch) this.onlinePlayers.delete(leaveMatch[1]);
+      }
     });
 
     this.process.stderr.on('data', (data) => {
@@ -91,6 +104,7 @@ export default class NativeServerService extends EventEmitter {
     this.process.on('exit', () => {
       if (this.metricsInterval) clearInterval(this.metricsInterval);
       this.process = null;
+      this.onlinePlayers.clear();
     });
 
     return this.process.pid.toString();

@@ -117,6 +117,11 @@ export default function PlayersPage({ params }) {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-xl">{player.name}</h3>
+                      {player.isOnline ? (
+                        <div className="w-3 h-3 rounded-full bg-green-500 border border-green-700 animate-pulse-slow" title="Conectado Ahora"></div>
+                      ) : (
+                        <div className="w-3 h-3 rounded-full bg-foreground/20 border border-surface-border" title="Desconectado"></div>
+                      )}
                       {player.isOp && <Shield className="w-4 h-4 text-warning fill-warning/20" title="Operador" />}
                       {player.isBanned && <Ban className="w-4 h-4 text-danger" title="Baneado" />}
                     </div>

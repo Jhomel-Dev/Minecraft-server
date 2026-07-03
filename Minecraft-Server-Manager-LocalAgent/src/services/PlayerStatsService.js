@@ -8,7 +8,7 @@ export default class PlayerStatsService {
     this.config = config;
   }
 
-  async getPlayers(serverId) {
+  async getPlayers(serverId, onlineNames = []) {
     const managerDir = path.join(os.homedir(), '.minecraft-manager');
     const baseDir = path.resolve(managerDir, 'servers', serverId);
     
@@ -85,7 +85,8 @@ export default class PlayerStatsService {
           food,
           xpLevel,
           inventory,
-          lastSeen: Date.now() // Ideally we'd stat the file
+          lastSeen: Date.now(), // Ideally we'd stat the file
+          isOnline: onlineNames.includes(name)
         });
       } catch (err) {
         console.error(`Error parsing NBT for player ${uuid}:`, err);
