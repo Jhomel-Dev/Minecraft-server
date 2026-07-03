@@ -71,9 +71,11 @@ export default function ServerOverviewPage({ params }) {
       {/* Hybrid Console Banner / Mini-Monitor */}
       <StatusBanner serverId={serverId} status={server.status} />
 
-      {server.status === "ONLINE" && (
-        <PerformanceCharts serverId={serverId} maxMemoryMB={server.settings?.maxRam || 4096} />
-      )}
+      <PerformanceCharts 
+        serverId={serverId} 
+        status={server.status}
+        maxMemoryMB={server.memory ? (server.memory.toUpperCase().endsWith('G') ? parseInt(server.memory) * 1024 : parseInt(server.memory)) : 4096} 
+      />
 
       {/* Software and Version Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

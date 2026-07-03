@@ -198,3 +198,5 @@
 * **Web UI:** Added the missing `CHUNK_SIZE` constant to support local .jar file uploads correctly.
 * **Web UI:** Made UI strings dynamic to seamlessly switch terminology between "Mods" and "Plugins" depending on the server type.
 * **Web UI:** Fixed a minor `eslint` warning (`react/no-unescaped-entities`) to keep the code clean.
+* **Web UI:** Fixed `PerformanceCharts` max memory constraint to dynamically read from the server's actual memory setting (e.g. converting "2G" to 2048 MB).
+* **Web UI:** Made `PerformanceCharts` always visible regardless of server status, and added a graceful drop to 0% CPU and 0 MB RAM when the server goes offline.

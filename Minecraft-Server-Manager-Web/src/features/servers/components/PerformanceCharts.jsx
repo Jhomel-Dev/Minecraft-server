@@ -3,11 +3,32 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart,
 import { useServerMetrics } from "../hooks/useServerMetrics";
 import { Cpu, MemoryStick } from "lucide-react";
 
-export function PerformanceCharts({ serverId, maxMemoryMB = 4096 }) {
+export function PerformanceCharts({ serverId, maxMemoryMB = 4096, status }) {
   const { metrics, isConnected } = useServerMetrics(serverId);
   const [data, setData] = useState([]);
 
+  const isOnline = status === "ONLINE" || status === "STARTING";
+
+  // Simulate drop to 0 when offline
   useEffect(() => {
+    let interval;
+    if (!isOnline) {
+      interval = setInterval(() => {
+        setData((current) => {
+          const now = new Date();
+          const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const newData = [...current, { time: timeString, cpu: 0, ram: 0 }];
+          if (newData.length > 20) newData.shift();
+          return newData;
+        });
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isOnline]);
+
+  // Handle real metrics when online
+  useEffect(() => {
+    if (!isOnline) return;
     setData((current) => {
       const now = new Date();
       const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -15,16 +36,14 @@ export function PerformanceCharts({ serverId, maxMemoryMB = 4096 }) {
       const newPoint = {
         time: timeString,
         cpu: Math.round(metrics.cpu),
-        // Convert bytes to MB
         ram: Math.round(metrics.memory / 1024 / 1024)
       };
 
       const newData = [...current, newPoint];
-      // Keep last 20 points for the chart
       if (newData.length > 20) newData.shift();
       return newData;
     });
-  }, [metrics]);
+  }, [metrics, isOnline]);
 
   const currentCpu = data.length > 0 ? data[data.length - 1].cpu : 0;
   const currentRam = data.length > 0 ? data[data.length - 1].ram : 0;
