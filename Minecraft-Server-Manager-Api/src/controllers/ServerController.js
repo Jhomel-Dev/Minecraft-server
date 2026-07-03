@@ -158,7 +158,8 @@ export default class ServerController {
   handleError(res, error) {
     if (error.message.includes('required') || 
         error.message.includes('not found') ||
-        error.message.includes('already running')) {
+        error.message.includes('already running') ||
+        error.message.includes('must be ONLINE')) {
       return res.status(400).json({ error: error.message });
     }
     
