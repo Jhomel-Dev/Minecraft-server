@@ -34,6 +34,7 @@ export function DashboardSidebar() {
           href={`/server/${serverId}`} 
           icon={<Server className="w-5 h-5" />} 
           label="Servidor" 
+          exact={true}
         />
         <SidebarItem 
           href={`/server/${serverId}/options`} 
@@ -52,11 +53,18 @@ export function DashboardSidebar() {
         />
         
         {serverType !== "vanilla" && (
-          <SidebarItem 
-            href={`/server/${serverId}/mods`} 
-            icon={<Package className="w-5 h-5" />} 
-            label={["paper", "spigot", "purpur", "folia"].includes(serverType) ? "Plugins" : "Mods"} 
-          />
+          <>
+            <SidebarItem 
+              href={`/server/${serverId}/plugins`} 
+              icon={<Package className="w-5 h-5" />} 
+              label="Plugins" 
+            />
+            <SidebarItem 
+              href={`/server/${serverId}/mods`} 
+              icon={<Package className="w-5 h-5" />} 
+              label="Mods" 
+            />
+          </>
         )}
 
         <SidebarItem 

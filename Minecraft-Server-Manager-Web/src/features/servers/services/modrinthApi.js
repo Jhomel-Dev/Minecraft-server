@@ -1,31 +1,32 @@
-export async function searchModrinth(query, softwareType, mcVersion) {
+export async function searchModrinth(query, softwareType, mcVersion, mode = "mods") {
   try {
-    // Definir la categoría base según el tipo de servidor
-    let loaderFacet = "";
+    let loaderFacets = [];
     const type = softwareType.toLowerCase();
     
-    if (["paper", "purpur", "folia", "vanilla"].includes(type)) {
-      loaderFacet = "categories:paper"; // O bukkit/spigot, Modrinth usa paper y spigot. Usaremos paper
-    } else if (type === "fabric") {
-      loaderFacet = "categories:fabric";
-    } else if (type === "forge" || type === "neoforge") {
-      loaderFacet = `categories:${type}`;
+    if (mode === "plugins") {
+      loaderFacets = ["categories:paper", "categories:spigot", "categories:bukkit"];
+    } else {
+      if (type === "fabric") {
+        loaderFacets = ["categories:fabric"];
+      } else if (type === "forge" || type === "neoforge") {
+        loaderFacets = [`categories:${type}`];
+      } else {
+        // Fallback for hybrid or unknown when in mods tab
+        loaderFacets = ["categories:forge", "categories:fabric", "categories:neoforge"];
+      }
     }
 
-    // mcVersion puede venir como "1.20.1-47.2.0". Extraemos solo "1.20.1"
     const baseMcVersion = mcVersion.split('-')[0];
 
-    // Construir facets en formato JSON stringificado
-    // Ejemplo: [["categories:paper"], ["versions:1.20.1"]]
     const facets = [
-      [loaderFacet],
+      loaderFacets,
       [`versions:${baseMcVersion}`]
     ];
 
     const url = new URL("https://api.modrinth.com/v2/search");
     url.searchParams.append("query", query);
     url.searchParams.append("facets", JSON.stringify(facets));
-    url.searchParams.append("limit", "10");
+    url.searchParams.append("limit", "20");
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error("Error fetching from Modrinth");
@@ -37,15 +38,19 @@ export async function searchModrinth(query, softwareType, mcVersion) {
   }
 }
 
-// Obtener las versiones (archivos) específicos de un proyecto para poder descargarlo
-export async function getProjectVersions(projectId, softwareType, mcVersion) {
+export async function getProjectVersions(projectId, softwareType, mcVersion, mode = "mods") {
   try {
     const type = softwareType.toLowerCase();
     let loaders = [];
-    if (["paper", "purpur", "folia"].includes(type)) loaders = ["paper", "spigot", "bukkit"];
-    else if (type === "fabric") loaders = ["fabric"];
-    else if (type === "forge") loaders = ["forge"];
-    else if (type === "neoforge") loaders = ["neoforge"];
+    
+    if (mode === "plugins") {
+      loaders = ["paper", "spigot", "bukkit"];
+    } else {
+      if (type === "fabric") loaders = ["fabric"];
+      else if (type === "forge") loaders = ["forge"];
+      else if (type === "neoforge") loaders = ["neoforge"];
+      else loaders = ["forge", "fabric", "neoforge"]; // Fallback
+    }
 
     const baseMcVersion = mcVersion.split('-')[0];
 
@@ -60,5 +65,16 @@ export async function getProjectVersions(projectId, softwareType, mcVersion) {
   } catch (err) {
     console.error("Modrinth versions error:", err);
     return [];
+  }
+}
+
+export async function getProject(projectId) {
+  try {
+    const res = await fetch(`https://api.modrinth.com/v2/project/${projectId}`);
+    if (!res.ok) throw new Error("Error fetching project");
+    return await res.json();
+  } catch (err) {
+    console.error("Modrinth project error:", err);
+    return null;
   }
 }
