@@ -90,6 +90,14 @@ export default class LocalAgentController {
 
     this.connectionService.on('get_player_stats', async (payload, callback) => {
       try {
+        // Force a save to ensure NBT files are perfectly up to date with live players
+        if (this.currentServerId && this.nativeServerService.process) {
+          try {
+            await this.nativeServerService.sendCommand('save-all');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          } catch(e) {}
+        }
+        
         const players = await this.playerStatsService.getPlayers(payload.serverId);
         callback({ success: true, data: players });
       } catch (error) {
