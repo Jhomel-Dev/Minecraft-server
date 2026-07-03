@@ -7,6 +7,13 @@ function bootstrap() {
   
   agent.start();
   console.log('Local Agent initialized and attempting to connect...');
+
+  process.on('SIGINT', async () => {
+    console.log('\\n[System] Deteniendo agente y limpiando procesos huerfanos...');
+    if (agent.tunnelService) agent.tunnelService.stopTunnel();
+    if (agent.nativeServerService) await agent.nativeServerService.stopMinecraftServer();
+    process.exit(0);
+  });
 }
 
 function extractConfig() {

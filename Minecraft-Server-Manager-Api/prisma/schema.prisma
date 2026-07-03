@@ -33,6 +33,8 @@ model Server {
   onlineMode   Boolean  @default(true)
   tunnelIp     String?
   tunnelSecret String?
+  customDomain String?
+  claimLink    String?
   isCloud      Boolean  @default(false)
   compatibilityMode Boolean @default(false)
   

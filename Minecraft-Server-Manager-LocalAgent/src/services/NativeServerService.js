@@ -80,7 +80,7 @@ export default class NativeServerService extends EventEmitter {
       try {
         const stats = await pidusage(this.process.pid);
         this.emit('telemetry', {
-          cpu: stats.cpu,
+          cpu: stats.cpu / os.cpus().length,
           memory: stats.memory
         });
       } catch (err) {

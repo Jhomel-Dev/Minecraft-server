@@ -12,15 +12,23 @@ export default function ServerOverviewPage({ params }) {
   const [server, setServer] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // In a real app we'd fetch specific server by ID or subscribe to its status via socket
-  // For now we'll fetch all and find it
-  useEffect(() => {
-    getMyServers().then(data => {
+  const fetchServer = async () => {
+    try {
+      const data = await getMyServers();
       const serverList = Array.isArray(data) ? data : [];
       const found = serverList.find(s => s.id === serverId);
-      setServer(found);
+      if (found) setServer(found);
+    } catch (error) {
+      console.error(error);
+    } finally {
       setLoading(false);
-    }).catch(console.error);
+    }
+  };
+
+  useEffect(() => {
+    fetchServer();
+    const interval = setInterval(fetchServer, 3000);
+    return () => clearInterval(interval);
   }, [serverId]);
 
   const handleStart = async () => { try { await startServer(serverId); } catch (e) { console.log(e.message); } };
@@ -41,9 +49,27 @@ export default function ServerOverviewPage({ params }) {
           </div>
           <div>
             <h1 className="text-3xl font-black">{server.name}</h1>
-            <p className="text-foreground/70 font-semibold flex items-center gap-2">
-              <Globe className="w-4 h-4" /> proxy.craftcontrol.net (Próximamente)
-            </p>
+            <div className="text-foreground/70 font-semibold flex items-center gap-2 mt-1">
+              <Globe className="w-4 h-4" /> 
+              {server.customDomain ? (
+                <span>{server.customDomain}</span>
+              ) : server.tunnelIp ? (
+                <span className="bg-primary/10 text-primary px-2 rounded">{server.tunnelIp}</span>
+              ) : server.status !== "OFFLINE" ? (
+                <span className="italic opacity-60">Asignando IP...</span>
+              ) : (
+                <span className="italic opacity-60">Apagado (Sin IP)</span>
+              )}
+              {(server.customDomain || server.tunnelIp) && (
+                <button 
+                  onClick={() => navigator.clipboard.writeText(server.customDomain || server.tunnelIp)}
+                  className="text-xs bg-foreground/10 hover:bg-foreground/20 px-2 py-1 rounded transition-colors text-foreground"
+                  title="Copiar IP"
+                >
+                  Copiar
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -56,16 +82,23 @@ export default function ServerOverviewPage({ params }) {
       </div>
 
       {/* Main Actions */}
-      <div className="flex flex-wrap items-center gap-4">
-        <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 h-14 px-8 text-lg flex-1 md:flex-none" onClick={handleStart}>
-          <Play className="w-5 h-5 mr-2" /> Iniciar
-        </Button>
-        <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 h-14 px-8 text-lg flex-1 md:flex-none" onClick={handleStop}>
-          <Square className="w-5 h-5 mr-2" /> Detener
-        </Button>
-        <Button variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 h-14 px-8 text-lg flex-1 md:flex-none" onClick={handleRestart}>
-          <RotateCw className="w-5 h-5 mr-2" /> Reiniciar
-        </Button>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-4">
+          <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 h-14 px-8 text-lg flex-1 md:flex-none" onClick={handleStart} disabled={server.status !== "OFFLINE"}>
+            <Play className="w-5 h-5 mr-2" /> Iniciar
+          </Button>
+          <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 h-14 px-8 text-lg flex-1 md:flex-none" onClick={handleStop} disabled={server.status === "OFFLINE" || server.status === "STOPPING"}>
+            <Square className="w-5 h-5 mr-2" /> Detener
+          </Button>
+          <Button variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 h-14 px-8 text-lg flex-1 md:flex-none" onClick={handleRestart} disabled={server.status === "OFFLINE" || server.status === "STOPPING"}>
+            <RotateCw className="w-5 h-5 mr-2" /> Reiniciar
+          </Button>
+        </div>
+        {server.status === "ONLINE" && !server.customDomain && (
+          <p className="text-xs text-warning font-semibold">
+            ⚠️ Nota: Si detienes o reinicias el servidor, la dirección IP pública actual cambiará.
+          </p>
+        )}
       </div>
 
       {/* Hybrid Console Banner / Mini-Monitor */}
