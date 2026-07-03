@@ -14,5 +14,6 @@ router.post('/:id/start', serverController.startServer);
 router.post('/:id/stop', serverController.stopServer);
 router.delete('/:id', serverController.deleteServer);
 router.post('/:id/fs', serverController.handleFileSystem);
+router.get('/:id/players', serverController.getPlayers);
 
 export default router;

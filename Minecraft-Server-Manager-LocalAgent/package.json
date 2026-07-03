@@ -14,6 +14,7 @@
   "type": "module",
   "dependencies": {
     "dotenv": "^17.4.2",
+    "prismarine-nbt": "^2.8.0",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
