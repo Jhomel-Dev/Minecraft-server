@@ -25,14 +25,21 @@ export default class PlayerStatsService {
     usercache.forEach(u => uuidToName[u.uuid] = u.name);
     
     // 2. Read playerdata directory
-    // Note: Forge/Vanilla use world/playerdata. Some setups might use worldName/playerdata.
-    const playersDir = path.join(baseDir, 'world', 'playerdata');
+    // Note: Forge/Vanilla use world/playerdata. Some implementations use world/players/data.
+    const playerdataDir = path.join(baseDir, 'world', 'playerdata');
+    const playersDataAltDir = path.join(baseDir, 'world', 'players', 'data');
+    
+    let playersDir = playerdataDir;
     let files = [];
     try {
-      files = await fs.readdir(playersDir);
+      files = await fs.readdir(playerdataDir);
     } catch(e) {
-      // If folder doesn't exist, no players have joined yet
-      return [];
+      try {
+        files = await fs.readdir(playersDataAltDir);
+        playersDir = playersDataAltDir;
+      } catch (err2) {
+        return [];
+      }
     }
     
     const players = [];
@@ -57,11 +64,17 @@ export default class PlayerStatsService {
         if (parsed.value.Inventory && parsed.value.Inventory.value && parsed.value.Inventory.value.value) {
           const items = parsed.value.Inventory.value.value;
           items.forEach(item => {
-            inventory.push({
-              slot: item.Slot.value,
-              id: item.id.value,
-              count: item.Count.value
-            });
+            const slotObj = item.Slot || item.slot;
+            const idObj = item.id || item.Id;
+            const countObj = item.Count || item.count;
+            
+            if (slotObj && idObj) {
+              inventory.push({
+                slot: slotObj.value,
+                id: idObj.value,
+                count: countObj ? countObj.value : 1
+              });
+            }
           });
         }
         
