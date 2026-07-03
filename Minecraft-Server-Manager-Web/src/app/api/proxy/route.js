@@ -9,7 +9,11 @@ export async function GET(request) {
   }
 
   try {
-    const res = await fetch(targetUrl);
+    const res = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'MinecraftServerManager/1.0 (contact@example.com)'
+      }
+    });
     if (!res.ok) {
       return NextResponse.json({ error: 'Failed to fetch from target' }, { status: res.status });
     }

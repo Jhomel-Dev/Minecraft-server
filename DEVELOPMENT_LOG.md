@@ -186,3 +186,17 @@
 - **Details:**
   - Separación formal de las interfaces para `Mods` y `Plugins` en `DashboardSidebar.jsx`.
   - Ajuste robusto a la API de Modrinth para forzar la búsqueda en `categories:paper`, `spigot` o `bukkit` cuando el modo es `plugins`, previniendo descargas de versiones erróneas.
+### Feature: Real-Time Performance Graphs (CPU & RAM)
+* **Local Agent:** Installed `pidusage` to read the Java process memory and CPU consumption natively. Created an interval in `NativeServerService.js` that samples the PID every 3 seconds and emits a `telemetry` event.
+* **Cloud API:** Configured `handleTelemetry` to broadcast the WebSocket payloads to clients subscribed to the specific server room (`TELEMETRY` event).
+* **Web UI:**
+  * Added `recharts` library for rendering smooth and attractive area charts.
+  * Built a custom React Hook `useServerMetrics` to handle the websocket connection safely without memory leaks.
+  * Designed `PerformanceCharts` component with glassmorphism touches and animated gradient area charts. The charts glow red if usage exceeds 90%.
+### Feature: Mod & Plugin Browser Module
+* **Web UI:** Fixed missing state (`activeTab`) in `ModList.jsx` that was causing the component to crash on load.
+* **Web UI:** Added the missing `CHUNK_SIZE` constant to support local .jar file uploads correctly.
+* **Web UI:** Made UI strings dynamic to seamlessly switch terminology between "Mods" and "Plugins" depending on the server type.
+* **Web UI:** Fixed a minor `eslint` warning (`react/no-unescaped-entities`) to keep the code clean.
+* **Web UI:** Fixed `PerformanceCharts` max memory constraint to dynamically read from the server's actual memory setting (e.g. converting "2G" to 2048 MB).
+* **Web UI:** Made `PerformanceCharts` always visible regardless of server status, and added a graceful drop to 0% CPU and 0 MB RAM when the server goes offline.
