@@ -5,12 +5,14 @@ import { Download, Trash2, Loader2, PackageOpen, Search, Check, AlertTriangle, U
 import { fsOperation, getMyServers } from "@/features/servers/services/serverApi";
 import { searchModrinth, getProjectVersions, getProject } from "@/features/servers/services/modrinthApi";
 import { Input } from "@/shared/ui/Input";
+const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
 
 export function ModList({ serverId, mode = "mods" }) {
   const [mods, setMods] = useState([]);
   const [loading, setLoading] = useState(true);
   const defaultFolder = mode === "plugins" ? "/plugins" : "/mods";
   const [targetFolder, setTargetFolder] = useState(defaultFolder);
+  const [activeTab, setActiveTab] = useState("installed");
   
   const [serverInfo, setServerInfo] = useState(null);
   
@@ -297,7 +299,7 @@ export function ModList({ serverId, mode = "mods" }) {
               {uploading ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Subiendo...</>
               ) : (
-                <><Upload className="w-4 h-4 mr-2" /> Subir Mod (.jar)</>
+                <><Upload className="w-4 h-4 mr-2" /> Subir {mode === "plugins" ? "Plugin" : "Mod"} (.jar)</>
               )}
             </Button>
           </label>
@@ -313,8 +315,8 @@ export function ModList({ serverId, mode = "mods" }) {
           ) : mods.length === 0 ? (
             <div className="text-center p-12 bg-surface border-2 border-surface-border rounded-blocky border-dashed">
               <PackageOpen className="w-12 h-12 mx-auto text-foreground/30 mb-4" />
-              <h3 className="font-bold text-xl text-foreground/70">No hay mods ni plugins instalados</h3>
-              <p className="text-foreground/50 mt-2">Ve a la Store para descargar o usa el Explorador de Archivos para subir tus propios .jar</p>
+              <h3 className="font-bold text-xl text-foreground/70">No hay {mode === "plugins" ? "plugins" : "mods"} instalados</h3>
+              <p className="text-foreground/50 mt-2">Ve a la Store para descargar o sube tus propios archivos .jar</p>
             </div>
           ) : (
             mods.map((mod) => {
@@ -409,7 +411,7 @@ export function ModList({ serverId, mode = "mods" }) {
             
             {storeResults.length === 0 && !searching && searchQuery && (
               <div className="text-center p-8 text-foreground/50 font-bold">
-                No se encontraron resultados para "{searchQuery}"
+                No se encontraron resultados para &quot;{searchQuery}&quot;
               </div>
             )}
           </div>

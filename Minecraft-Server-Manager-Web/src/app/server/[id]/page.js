@@ -4,6 +4,7 @@ import { Server, Activity, Play, Square, RotateCw, Globe, RefreshCw, Pickaxe } f
 import { Button } from "@/shared/ui/Button";
 import { startServer, stopServer, restartServer, getMyServers } from "@/features/servers/services/serverApi";
 import { StatusBanner } from "@/features/servers/components/StatusBanner";
+import { PerformanceCharts } from "@/features/servers/components/PerformanceCharts";
 
 export default function ServerOverviewPage({ params }) {
   const unwrappedParams = use(params);
@@ -70,8 +71,14 @@ export default function ServerOverviewPage({ params }) {
       {/* Hybrid Console Banner / Mini-Monitor */}
       <StatusBanner serverId={serverId} status={server.status} />
 
+      <PerformanceCharts 
+        serverId={serverId} 
+        status={server.status}
+        maxMemoryMB={server.memory ? (server.memory.toUpperCase().endsWith('G') ? parseInt(server.memory) * 1024 : parseInt(server.memory)) : 4096} 
+      />
+
       {/* Software and Version Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         
         {/* Software Card */}
         <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky flex flex-col gap-4">

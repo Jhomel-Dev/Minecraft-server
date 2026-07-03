@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { pipeline } from 'stream/promises';
+import pidusage from 'pidusage';
 
 export default class NativeServerService extends EventEmitter {
   constructor() {
@@ -72,8 +73,23 @@ export default class NativeServerService extends EventEmitter {
       const logLine = data.toString('utf8').trim();
       if (logLine) this.emit('log', logLine);
     });
+    
+    if (this.metricsInterval) clearInterval(this.metricsInterval);
+    this.metricsInterval = setInterval(async () => {
+      if (!this.process || !this.process.pid) return;
+      try {
+        const stats = await pidusage(this.process.pid);
+        this.emit('telemetry', {
+          cpu: stats.cpu,
+          memory: stats.memory
+        });
+      } catch (err) {
+        // pid might no longer exist
+      }
+    }, 3000);
 
     this.process.on('exit', () => {
+      if (this.metricsInterval) clearInterval(this.metricsInterval);
       this.process = null;
     });
 
