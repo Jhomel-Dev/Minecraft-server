@@ -175,8 +175,8 @@ export default function PlayersPage({ params }) {
                       <div key={i} className="w-10 h-10 bg-background border-2 border-surface-border rounded flex items-center justify-center relative group">
                         {item ? (
                           <>
-                            <div className="text-[10px] text-foreground truncate w-8 text-center" title={item.id.replace('minecraft:', '')}>
-                              {item.id.split(':')[1].substring(0, 4)}...
+                            <div className="text-[9px] font-bold text-foreground truncate w-full px-1 text-center" title={item.id.replace('minecraft:', '')}>
+                              {item.id.replace('minecraft:', '')}
                             </div>
                             {item.count > 1 && (
                               <span className="absolute -bottom-1 -right-1 bg-surface border border-surface-border text-[9px] font-bold px-1 rounded-sm z-10">
