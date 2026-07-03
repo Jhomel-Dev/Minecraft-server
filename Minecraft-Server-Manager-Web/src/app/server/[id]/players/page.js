@@ -10,6 +10,7 @@ export default function PlayersPage({ params }) {
   
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [commandError, setCommandError] = useState(null);
 
   const fetchPlayers = async () => {
     try {
@@ -43,11 +44,12 @@ export default function PlayersPage({ params }) {
 
   const handleCommand = async (command) => {
     try {
+      setCommandError(null);
       await sendCommand(serverId, command);
       setTimeout(fetchPlayers, 500); // Give the server a moment to update files
     } catch (err) {
-      console.error("Error sending command:", err);
-      alert("Error: Server might be offline.");
+      setCommandError(err.message || "Error al ejecutar el comando. Asegúrate de que el servidor esté ONLINE.");
+      setTimeout(() => setCommandError(null), 5000); // Auto-hide after 5s
     }
   };
 
@@ -93,6 +95,22 @@ export default function PlayersPage({ params }) {
           </div>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {commandError && (
+        <div className="bg-danger/10 border-2 border-danger text-danger p-4 rounded-blocky flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-center gap-3 font-bold">
+            <span className="text-xl">⚠️</span>
+            <span>{commandError}</span>
+          </div>
+          <button 
+            onClick={() => setCommandError(null)} 
+            className="text-danger hover:text-danger/70 transition-colors font-black text-xl px-2"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Players Grid */}
       {players.length === 0 ? (
