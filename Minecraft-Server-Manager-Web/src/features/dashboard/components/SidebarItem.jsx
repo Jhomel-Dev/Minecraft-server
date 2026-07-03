@@ -2,9 +2,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function SidebarItem({ href, icon, label }) {
+export function SidebarItem({ href, icon, label, exact = false }) {
   const pathname = usePathname();
-  const isActive = pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = exact 
+    ? pathname === href 
+    : pathname === href || pathname.startsWith(`${href}/`);
 
   const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-blocky transition-all font-bold";
   const activeClasses = isActive 

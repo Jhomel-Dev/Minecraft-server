@@ -26,7 +26,7 @@ export async function getMinecraftVersions(softwareType) {
         return data.filter(v => v.stable).map(v => v.version);
       }
       case "forge": {
-        const res = await fetch("/api/proxy?url=" + encodeURIComponent("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json"));
+        const res = await fetch("/api/proxy?url=" + encodeURIComponent("https://maven.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json"));
         const data = await res.json();
         const versions = new Set();
         for (const key of Object.keys(data.promos)) {
@@ -87,7 +87,7 @@ export async function getSoftwareBuilds(softwareType, mcVersion) {
         return data.filter(v => v.stable).map(v => v.version);
       }
       case "forge": {
-        const res = await fetch("/api/proxy?url=" + encodeURIComponent("https://files.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"));
+        const res = await fetch("/api/proxy?url=" + encodeURIComponent("https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"));
         const text = await res.text();
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(text, "text/xml");

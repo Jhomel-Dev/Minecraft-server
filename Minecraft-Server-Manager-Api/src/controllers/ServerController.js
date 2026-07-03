@@ -109,6 +109,33 @@ export default class ServerController {
     }
   };
 
+  getPlayers = async (req, res) => {
+    try {
+      const serverService = this.getServerService(req);
+      const userId = req.user.id;
+      const serverId = req.params.id;
+      
+      const server = await serverService.findServerById(serverId);
+      if (server.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+      const io = req.app.get('io');
+      const sockets = await io.fetchSockets();
+      const agentSocket = sockets.find(s => s.isAgent);
+      
+      if (!agentSocket) return res.status(503).json({ error: 'Agent offline' });
+
+      agentSocket.emit('get_player_stats', { serverId }, (response) => {
+        if (response.success) {
+          return res.status(200).json(response.data);
+        } else {
+          return res.status(400).json({ error: response.error });
+        }
+      });
+    } catch (error) {
+      this.handleError(res, error);
+    }
+  };
+
   getServerService(req) {
     const io = req.app.get('io');
     return new ServerService(io);

@@ -236,7 +236,31 @@ export default class NativeServerService extends EventEmitter {
   }
 
   async ensureForgeIsInstalled(fullVersion, config) {
-    const [mcVer, forgeVer] = fullVersion.split('-');
+    let mcVer = fullVersion;
+    let forgeVer = null;
+    
+    if (fullVersion.includes('-')) {
+      const parts = fullVersion.split('-');
+      mcVer = parts[0];
+      forgeVer = parts[1];
+    } else {
+      this.emit('log', `Fetching latest Forge build for ${mcVer}...`);
+      try {
+        const res = await fetch('https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml');
+        const text = await res.text();
+        const matches = [...text.matchAll(new RegExp(`<version>(${mcVer}-[\\d\\.]+)</version>`, 'g'))];
+        if (matches.length > 0) {
+          fullVersion = matches[matches.length - 1][1]; // Último build de la lista XML
+          forgeVer = fullVersion.split('-')[1];
+          this.emit('log', `Resolved latest Forge build: ${fullVersion}`);
+        } else {
+          throw new Error(`No Forge builds found for Minecraft ${mcVer}`);
+        }
+      } catch (err) {
+        throw new Error(`Failed to resolve Forge version: ${err.message}`);
+      }
+    }
+
     const forgeDir = path.join(this.jarsDir, `Forge-${fullVersion}`);
     const librariesDir = path.join(forgeDir, 'libraries');
     const unixArgsFile = path.join(forgeDir, 'libraries', 'net', 'minecraftforge', 'forge', fullVersion, 'unix_args.txt');
@@ -252,7 +276,7 @@ export default class NativeServerService extends EventEmitter {
       if (!fs.existsSync(forgeDir)) fs.mkdirSync(forgeDir, { recursive: true });
       
       const javaExe = await this.ensureJavaIsInstalled(this.getRequiredJavaVersion(mcVer));
-      execSync(`"${javaExe}" -jar "${installerPath}" --installServer`, { cwd: forgeDir });
+      execSync(`"${javaExe}" -jar "${installerPath}" --installServer`, { cwd: forgeDir, stdio: 'ignore' });
       
       fs.unlinkSync(installerPath);
       this.emit('log', `Forge ${fullVersion} installed in Vault.`);
@@ -261,6 +285,16 @@ export default class NativeServerService extends EventEmitter {
     this.emit('log', `Linking Forge libraries to server...`);
     const serverLibsDir = path.join(config.dataDir, 'libraries');
     this.smartLink(librariesDir, serverLibsDir, config.compatibilityMode);
+
+    // Link shim jar if it exists (for modern Forge)
+    const shimJarName = `forge-${fullVersion}-shim.jar`;
+    const shimJarPath = path.join(forgeDir, shimJarName);
+    const serverShimJarPath = path.join(config.dataDir, shimJarName);
+    if (fs.existsSync(shimJarPath)) {
+      if (!fs.existsSync(serverShimJarPath)) {
+        fs.symlinkSync(shimJarPath, serverShimJarPath);
+      }
+    }
 
     if (fs.existsSync(unixArgsFile)) {
       return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/minecraftforge/forge/${fullVersion}/unix_args.txt`] };
@@ -271,14 +305,43 @@ export default class NativeServerService extends EventEmitter {
   }
 
   async ensureNeoForgeIsInstalled(fullVersion, config) {
-    const [mcVer, neoVer] = fullVersion.split('-');
+    let mcVer = fullVersion;
+    let neoVer = null;
+
+    if (fullVersion.includes('-')) {
+      const parts = fullVersion.split('-');
+      mcVer = parts[0];
+      neoVer = parts[1];
+    } else {
+      this.emit('log', `Fetching latest NeoForge build for ${mcVer}...`);
+      try {
+        const res = await fetch('https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml');
+        const text = await res.text();
+        // NeoForge usually Maps 1.20.4 to 20.4.X
+        const parts = mcVer.split('.');
+        const neoPrefix = `${parts[1]}.${parts[2] || '0'}`;
+        const matches = [...text.matchAll(new RegExp(`<version>(${neoPrefix}\\.[\\d\\.]+)</version>`, 'g'))];
+        
+        if (matches.length > 0) {
+          neoVer = matches[matches.length - 1][1]; // Último build
+          fullVersion = `${mcVer}-${neoVer}`;
+          this.emit('log', `Resolved latest NeoForge build: ${fullVersion}`);
+        } else {
+          throw new Error(`No NeoForge builds found for Minecraft ${mcVer}`);
+        }
+      } catch (err) {
+        throw new Error(`Failed to resolve NeoForge version: ${err.message}`);
+      }
+    }
+
     const neoDir = path.join(this.jarsDir, `NeoForge-${fullVersion}`);
     const librariesDir = path.join(neoDir, 'libraries');
     const unixArgsFile = path.join(neoDir, 'libraries', 'net', 'neoforged', 'neoforge', fullVersion, 'unix_args.txt');
 
     if (!fs.existsSync(librariesDir)) {
       this.emit('log', `Downloading NeoForge installer for ${fullVersion}...`);
-      const installerUrl = `https://maven.neoforged.net/releases/net/neoforged/neoforge/${fullVersion}/neoforge-${fullVersion}-installer.jar`;
+      // Nota: NeoForge URLs changed slightly over time, but typically use neoVer for the installer
+      const installerUrl = `https://maven.neoforged.net/releases/net/neoforged/neoforge/${neoVer}/neoforge-${neoVer}-installer.jar`;
       const installerPath = path.join(this.jarsDir, `neoforge-installer-${fullVersion}.jar`);
       await this.downloadFile(installerUrl, installerPath);
       
@@ -286,7 +349,7 @@ export default class NativeServerService extends EventEmitter {
       if (!fs.existsSync(neoDir)) fs.mkdirSync(neoDir, { recursive: true });
       
       const javaExe = await this.ensureJavaIsInstalled(this.getRequiredJavaVersion(mcVer));
-      execSync(`"${javaExe}" -jar "${installerPath}" --installServer`, { cwd: neoDir });
+      execSync(`"${javaExe}" -jar "${installerPath}" --installServer`, { cwd: neoDir, stdio: 'ignore' });
       
       fs.unlinkSync(installerPath);
       this.emit('log', `NeoForge ${fullVersion} installed in Vault.`);
@@ -295,6 +358,18 @@ export default class NativeServerService extends EventEmitter {
     this.emit('log', `Linking NeoForge libraries to server...`);
     const serverLibsDir = path.join(config.dataDir, 'libraries');
     this.smartLink(librariesDir, serverLibsDir, config.compatibilityMode);
+
+    // Link any shim/root jars
+    const neoFiles = fs.readdirSync(neoDir);
+    for (const file of neoFiles) {
+      if (file.endsWith('.jar')) {
+        const sourceJar = path.join(neoDir, file);
+        const targetJar = path.join(config.dataDir, file);
+        if (!fs.existsSync(targetJar)) {
+          fs.symlinkSync(sourceJar, targetJar);
+        }
+      }
+    }
 
     return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/neoforged/neoforge/${fullVersion}/unix_args.txt`] };
   }

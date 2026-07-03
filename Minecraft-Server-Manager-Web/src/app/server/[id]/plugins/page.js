@@ -13,11 +13,11 @@ export default function ModsPage({ params }) {
           <Package className="w-8 h-8" />
         </div>
         <div>
-          <h1 className="text-3xl font-black">Mods</h1>
+          <h1 className="text-3xl font-black">Plugins</h1>
           <p className="text-foreground/70 font-semibold">{serverId}</p>
         </div>
       </div>
-      <ModList serverId={serverId} mode="mods" />
+      <ModList serverId={serverId} mode="plugins" />
     </div>
   );
 }

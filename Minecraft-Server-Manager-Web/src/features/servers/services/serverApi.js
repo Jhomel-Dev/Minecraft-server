@@ -41,13 +41,13 @@ const authFetch = async (endpoint, options = {}) => {
 
     try {
       await refreshPromise;
-      // Reintentar la petición original con el nuevo token
       res = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers: { ...getHeaders(), ...options.headers }
       });
     } catch (err) {
-      throw new Error("Session expired");
+      // Return a pending promise to halt execution and avoid React unhandled errors while window.location redirects
+      return new Promise(() => {}); 
     }
   }
 
@@ -88,6 +88,12 @@ export async function fsOperation(id, payload) {
   return authFetch(`/api/servers/${id}/fs`, {
     method: "POST",
     body: JSON.stringify(payload)
+  });
+}
+
+export async function getPlayers(id) {
+  return authFetch(`/api/servers/${id}/players`, {
+    method: "GET"
   });
 }
 

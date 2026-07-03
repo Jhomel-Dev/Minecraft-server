@@ -35,8 +35,11 @@ export default class AuthController {
 
   googleLogin = async (req, res) => {
     try {
-      const { credential } = req.body;
-      const { accessToken, refreshToken, user } = await this.authService.googleLogin(credential);
+      const { credential, accessToken: bodyAccessToken } = req.body;
+      const isAccessToken = !!bodyAccessToken;
+      const tokenToVerify = bodyAccessToken || credential;
+      
+      const { accessToken, refreshToken, user } = await this.authService.googleLogin(tokenToVerify, isAccessToken);
       
       this.setRefreshCookie(res, refreshToken);
       return res.status(200).json({ token: accessToken, user: { username: user.username, email: user.email } });

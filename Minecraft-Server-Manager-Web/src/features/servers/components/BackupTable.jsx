@@ -3,11 +3,7 @@ import { Button } from "@/shared/ui/Button";
 import { RefreshCw, Trash2, DownloadCloud } from "lucide-react";
 
 export function BackupTable() {
-  const backups = [
-    { id: "b1", date: "2026-06-21 14:30", size: "450 MB", status: "success" },
-    { id: "b2", date: "2026-06-20 03:00", size: "448 MB", status: "success" },
-    { id: "b3", date: "2026-06-19 03:00", size: "445 MB", status: "success" },
-  ];
+  const backups = [];
 
   if (backups.length === 0) {
     return (

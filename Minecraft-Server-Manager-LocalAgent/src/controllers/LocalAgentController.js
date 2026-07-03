@@ -2,6 +2,7 @@ import NativeServerService from '../services/NativeServerService.js';
 import TunnelService from '../services/TunnelService.js';
 import ConnectionService from '../services/ConnectionService.js';
 import FileService from '../services/FileService.js';
+import PlayerStatsService from '../services/PlayerStatsService.js';
 import os from 'os';
 import path from 'path';
 
@@ -12,6 +13,7 @@ export default class LocalAgentController {
     this.tunnelService = new TunnelService();
     this.connectionService = new ConnectionService(config.apiUrl, config.agentToken);
     this.fileService = new FileService();
+    this.playerStatsService = new PlayerStatsService();
     
     this.initialize();
   }
@@ -81,6 +83,15 @@ export default class LocalAgentController {
       try {
         const result = await this.fileService.execute(payload);
         callback({ success: true, data: result });
+      } catch (error) {
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    this.connectionService.on('get_player_stats', async (payload, callback) => {
+      try {
+        const players = await this.playerStatsService.getPlayers(payload.serverId);
+        callback({ success: true, data: players });
       } catch (error) {
         callback({ success: false, error: error.message });
       }

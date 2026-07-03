@@ -6,7 +6,7 @@ class VersionService {
       lastUpdated: null
     };
     this.isUpdating = false;
-    
+
     setInterval(() => this.updateCache(), 12 * 60 * 60 * 1000);
     this.updateCache();
   }
@@ -16,25 +16,37 @@ class VersionService {
     this.isUpdating = true;
     try {
       const [paperRes, fabricGameRes, fabricLoaderRes] = await Promise.all([
-        fetch('https://api.papermc.io/v2/projects/paper'),
+        fetch('https://fill.papermc.io/v3/projects/paper', {
+          headers: { 'User-Agent': 'MinecraftServerManager/1.0 (contact@example.com)' }
+        }),
         fetch('https://meta.fabricmc.net/v2/versions/game'),
         fetch('https://meta.fabricmc.net/v2/versions/loader')
       ]);
 
-      const paperData = await paperRes.json();
-      const fabricGameData = await fabricGameRes.json();
-      const fabricLoaderData = await fabricLoaderRes.json();
+      if (!paperRes.ok) console.warn(`Paper API Error: ${paperRes.status}`);
+      if (!fabricGameRes.ok) console.warn(`Fabric Game API Error: ${fabricGameRes.status}`);
+      if (!fabricLoaderRes.ok) console.warn(`Fabric Loader API Error: ${fabricLoaderRes.status}`);
+
+      const paperData = paperRes.ok ? await paperRes.json().catch(() => ({})) : {};
+      const fabricGameData = fabricGameRes.ok ? await fabricGameRes.json().catch(() => []) : [];
+      const fabricLoaderData = fabricLoaderRes.ok ? await fabricLoaderRes.json().catch(() => []) : [];
+
+      let paperVersions = [];
+      if (paperData && paperData.versions && typeof paperData.versions === 'object') {
+        // La API v3 devuelve un objeto con grupos de versiones
+        paperVersions = Object.values(paperData.versions).flat();
+      }
 
       this.cache = {
-        paper: paperData.versions.reverse(),
+        paper: paperVersions,
         fabric: {
-          game: fabricGameData.filter(v => v.stable).map(v => v.version),
-          loaders: fabricLoaderData.map(v => v.version)
+          game: Array.isArray(fabricGameData) ? fabricGameData.filter(v => v.stable).map(v => v.version) : [],
+          loaders: Array.isArray(fabricLoaderData) ? fabricLoaderData.map(v => v.version) : []
         },
         lastUpdated: new Date()
       };
     } catch (error) {
-      console.error(error);
+      console.error("Error updating version cache:", error);
     } finally {
       this.isUpdating = false;
     }
