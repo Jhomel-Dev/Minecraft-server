@@ -22,9 +22,9 @@ export default function ServerOverviewPage({ params }) {
     }).catch(console.error);
   }, [serverId]);
 
-  const handleStart = async () => { await startServer(serverId).catch(console.error); };
-  const handleStop = async () => { await stopServer(serverId).catch(console.error); };
-  const handleRestart = async () => { await restartServer(serverId).catch(console.error); };
+  const handleStart = async () => { try { await startServer(serverId); } catch (e) { console.log(e.message); } };
+  const handleStop = async () => { try { await stopServer(serverId); } catch (e) { console.log(e.message); } };
+  const handleRestart = async () => { try { await restartServer(serverId); } catch (e) { console.log(e.message); } };
 
   if (loading) return <div className="p-8 text-center animate-pulse">Cargando servidor...</div>;
   if (!server) return <div className="p-8 text-center text-danger">Servidor no encontrado.</div>;
