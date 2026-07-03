@@ -33,7 +33,6 @@ class VersionService {
 
       let paperVersions = [];
       if (paperData && paperData.versions && typeof paperData.versions === 'object') {
-        // La API v3 devuelve un objeto con grupos de versiones
         paperVersions = Object.values(paperData.versions).flat();
       }
 

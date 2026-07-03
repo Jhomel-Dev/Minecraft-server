@@ -11,7 +11,6 @@ export async function searchModrinth(query, softwareType, mcVersion, mode = "mod
       } else if (type === "forge" || type === "neoforge") {
         loaderFacets = [`categories:${type}`];
       } else {
-        // Fallback for hybrid or unknown when in mods tab
         loaderFacets = ["categories:forge", "categories:fabric", "categories:neoforge"];
       }
     }
@@ -49,7 +48,6 @@ export async function getProjectVersions(projectId, softwareType, mcVersion, mod
       if (type === "fabric") loaders = ["fabric"];
       else if (type === "forge") loaders = ["forge"];
       else if (type === "neoforge") loaders = ["neoforge"];
-      else loaders = ["forge", "fabric", "neoforge"]; // Fallback
     }
 
     const baseMcVersion = mcVersion.split('-')[0];
