@@ -22,11 +22,13 @@ export async function registerWithCredentials(username, email, password) {
   return res.json();
 }
 
-export async function loginWithGoogle(credential) {
+export async function loginWithGoogle(credentialOrToken, isAccessToken = false) {
+  const bodyData = isAccessToken ? { accessToken: credentialOrToken } : { credential: credentialOrToken };
+  
   const res = await fetch(`${API_URL}/api/auth/google`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ credential }),
+    body: JSON.stringify(bodyData),
     credentials: 'include',
   });
   if (!res.ok) throw new Error('Google authentication failed');

@@ -30,17 +30,33 @@ export default class AuthService {
     return this.generateTokens(user);
   }
 
-  async googleLogin(idToken) {
-    if (!idToken) throw new Error('ID Token is required');
+  async googleLogin(credential, isAccessToken = false) {
+    if (!credential) throw new Error('Credential is required');
     
-    const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-    const ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
-    
-    const payload = ticket.getPayload();
-    const { email, name, sub: googleId } = payload;
+    let email, name, googleId;
+
+    if (isAccessToken) {
+      // Usar el access_token para obtener la información del usuario
+      const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${credential}` }
+      });
+      if (!res.ok) throw new Error("Invalid Google Access Token");
+      const payload = await res.json();
+      email = payload.email;
+      name = payload.name;
+      googleId = payload.sub;
+    } else {
+      // Usar el ID Token (JWT) clásico
+      const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+      const payload = ticket.getPayload();
+      email = payload.email;
+      name = payload.name;
+      googleId = payload.sub;
+    }
     
     let user = await prisma.user.findUnique({ where: { email } });
     
