@@ -66,6 +66,20 @@ export default class ServerController {
     }
   };
 
+  executeCommand = async (req, res) => {
+    try {
+      const serverService = this.getServerService(req);
+      const serverId = req.params.id;
+      const { command } = req.body;
+      
+      const result = await serverService.executeCommand(serverId, command);
+      
+      return res.status(200).json(result);
+    } catch (error) {
+      this.handleError(res, error);
+    }
+  };
+
   deleteServer = async (req, res) => {
     try {
       const serverService = this.getServerService(req);

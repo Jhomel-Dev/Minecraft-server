@@ -2,7 +2,7 @@
 import { use, useState, useEffect } from "react";
 import { Users, Ban, Shield, ShieldOff, Heart, Swords, Pickaxe, MapPin, Footprints, Clock, UserX, Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/shared/ui/Button";
-import { getPlayers, fsOperation } from "@/features/servers/services/serverApi";
+import { getPlayers, fsOperation, sendCommand } from "@/features/servers/services/serverApi";
 
 export default function PlayersPage({ params }) {
   const unwrappedParams = use(params);
@@ -40,6 +40,20 @@ export default function PlayersPage({ params }) {
       setLoading(false);
     }
   };
+
+  const handleCommand = async (command) => {
+    try {
+      await sendCommand(serverId, command);
+      setTimeout(fetchPlayers, 500); // Give the server a moment to update files
+    } catch (err) {
+      console.error("Error sending command:", err);
+      alert("Error: Server might be offline.");
+    }
+  };
+
+  const handleKick = (playerName) => handleCommand(`kick ${playerName}`);
+  const handleBanToggle = (player) => handleCommand(player.isBanned ? `pardon ${player.name}` : `ban ${player.name}`);
+  const handleOpToggle = (player) => handleCommand(player.isOp ? `deop ${player.name}` : `op ${player.name}`);
 
   useEffect(() => {
     fetchPlayers();
@@ -110,10 +124,13 @@ export default function PlayersPage({ params }) {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="text-warning border-warning hover:bg-warning hover:text-white" size="sm">
+                  <Button variant="outline" className="text-secondary border-secondary hover:bg-secondary hover:text-white" size="sm" onClick={() => handleKick(player.name)} title="Expulsar (Kick)">
+                    Kick
+                  </Button>
+                  <Button variant="outline" className="text-warning border-warning hover:bg-warning hover:text-white" size="sm" onClick={() => handleOpToggle(player)} title={player.isOp ? "Quitar OP" : "Dar OP"}>
                     {player.isOp ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
                   </Button>
-                  <Button variant="outline" className="text-danger border-danger hover:bg-danger hover:text-white" size="sm">
+                  <Button variant="outline" className="text-danger border-danger hover:bg-danger hover:text-white" size="sm" onClick={() => handleBanToggle(player)} title={player.isBanned ? "Desbanear" : "Banear"}>
                     <Ban className="w-4 h-4" />
                   </Button>
                 </div>

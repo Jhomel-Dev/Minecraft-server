@@ -200,3 +200,10 @@
 * **Web UI:** Fixed a minor `eslint` warning (`react/no-unescaped-entities`) to keep the code clean.
 * **Web UI:** Fixed `PerformanceCharts` max memory constraint to dynamically read from the server's actual memory setting (e.g. converting "2G" to 2048 MB).
 * **Web UI:** Made `PerformanceCharts` always visible regardless of server status, and added a graceful drop to 0% CPU and 0 MB RAM when the server goes offline.
+
+## Feature: Player Actions (Priority 4)
+- **Status:** Completed
+- **Details:**
+  - **API:** Added `POST /api/servers/:id/command` to `serverRoutes.js` and wired it through `ServerController` and `ServerService` to emit a `SEND_COMMAND` websocket event to the target server's local agent.
+  - **Local Agent:** Confirmed existing `SEND_COMMAND` socket listener natively passes commands to the Java server process (`NativeServerService.sendCommand`).
+  - **Web UI:** Added a "Kick" button to the Players table in `players/page.js`. Hooked up Kick, OP (toggle), and Ban (toggle) buttons to dispatch commands seamlessly.

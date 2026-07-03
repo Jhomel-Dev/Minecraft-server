@@ -116,3 +116,10 @@ export async function deleteServer(id, keepFiles = false) {
     body: JSON.stringify({ keepFiles })
   });
 }
+
+export async function sendCommand(id, command) {
+  return authFetch(`/api/servers/${id}/command`, {
+    method: "POST",
+    body: JSON.stringify({ command })
+  });
+}
