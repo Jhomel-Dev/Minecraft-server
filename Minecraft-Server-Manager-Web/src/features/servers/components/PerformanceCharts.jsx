@@ -35,8 +35,8 @@ export function PerformanceCharts({ serverId, maxMemoryMB = 4096, status }) {
       
       const newPoint = {
         time: timeString,
-        cpu: Math.round(metrics.cpu),
-        ram: Math.round(metrics.memory / 1024 / 1024)
+        cpu: Math.min(100, Number(metrics.cpu.toFixed(1))),
+        ram: Math.min(maxMemoryMB, Math.round(metrics.memory / 1024 / 1024))
       };
 
       const newData = [...current, newPoint];

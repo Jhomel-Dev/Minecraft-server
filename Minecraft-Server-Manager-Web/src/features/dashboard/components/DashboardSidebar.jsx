@@ -1,6 +1,6 @@
 "use client";
 import { SidebarItem } from "./SidebarItem";
-import { Server, FolderOpen, Package, Save, Settings, Users, ArrowLeft } from "lucide-react";
+import { Server, FolderOpen, Package, Save, Settings, Users, ArrowLeft, Globe } from "lucide-react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -76,6 +76,11 @@ export function DashboardSidebar() {
           href={`/server/${serverId}/backups`} 
           icon={<Save className="w-5 h-5" />} 
           label="Respaldos" 
+        />
+        <SidebarItem 
+          href={`/server/${serverId}/network`} 
+          icon={<Globe className="w-5 h-5" />} 
+          label="Red y Dominios" 
         />
       </nav>
     </aside>

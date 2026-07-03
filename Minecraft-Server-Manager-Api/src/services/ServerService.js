@@ -1,4 +1,7 @@
 import prisma from '../config/prisma.js';
+import DnsService from './DnsService.js';
+
+const dnsService = new DnsService();
 
 export default class ServerService {
   constructor(io) {
@@ -37,9 +40,14 @@ export default class ServerService {
     return prisma.server.findMany({ where: { userId } });
   }
 
-  async updateSettings(serverId, userId, { maxPlayers, whitelist, onlineMode, version, type, memory, compatibilityMode }) {
+  async updateSettings(serverId, userId, { maxPlayers, whitelist, onlineMode, version, type, memory, compatibilityMode, customDomain }) {
     const server = await this.findServerById(serverId);
     if (server.userId !== userId) throw new Error('Unauthorized');
+    
+    if (customDomain && customDomain !== server.customDomain) {
+      // Call DnsService to simulate or actually set the custom domain
+      await dnsService.setCustomDomain(customDomain, server.tunnelIp);
+    }
     
     return prisma.server.update({
       where: { id: serverId },
@@ -51,6 +59,7 @@ export default class ServerService {
         type: type !== undefined ? type : server.type,
         memory: memory !== undefined ? memory : server.memory,
         compatibilityMode: compatibilityMode !== undefined ? Boolean(compatibilityMode) : server.compatibilityMode,
+        customDomain: customDomain !== undefined ? customDomain : server.customDomain,
       }
     });
   }
@@ -59,7 +68,10 @@ export default class ServerService {
     const server = await this.findServerById(serverId);
     this.verifyServerIsOffline(server);
 
-    await this.updateServerStatus(serverId, 'STARTING');
+    await prisma.server.update({
+      where: { id: serverId },
+      data: { status: 'STARTING', tunnelIp: null }
+    });
     
     this.emitStartCommandToAgent(server);
     
@@ -70,7 +82,10 @@ export default class ServerService {
     const server = await this.findServerById(serverId);
     
     if (server.status === 'STOPPING') {
-      await this.updateServerStatus(serverId, 'OFFLINE');
+      await prisma.server.update({
+        where: { id: serverId },
+        data: { status: 'OFFLINE', tunnelIp: null }
+      });
       return await this.findServerById(serverId);
     }
     

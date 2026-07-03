@@ -83,9 +83,14 @@ const handleServerLog = (socket, payload) => {
 const handleStatusUpdate = async (socket, payload) => {
   if (payload.serverId && payload.status) {
     try {
+      const updateData = { status: payload.status };
+      if (payload.status === 'OFFLINE' || payload.status === 'STOPPING') {
+        updateData.tunnelIp = null;
+      }
+
       await prisma.server.update({
         where: { id: payload.serverId },
-        data: { status: payload.status }
+        data: updateData
       });
       socket.broadcast.to(payload.serverId).emit('STATUS_UPDATE', payload.status);
     } catch (e) {
@@ -94,8 +99,26 @@ const handleStatusUpdate = async (socket, payload) => {
   }
 };
 
-const handleTunnelInfo = (socket, info) => {
-  // Pending: Save Tunnel IP to Database
+const handleTunnelInfo = async (socket, info) => {
+  if (info.serverId) {
+    try {
+      const updateData = {};
+      if (info.address) updateData.tunnelIp = info.address;
+      if (info.claimLink) updateData.claimLink = info.claimLink;
+      
+      if (Object.keys(updateData).length > 0) {
+        await prisma.server.update({
+          where: { id: info.serverId },
+          data: updateData
+        });
+      }
+      
+      // Notify clients watching the dashboard
+      socket.broadcast.to(info.serverId).emit('TUNNEL_INFO', info);
+    } catch (e) {
+      console.error('Error saving tunnel info', e);
+    }
+  }
 };
 
 const handleDisconnect = async (socket, reason) => {

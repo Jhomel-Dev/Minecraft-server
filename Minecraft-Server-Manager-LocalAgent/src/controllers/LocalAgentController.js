@@ -90,7 +90,17 @@ export default class LocalAgentController {
 
     this.connectionService.on('get_player_stats', async (payload, callback) => {
       try {
-        const players = await this.playerStatsService.getPlayers(payload.serverId);
+        // Force a save to ensure NBT files are perfectly up to date with live players
+        let onlineNames = [];
+        if (this.currentServerId && this.nativeServerService.process) {
+          onlineNames = Array.from(this.nativeServerService.onlinePlayers || []);
+          try {
+            await this.nativeServerService.sendCommand('save-all');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          } catch(e) {}
+        }
+        
+        const players = await this.playerStatsService.getPlayers(payload.serverId, onlineNames);
         callback({ success: true, data: players });
       } catch (error) {
         callback({ success: false, error: error.message });
@@ -114,11 +124,15 @@ export default class LocalAgentController {
 
   setupTunnelListeners() {
     this.tunnelService.on('address_assigned', (address) => {
-      this.connectionService.sendTunnelInfo({ address });
+      if (this.currentServerId) {
+        this.connectionService.sendTunnelInfo({ serverId: this.currentServerId, address });
+      }
     });
 
     this.tunnelService.on('claim_link', (link) => {
-      this.connectionService.sendTunnelInfo({ claimLink: link });
+      if (this.currentServerId) {
+        this.connectionService.sendTunnelInfo({ serverId: this.currentServerId, claimLink: link });
+      }
     });
 
     this.tunnelService.on('log', (logLine) => {
@@ -142,7 +156,7 @@ export default class LocalAgentController {
 
       this.connectionService.sendLog({ serverId: this.currentServerId, logLine: '[System] Booting Native server...' });
       await this.nativeServerService.startMinecraftServer(serverConfig);
-      this.tunnelService.startTunnel(serverConfig.tunnelSecret);
+      this.tunnelService.startTunnel();
       this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'ONLINE' });
     } catch (error) {
       console.error("Error in handleStartCommand:", error);

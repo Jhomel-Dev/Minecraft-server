@@ -1,76 +1,78 @@
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import EventEmitter from 'events';
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
 
 export default class TunnelService extends EventEmitter {
   constructor() {
     super();
-    this.playitProcess = null;
+    this.process = null;
   }
 
-  startTunnel(secretKey = null) {
+  async startTunnel() {
     this.verifyNotRunning();
 
-    const args = this.buildArgs(secretKey);
+    const managerDir = path.join(os.homedir(), '.minecraft-manager');
+    const borePath = path.join(managerDir, 'bore');
+    
+    // Auto-install bore if not exists
+    if (!fs.existsSync(borePath)) {
+      this.emit('log', `[Tunnel] Instalando motor de red sin fricción (bore)...`);
+      try {
+        execSync(`curl -sSL https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz | tar -xz -C "${managerDir}" && chmod +x "${borePath}"`);
+      } catch (err) {
+        this.emit('log', `[Tunnel] Error instalando bore: ${err.message}`);
+        return;
+      }
+    }
+
     try {
-      this.playitProcess = spawn('playit', args);
+      this.emit('log', `[Tunnel] Iniciando túnel TCP dinámico...`);
+      this.process = spawn(borePath, ['local', '25565', '--to', 'bore.pub']);
       
-      this.playitProcess.on('error', (err) => {
-        this.emit('log', `[Tunnel] Error: Playit no está instalado o falló al iniciar. El servidor seguirá localmente. (Detalle: ${err.message})`);
-        this.playitProcess = null;
+      this.process.on('error', (err) => {
+        this.emit('log', `[Tunnel] Error: falló al iniciar. (Detalle: ${err.message})`);
       });
 
-      this.attachProcessListeners();
-    } catch (err) {
-      this.emit('log', `[Tunnel] Error iniciando el túnel: ${err.message}`);
+      this.process.stdout.on('data', (data) => {
+        const output = data.toString();
+        // bore outputs: INFO bore_cli::client: listening at bore.pub:PORT
+        const match = output.match(/listening at (bore\.pub:\d+)/);
+        if (match) {
+          const address = match[1];
+          this.emit('log', `[Tunnel] ¡Túnel establecido exitosamente en ${address}!`);
+          this.emit('address_assigned', address);
+        }
+      });
+
+      this.process.stderr.on('data', (data) => {
+        const output = data.toString();
+        const match = output.match(/listening at (bore\.pub:\d+)/);
+        if (match) {
+          const address = match[1];
+          this.emit('log', `[Tunnel] ¡Túnel establecido exitosamente en ${address}!`);
+          this.emit('address_assigned', address);
+        }
+      });
+
+      this.process.on('close', (code) => {
+        this.emit('log', `[Tunnel] Proceso detenido con código ${code}`);
+        this.process = null;
+      });
+
+    } catch (error) {
+      this.emit('log', `[Tunnel] Excepción al lanzar el túnel: ${error.message}`);
     }
   }
 
   stopTunnel() {
-    if (!this.playitProcess) return;
-    this.playitProcess.kill('SIGINT');
-    this.playitProcess = null;
+    if (!this.process) return;
+    this.process.kill('SIGINT');
+    this.process = null;
   }
 
   verifyNotRunning() {
-    if (this.playitProcess) throw new Error('Tunnel is already running');
-  }
-
-  buildArgs(secretKey) {
-    const args = [];
-    if (secretKey) args.push('--secret', secretKey);
-    return args;
-  }
-
-  attachProcessListeners() {
-    this.playitProcess.stdout.on('data', (data) => this.processOutput(data.toString()));
-    this.playitProcess.stderr.on('data', (data) => this.processError(data.toString()));
-    this.playitProcess.on('close', (code) => this.handleClose(code));
-  }
-
-  processOutput(output) {
-    this.emit('log', output);
-    this.checkForClaimLink(output);
-    this.checkForAssignedAddress(output);
-  }
-
-  processError(error) {
-    this.emit('error', error);
-  }
-
-  handleClose(code) {
-    this.emit('close', code);
-    this.playitProcess = null;
-  }
-
-  checkForClaimLink(output) {
-    const claimLinkRegex = /(https:\/\/playit\.gg\/claim\/[a-zA-Z0-9]+)/;
-    const match = output.match(claimLinkRegex);
-    if (match) this.emit('claim_link', match[1]);
-  }
-
-  checkForAssignedAddress(output) {
-    const addressRegex = /Tunnel address:\s+([a-zA-Z0-9.-]+:[0-9]+)/;
-    const match = output.match(addressRegex);
-    if (match) this.emit('address_assigned', match[1]);
+    if (this.process) throw new Error('Tunnel is already running');
   }
 }

@@ -117,6 +117,11 @@ export default function PlayersPage({ params }) {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-xl">{player.name}</h3>
+                      {player.isOnline ? (
+                        <div className="w-3 h-3 rounded-full bg-green-500 border border-green-700 animate-pulse-slow" title="Conectado Ahora"></div>
+                      ) : (
+                        <div className="w-3 h-3 rounded-full bg-foreground/20 border border-surface-border" title="Desconectado"></div>
+                      )}
                       {player.isOp && <Shield className="w-4 h-4 text-warning fill-warning/20" title="Operador" />}
                       {player.isBanned && <Ban className="w-4 h-4 text-danger" title="Baneado" />}
                     </div>
@@ -175,8 +180,8 @@ export default function PlayersPage({ params }) {
                       <div key={i} className="w-10 h-10 bg-background border-2 border-surface-border rounded flex items-center justify-center relative group">
                         {item ? (
                           <>
-                            <div className="text-[10px] text-foreground truncate w-8 text-center" title={item.id.replace('minecraft:', '')}>
-                              {item.id.split(':')[1].substring(0, 4)}...
+                            <div className="text-[9px] font-bold text-foreground truncate w-full px-1 text-center" title={item.id.replace('minecraft:', '')}>
+                              {item.id.replace('minecraft:', '')}
                             </div>
                             {item.count > 1 && (
                               <span className="absolute -bottom-1 -right-1 bg-surface border border-surface-border text-[9px] font-bold px-1 rounded-sm z-10">
