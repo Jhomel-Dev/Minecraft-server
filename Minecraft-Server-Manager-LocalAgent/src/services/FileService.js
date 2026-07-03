@@ -21,6 +21,8 @@ export default class FileService {
         return this.readFile(targetPath);
       case 'write':
         return this.writeFile(targetPath, content, payload.isBase64);
+      case 'append':
+        return this.appendFile(targetPath, content, payload.isBase64);
       case 'delete':
         return this.deleteFile(targetPath);
       case 'download':
@@ -51,7 +53,13 @@ export default class FileService {
   }
 
   async listFiles(targetPath) {
-    const items = await fs.readdir(targetPath, { withFileTypes: true });
+    let items = [];
+    try {
+      items = await fs.readdir(targetPath, { withFileTypes: true });
+    } catch (err) {
+      if (err.code === 'ENOENT') return [];
+      throw err;
+    }
     
     const list = await Promise.all(items.map(async (item) => {
       const isDir = item.isDirectory();
@@ -82,6 +90,7 @@ export default class FileService {
   }
 
   async writeFile(targetPath, content, isBase64 = false) {
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
     if (isBase64) {
       await fs.writeFile(targetPath, Buffer.from(content, 'base64'));
     } else {
@@ -89,8 +98,19 @@ export default class FileService {
     }
     return { success: true };
   }
+
+  async appendFile(targetPath, content, isBase64 = false) {
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    if (isBase64) {
+      await fs.appendFile(targetPath, Buffer.from(content, 'base64'));
+    } else {
+      await fs.appendFile(targetPath, content, 'utf-8');
+    }
+    return { success: true };
+  }
   
   async downloadFile(targetPath, url) {
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Download failed: ${res.status}`);
     const arrayBuffer = await res.arrayBuffer();
