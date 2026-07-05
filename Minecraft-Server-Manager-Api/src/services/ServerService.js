@@ -15,7 +15,7 @@ export default class ServerService {
     const userServers = await prisma.server.findMany({
       where: { userId }
     });
-    
+
     let port = 25565;
     if (userServers.length > 0) {
       const maxPort = Math.max(...userServers.map(s => s.port));
@@ -43,12 +43,11 @@ export default class ServerService {
   async updateSettings(serverId, userId, { maxPlayers, whitelist, onlineMode, version, type, memory, compatibilityMode, customDomain, tunnelSecret }) {
     const server = await this.findServerById(serverId);
     if (server.userId !== userId) throw new Error('Unauthorized');
-    
+
     if (customDomain && customDomain !== server.customDomain) {
-      // Call DnsService to simulate or actually set the custom domain
       await dnsService.setCustomDomain(customDomain, server.tunnelIp);
     }
-    
+
     return prisma.server.update({
       where: { id: serverId },
       data: {
@@ -73,15 +72,15 @@ export default class ServerService {
       where: { id: serverId },
       data: { status: 'STARTING', tunnelIp: null }
     });
-    
+
     this.emitStartCommandToAgent(server);
-    
+
     return server;
   }
 
   async stopServer(serverId) {
     const server = await this.findServerById(serverId);
-    
+
     if (server.status === 'STOPPING') {
       await prisma.server.update({
         where: { id: serverId },
@@ -89,18 +88,18 @@ export default class ServerService {
       });
       return await this.findServerById(serverId);
     }
-    
+
     await this.updateServerStatus(serverId, 'STOPPING');
-    
+
     this.emitStopCommandToAgent(server);
-    
+
     return server;
   }
 
   async deleteServer(serverId, userId, deleteFiles = true) {
     const server = await this.findServerById(serverId);
     if (server.userId !== userId) throw new Error('Unauthorized');
-    
+
     // Si está encendido, lo detenemos primero (o devolvemos error)
     if (server.status !== 'OFFLINE') {
       throw new Error('Debes detener el servidor antes de eliminarlo');
@@ -131,7 +130,7 @@ export default class ServerService {
 
   async findServerById(serverId) {
     if (!serverId) throw new Error('Server ID is required');
-    
+
     const server = await prisma.server.findUnique({ where: { id: serverId } });
     if (!server) {
       throw new Error('Server not found');
@@ -154,7 +153,7 @@ export default class ServerService {
 
   emitStartCommandToAgent(server) {
     if (!this.io) throw new Error('WebSocket instance not configured');
-    
+
     const config = {
       id: server.id,
       name: server.name,
@@ -181,15 +180,15 @@ export default class ServerService {
   async executeCommand(serverId, command) {
     if (!serverId) throw new Error('Server ID is required');
     if (!command) throw new Error('Command is required');
-    
+
     const server = await this.findServerById(serverId);
     if (server.status !== 'ONLINE') {
       throw new Error('Server must be ONLINE to execute commands');
     }
-    
+
     if (!this.io) throw new Error('WebSocket instance not configured');
     this.io.emit('SEND_COMMAND', command);
-    
+
     return { success: true, message: 'Command sent' };
   }
 }

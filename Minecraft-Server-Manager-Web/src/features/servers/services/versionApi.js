@@ -25,7 +25,7 @@ export async function getMinecraftVersions(softwareType) {
             } else if (typeof data.versions === 'object') {
               versionsArr = Object.values(data.versions).flat();
             }
-            return versionsArr.reverse();
+            return versionsArr.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
           }
           return [];
         } catch (e) {
