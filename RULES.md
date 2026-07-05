@@ -1,7 +1,0 @@
-- Escribir código SIN comentarios.
-- Aplicar principios de Clean Code en todo momento.
-- Declaraciones de funciones claras, con nombres descriptivos y enfoque en la legibilidad natural.
-- EVITAR condiciones anidadas a toda costa (usar Guard Clauses / Early Returns).
-- Dividir la implementación en Features.
-- Crear commits pequeños y atómicos dentro de cada Feature.
-- **NO subir cambios ni hacer commits en Git a menos que el usuario lo solicite expresamente.**
