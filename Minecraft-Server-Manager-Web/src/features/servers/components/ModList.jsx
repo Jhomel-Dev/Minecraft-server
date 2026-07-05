@@ -5,6 +5,7 @@ import { Download, Trash2, Loader2, PackageOpen, Search, Check, AlertTriangle, U
 import { fsOperation, getMyServers } from "@/features/servers/services/serverApi";
 import { searchModrinth, getProjectVersions, getProject } from "@/features/servers/services/modrinthApi";
 import { Input } from "@/shared/ui/Input";
+import { useToast } from "@/shared/ui/ToastProvider";
 const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
 
 export function ModList({ serverId, mode = "mods" }) {
@@ -13,6 +14,7 @@ export function ModList({ serverId, mode = "mods" }) {
   const defaultFolder = mode === "plugins" ? "/plugins" : "/mods";
   const [targetFolder, setTargetFolder] = useState(defaultFolder);
   const [activeTab, setActiveTab] = useState("installed");
+  const { toast } = useToast();
   
   const [serverInfo, setServerInfo] = useState(null);
   
@@ -80,7 +82,7 @@ export function ModList({ serverId, mode = "mods" }) {
     if (!file) return;
 
     if (!file.name.endsWith('.jar') && !file.name.endsWith('.zip')) {
-      alert("Por favor, sube un archivo válido con extensión .jar o .zip");
+      toast("Por favor, sube un archivo válido con extensión .jar o .zip", "warning");
       return;
     }
 

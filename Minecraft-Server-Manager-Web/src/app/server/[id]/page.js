@@ -5,12 +5,17 @@ import { Button } from "@/shared/ui/Button";
 import { startServer, stopServer, restartServer, getMyServers } from "@/features/servers/services/serverApi";
 import { StatusBanner } from "@/features/servers/components/StatusBanner";
 import { PerformanceCharts } from "@/features/servers/components/PerformanceCharts";
+import { ReinstallModal } from "@/features/servers/components/ReinstallModal";
+import { updateSettings } from "@/features/servers/services/serverApi";
+import { useToast } from "@/shared/ui/ToastProvider";
 
 export default function ServerOverviewPage({ params }) {
   const unwrappedParams = use(params);
   const serverId = unwrappedParams.id;
   const [server, setServer] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showReinstallModal, setShowReinstallModal] = useState(false);
+  const { toast } = useToast();
 
   const fetchServer = async () => {
     try {
@@ -31,9 +36,20 @@ export default function ServerOverviewPage({ params }) {
     return () => clearInterval(interval);
   }, [serverId]);
 
-  const handleStart = async () => { try { await startServer(serverId); } catch (e) { console.log(e.message); } };
-  const handleStop = async () => { try { await stopServer(serverId); } catch (e) { console.log(e.message); } };
-  const handleRestart = async () => { try { await restartServer(serverId); } catch (e) { console.log(e.message); } };
+  const handleStart = async () => { try { await startServer(serverId); toast("Iniciando servidor...", "info"); } catch (e) { toast(e.message, "error"); } };
+  const handleStop = async () => { try { await stopServer(serverId); toast("Deteniendo servidor...", "warning"); } catch (e) { toast(e.message, "error"); } };
+  const handleRestart = async () => { try { await restartServer(serverId); toast("Reiniciando servidor...", "info"); } catch (e) { toast(e.message, "error"); } };
+
+  const handleReinstallConfirm = async (type, version) => {
+    try {
+      await updateSettings(serverId, { type, version });
+      setShowReinstallModal(false);
+      fetchServer();
+      toast("Configuración actualizada. Si el servidor estaba encendido, los cambios aplicarán al próximo inicio.", "success");
+    } catch (e) {
+      toast("Error al actualizar: " + e.message, "error");
+    }
+  };
 
   if (loading) return <div className="p-8 text-center animate-pulse">Cargando servidor...</div>;
   if (!server) return <div className="p-8 text-center text-danger">Servidor no encontrado.</div>;
@@ -127,7 +143,7 @@ export default function ServerOverviewPage({ params }) {
                 <p className="text-sm text-foreground/60">Motor de Java</p>
               </div>
             </div>
-            <Button variant="secondary" className="border-2">
+            <Button variant="secondary" className="border-2" onClick={() => setShowReinstallModal(true)}>
               <RefreshCw className="w-4 h-4 mr-2" /> Reinstalar
             </Button>
           </div>
@@ -147,13 +163,21 @@ export default function ServerOverviewPage({ params }) {
                 <p className="text-sm text-foreground/60">Minecraft</p>
               </div>
             </div>
-            <Button variant="secondary" className="border-2">
+            <Button variant="secondary" className="border-2" onClick={() => setShowReinstallModal(true)}>
               <RefreshCw className="w-4 h-4 mr-2" /> Cambiar
             </Button>
           </div>
         </div>
 
       </div>
+
+      {showReinstallModal && (
+        <ReinstallModal 
+          server={server}
+          onClose={() => setShowReinstallModal(false)}
+          onConfirm={handleReinstallConfirm}
+        />
+      )}
 
     </div>
   );

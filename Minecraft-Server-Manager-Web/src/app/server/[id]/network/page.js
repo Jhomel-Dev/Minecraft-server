@@ -2,11 +2,13 @@
 import { use, useState, useEffect } from "react";
 import { Globe, Link as LinkIcon, ExternalLink, ShieldCheck, Activity } from "lucide-react";
 import { Button } from "@/shared/ui/Button";
+import { useToast } from "@/shared/ui/ToastProvider";
 import { getMyServers, updateSettings } from "@/features/servers/services/serverApi";
 
 export default function NetworkPage({ params }) {
   const unwrappedParams = use(params);
   const serverId = unwrappedParams.id;
+  const { toast } = useToast();
   
   const [server, setServer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,10 +52,11 @@ export default function NetworkPage({ params }) {
       await fetchServer();
       
       setSuccess(true);
+      toast("Configuración de red actualizada correctamente.", "success");
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
       console.error(err);
-      alert("Error al guardar la configuración de red");
+      toast("Error al guardar la configuración de red: " + (err.message || ""), "error");
     } finally {
       setSaving(false);
     }

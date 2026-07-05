@@ -41,6 +41,11 @@ export async function refreshAccessToken() {
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
   });
-  if (!res.ok) throw new Error('Refresh failed');
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('SessionExpired');
+    }
+    throw new Error('Refresh failed');
+  }
   return res.json();
 }

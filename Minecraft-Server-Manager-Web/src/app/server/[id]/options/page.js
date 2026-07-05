@@ -5,11 +5,13 @@ import { Settings, Save, ShieldCheck, Users, HardDrive, Wifi, ShieldAlert, Trash
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/shared/ui/ToastProvider";
 
 export default function ServerOptionsPage({ params }) {
   const unwrappedParams = use(params);
   const serverId = unwrappedParams.id;
   const router = useRouter();
+  const { toast } = useToast();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -23,6 +25,7 @@ export default function ServerOptionsPage({ params }) {
 
   const [properties, setProperties] = useState({});
   const [rawPropertiesOrder, setRawPropertiesOrder] = useState([]);
+  const [rawContent, setRawContent] = useState("");
 
   useEffect(() => {
     loadData();
@@ -42,8 +45,9 @@ export default function ServerOptionsPage({ params }) {
         });
       }
 
-      const fileRes = await fsOperation(serverId, { action: "read", filePath: "/server.properties" });
+      const fileRes = await fsOperation(serverId, { action: "read", filePath: "server.properties" });
       if (fileRes && fileRes.content) {
+        setRawContent(fileRes.content);
         const lines = fileRes.content.split("\n");
         const parsed = {};
         const order = [];
@@ -51,10 +55,13 @@ export default function ServerOptionsPage({ params }) {
         for (const line of lines) {
           const trimmed = line.trim();
           if (trimmed && !trimmed.startsWith("#")) {
-            const [key, ...rest] = trimmed.split("=");
-            const val = rest.join("=").trim();
-            parsed[key.trim()] = val;
-            order.push(key.trim());
+            const idx = trimmed.indexOf('=');
+            if (idx > -1) {
+              const key = trimmed.substring(0, idx).trim();
+              const val = trimmed.substring(idx + 1).trim();
+              parsed[key] = val;
+              order.push(key);
+            }
           }
         }
         setProperties(parsed);
@@ -80,21 +87,39 @@ export default function ServerOptionsPage({ params }) {
         "online-mode": settings.onlineMode.toString()
       };
       
-      // Determine keys to save (preserve original order, plus any new keys added via UI)
-      const keysToSave = new Set([...rawPropertiesOrder, ...Object.keys(mergedProps)]);
+      const lines = rawContent.split('\n');
+      const newLines = lines.map(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return line;
+        const idx = trimmed.indexOf('=');
+        if (idx > -1) {
+          const key = trimmed.substring(0, idx).trim();
+          if (mergedProps.hasOwnProperty(key)) {
+            return `${key}=${mergedProps[key]}`;
+          }
+        }
+        return line;
+      });
+
+      // Add missing keys
+      Object.keys(mergedProps).forEach(key => {
+        if (!lines.some(l => l.split('=')[0].trim() === key && !l.trim().startsWith('#'))) {
+          newLines.push(`${key}=${mergedProps[key]}`);
+        }
+      });
       
-      // Build properties string
-      const propsString = Array.from(keysToSave).map(key => {
-        return `${key}=${mergedProps[key] ?? ""}`;
-      }).join("\n");
+      const propsString = newLines.join("\n");
       
       await fsOperation(serverId, {
         action: "write",
-        filePath: "/server.properties",
+        filePath: "server.properties",
         content: propsString
       });
+      setRawContent(propsString);
+      toast("Opciones guardadas correctamente. Reinicia el servidor para aplicar los cambios.", "success");
     } catch (error) {
       console.error(error);
+      toast("Error al guardar: " + error.message, "error");
     } finally {
       setSaving(false);
     }
@@ -110,7 +135,7 @@ export default function ServerOptionsPage({ params }) {
       await deleteServer(serverId, keepFiles);
       router.push("/servers");
     } catch (error) {
-      alert("Error: " + error.message);
+      toast("Error: " + error.message, "error");
       setDeleting(false);
       setShowDeleteModal(false);
     }
@@ -163,7 +188,13 @@ export default function ServerOptionsPage({ params }) {
               min="1" 
               max="10000"
               value={settings.maxPlayers}
-              onChange={(e) => setSettings({ ...settings, maxPlayers: parseInt(e.target.value) || 20 })}
+              onChange={(e) => setSettings({ ...settings, maxPlayers: e.target.value })}
+              onBlur={() => {
+                let val = parseInt(settings.maxPlayers);
+                if (isNaN(val) || val < 1) val = 1;
+                if (val > 100000) val = 100000;
+                setSettings({ ...settings, maxPlayers: val });
+              }}
             />
           </div>
         </div>
@@ -281,6 +312,29 @@ export default function ServerOptionsPage({ params }) {
                   max="32"
                   value={properties["view-distance"] ?? "10"}
                   onChange={(e) => updateProperty("view-distance", e.target.value)}
+                  onBlur={(e) => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val) || val < 2) val = 2;
+                    if (val > 32) val = 32;
+                    updateProperty("view-distance", val.toString());
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-sm text-foreground/80">Protección del Spawn (Bloques)</label>
+                <Input 
+                  type="number" 
+                  min="0" 
+                  max="1000"
+                  value={properties["spawn-protection"] ?? "16"}
+                  onChange={(e) => updateProperty("spawn-protection", e.target.value)}
+                  onBlur={(e) => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val) || val < 0) val = 0;
+                    if (val > 10000) val = 10000;
+                    updateProperty("spawn-protection", val.toString());
+                  }}
                 />
               </div>
 
@@ -290,6 +344,31 @@ export default function ServerOptionsPage({ params }) {
                 checked={properties["pvp"] === "true"}
                 onToggle={() => updateProperty("pvp", properties["pvp"] === "true" ? "false" : "true")}
                 icon={<ShieldAlert className="w-5 h-5" />}
+              />
+
+              <ToggleOption 
+                title="Permitir Vuelo" 
+                description="Evita que el servidor expulse a jugadores en el aire (útil para mods)."
+                checked={properties["allow-flight"] === "true"}
+                onToggle={() => updateProperty("allow-flight", properties["allow-flight"] === "true" ? "false" : "true")}
+                icon={<Wifi className="w-5 h-5" />}
+              />
+
+              <ToggleOption 
+                title="Modo Extremo (Hardcore)" 
+                description="Muerte permanente (baneo o modo espectador al morir)."
+                checked={properties["hardcore"] === "true"}
+                onToggle={() => updateProperty("hardcore", properties["hardcore"] === "true" ? "false" : "true")}
+                icon={<ShieldAlert className="w-5 h-5" />}
+                danger
+              />
+
+              <ToggleOption 
+                title="Bloques de Comandos" 
+                description="Permite usar y ejecutar bloques de comandos en el mundo."
+                checked={properties["enable-command-block"] === "true"}
+                onToggle={() => updateProperty("enable-command-block", properties["enable-command-block"] === "true" ? "false" : "true")}
+                icon={<Settings className="w-5 h-5" />}
               />
             </div>
           </div>
