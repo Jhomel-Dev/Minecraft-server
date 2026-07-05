@@ -5,7 +5,7 @@ import { ConsoleOutput } from "@/features/servers/components/ConsoleOutput";
 import { ConsoleInput } from "@/features/servers/components/ConsoleInput";
 import { Server, Activity, Play, Square, RotateCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { startServer, stopServer, restartServer } from "@/features/servers/services/serverApi";
+import { getMyServers, startServer, stopServer, restartServer } from "@/features/servers/services/serverApi";
 import { Button } from "@/shared/ui/Button";
 
 export default function ServerConsolePage({ params }) {
@@ -14,19 +14,45 @@ export default function ServerConsolePage({ params }) {
   const router = useRouter();
   const { logs, isConnected, sendCommand, clearLogs } = useServerConsole(serverId);
 
-  const [errorMsg, setErrorMsg] = useState("");
+  const [server, setServer] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+
+  const fetchServer = async () => {
+    try {
+      const data = await getMyServers();
+      const serverList = Array.isArray(data) ? data : [];
+      const found = serverList.find(s => s.id === serverId);
+      if (found) setServer(found);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchServer();
+    const interval = setInterval(fetchServer, 3000);
+    return () => clearInterval(interval);
+  }, [serverId]);
+
+  const handleError = (err) => {
+    setErrorMsg(err.message || "Ha ocurrido un error inesperado.");
+    setTimeout(() => setErrorMsg(null), 5000);
+  };
 
   const handleStart = async () => { 
-    setErrorMsg("");
-    await startServer(serverId).catch(err => setErrorMsg(err.message)); 
+    setErrorMsg(null);
+    await startServer(serverId).catch(handleError); 
+    fetchServer();
   };
   const handleStop = async () => { 
-    setErrorMsg("");
-    await stopServer(serverId).catch(err => setErrorMsg(err.message)); 
+    setErrorMsg(null);
+    await stopServer(serverId).catch(handleError); 
+    fetchServer();
   };
   const handleRestart = async () => { 
-    setErrorMsg("");
-    await restartServer(serverId).catch(err => setErrorMsg(err.message)); 
+    setErrorMsg(null);
+    await restartServer(serverId).catch(handleError); 
+    fetchServer();
   };
 
   useEffect(() => {
@@ -35,6 +61,10 @@ export default function ServerConsolePage({ params }) {
       router.push("/login");
     }
   }, [router]);
+
+  const isOnline = server?.status === 'ONLINE';
+  const isOffline = server?.status === 'OFFLINE' || !server;
+  const isTransitioning = server?.status === 'STARTING' || server?.status === 'STOPPING';
 
   return (
     <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6 h-full animate-in fade-in">
@@ -51,28 +81,39 @@ export default function ServerConsolePage({ params }) {
         </div>
         
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10" onClick={handleStart}>
+          <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10" onClick={handleStart} disabled={isOnline || isTransitioning}>
             <Play className="w-4 h-4 mr-2 inline-block" /> Iniciar
           </Button>
-          <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10" onClick={handleStop}>
+          <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10" onClick={handleStop} disabled={isOffline || isTransitioning}>
             <Square className="w-4 h-4 mr-2 inline-block" /> Detener
           </Button>
-          <Button variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={handleRestart}>
+          <Button variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={handleRestart} disabled={isOffline || isTransitioning}>
             <RotateCw className="w-4 h-4 mr-2 inline-block" /> Reiniciar
           </Button>
 
           <div className="flex items-center gap-2 px-4 py-2 bg-background rounded-blocky border-2 border-surface-border">
-            <Activity className={`w-5 h-5 ${isConnected ? "text-primary animate-pulse" : "text-danger"}`} />
+            <Activity className={`w-5 h-5 ${server?.status === 'ONLINE' ? "text-primary animate-pulse" : "text-danger"}`} />
             <span className="font-bold text-sm">
-              {isConnected ? "En línea" : "Desconectado"}
+              {server?.status === 'ONLINE' ? 'Servidor Encendido' : 
+               server?.status === 'STARTING' ? 'Iniciando...' :
+               server?.status === 'STOPPING' ? 'Deteniendo...' : 'Servidor Apagado'}
             </span>
           </div>
         </div>
       </div>
 
       {errorMsg && (
-        <div className="bg-red-500/10 border-2 border-red-500 text-red-500 p-4 rounded-blocky font-semibold">
-          Error: {errorMsg}
+        <div className="bg-danger/10 border-2 border-danger text-danger p-4 rounded-blocky flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-center gap-3 font-bold">
+            <span className="text-xl">⚠️</span>
+            <span>{errorMsg}</span>
+          </div>
+          <button 
+            onClick={() => setErrorMsg(null)} 
+            className="text-danger hover:text-danger/70 transition-colors font-black text-xl px-2"
+          >
+            ×
+          </button>
         </div>
       )}
 
