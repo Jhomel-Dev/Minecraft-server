@@ -99,7 +99,7 @@ export default class AuthService {
       throw new Error('Invalid refresh token');
     }
     
-    return this.generateTokens(user);
+    return this.generateTokens(user, false);
   }
 
   async logout(userId) {
@@ -156,7 +156,7 @@ export default class AuthService {
     }
   }
 
-  async generateTokens(user) {
+  async generateTokens(user, rotateRefresh = true) {
     const secret = process.env.JWT_SECRET;
     const refreshSecret = process.env.JWT_REFRESH_SECRET || 'refresh-secret-fallback';
     if (!secret) throw new Error('JWT_SECRET is not configured');
@@ -167,16 +167,20 @@ export default class AuthService {
       { expiresIn: '15m' }
     );
 
-    const refreshToken = jwt.sign(
-      { id: user.id },
-      refreshSecret,
-      { expiresIn: '7d' }
-    );
+    let refreshToken = user.refreshToken;
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken }
-    });
+    if (rotateRefresh || !refreshToken) {
+      refreshToken = jwt.sign(
+        { id: user.id },
+        refreshSecret,
+        { expiresIn: '7d' }
+      );
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { refreshToken }
+      });
+    }
     
     return { accessToken, refreshToken, user };
   }
