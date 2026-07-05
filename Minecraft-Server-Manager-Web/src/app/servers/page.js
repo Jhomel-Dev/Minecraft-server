@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getMyServers } from "@/features/servers/services/serverApi";
-import { Server, Plus } from "lucide-react";
+import { getMyServers, fsOperation } from "@/features/servers/services/serverApi";
+import { Server, Plus, HardDrive } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/Button";
 
@@ -9,8 +9,16 @@ import { useRouter } from "next/navigation";
 
 export default function DashboardHome() {
   const [servers, setServers] = useState([]);
+  const [serverSizes, setServerSizes] = useState({});
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const formatSize = (bytes) => {
+    if (!bytes) return "Calculando...";
+    const mb = bytes / (1024 * 1024);
+    if (mb > 1024) return (mb / 1024).toFixed(2) + " GB";
+    return mb.toFixed(2) + " MB";
+  };
 
   useEffect(() => {
     getMyServers()
@@ -20,6 +28,16 @@ export default function DashboardHome() {
           router.push("/servers/new-server");
         } else {
           setServers(serverList);
+          // Fetch sizes in parallel
+          serverList.forEach(server => {
+            fsOperation(server.id, { action: "size", filePath: "." })
+              .then(res => {
+                if (res && res.size !== undefined) {
+                  setServerSizes(prev => ({ ...prev, [server.id]: res.size }));
+                }
+              })
+              .catch(() => {}); // ignore errors (agent offline)
+          });
         }
       })
       .catch(console.error)
@@ -65,6 +83,10 @@ export default function DashboardHome() {
                 <h3 className="font-bold text-xl group-hover:text-primary transition-colors">{server.name}</h3>
                 <p className="text-sm text-foreground/60 mt-1">Versión: {server.version}</p>
                 <p className="text-sm text-foreground/60">RAM: {server.memory} MB</p>
+                <div className="flex items-center gap-1 text-sm text-foreground/60 mt-2">
+                  <HardDrive className="w-4 h-4" />
+                  <span>{formatSize(serverSizes[server.id])}</span>
+                </div>
               </div>
             </Link>
           ))}

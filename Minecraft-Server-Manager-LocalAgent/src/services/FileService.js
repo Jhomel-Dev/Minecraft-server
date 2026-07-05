@@ -33,6 +33,8 @@ export default class FileService {
         return this.unzipFile(targetPath, payload.destPath ? this.getSafePath(baseDir, payload.destPath) : baseDir);
       case 'download':
         return this.downloadFile(targetPath, payload.url);
+      case 'size':
+        return this.getDirectorySize(targetPath);
       default:
         throw new Error('Invalid FS action');
     }
@@ -148,6 +150,17 @@ export default class FileService {
     } catch (err) {
       console.error('Error al descomprimir:', err);
       throw new Error(`Fallo al descomprimir: ${err.message}`);
+    }
+  }
+
+  async getDirectorySize(targetPath) {
+    try {
+      const { stdout } = await execPromise(`du -sb "${targetPath}"`);
+      const sizeBytes = parseInt(stdout.split('\t')[0]);
+      return { size: sizeBytes };
+    } catch (err) {
+      console.error('Error getting directory size:', err);
+      return { size: 0 };
     }
   }
 }
