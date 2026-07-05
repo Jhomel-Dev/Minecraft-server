@@ -75,8 +75,11 @@ export default function ServerConsolePage({ params }) {
             <Server className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-black">{serverId}</h1>
-            <p className="text-foreground/70 font-semibold">Panel de Control Principal</p>
+            <h1 className="text-3xl font-black">{server ? server.name : 'Cargando...'}</h1>
+            <div className="flex items-center gap-2">
+              <span className="text-foreground/70 font-semibold">Panel de Control Principal</span>
+              <span className="text-foreground/30 font-mono text-sm">• {serverId}</span>
+            </div>
           </div>
         </div>
         
