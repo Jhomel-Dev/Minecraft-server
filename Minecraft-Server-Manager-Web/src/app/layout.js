@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/shared/theme/ThemeProvider";
 import { GoogleAuthProvider } from "@/shared/providers/GoogleAuthProvider";
+import { ToastProvider } from "@/shared/ui/ToastProvider";
 import "./globals.css";
 
 export const metadata = {
@@ -13,7 +14,9 @@ export default function RootLayout({ children }) {
       <body className="antialiased min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <GoogleAuthProvider>
-            {children}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
           </GoogleAuthProvider>
         </ThemeProvider>
       </body>
