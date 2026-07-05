@@ -40,7 +40,7 @@ export default class ServerService {
     return prisma.server.findMany({ where: { userId } });
   }
 
-  async updateSettings(serverId, userId, { maxPlayers, whitelist, onlineMode, version, type, memory, compatibilityMode, customDomain }) {
+  async updateSettings(serverId, userId, { maxPlayers, whitelist, onlineMode, version, type, memory, compatibilityMode, customDomain, tunnelSecret }) {
     const server = await this.findServerById(serverId);
     if (server.userId !== userId) throw new Error('Unauthorized');
     
@@ -60,6 +60,7 @@ export default class ServerService {
         memory: memory !== undefined ? memory : server.memory,
         compatibilityMode: compatibilityMode !== undefined ? Boolean(compatibilityMode) : server.compatibilityMode,
         customDomain: customDomain !== undefined ? customDomain : server.customDomain,
+        tunnelSecret: tunnelSecret !== undefined ? tunnelSecret : server.tunnelSecret,
       }
     });
   }
