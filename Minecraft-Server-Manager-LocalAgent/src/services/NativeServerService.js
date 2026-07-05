@@ -24,14 +24,14 @@ export default class NativeServerService extends EventEmitter {
   async startMinecraftServer(config) {
     this.validateConfig(config);
 
-    // Kill any existing ghost process on this port
+    
     try {
       const port = config.port || 25565;
       execSync(`fuser -k ${port}/tcp`, { stdio: 'ignore' });
       this.emit('log', `[System] Liberado el puerto ${port} de procesos anteriores.`);
       await new Promise(r => setTimeout(r, 1000));
     } catch (e) {
-      // fuser returns 1 if no process was found, which is fine
+      
     }
 
 
@@ -44,7 +44,7 @@ export default class NativeServerService extends EventEmitter {
 
     let softwareConfig = await this.ensureServerSoftwareIsInstalled(config);
     
-    // Modo de Compatibilidad (Desactivar Zero-Copy)
+    
     if (config.compatibilityMode && softwareConfig.type === 'jar') {
       this.emit('log', '[Compatibility Mode] Copiando servidor localmente para evitar conflictos...');
       const fileName = path.basename(softwareConfig.path);
@@ -64,7 +64,7 @@ export default class NativeServerService extends EventEmitter {
     if (softwareConfig.type === 'jar') {
       spawnArgs.push('-jar', softwareConfig.path, 'nogui');
     } else if (softwareConfig.type === 'args') {
-      // Necesitamos crear el archivo @user_jvm_args.txt si no existe
+      
       const userJvmArgsFile = path.join(config.dataDir, 'user_jvm_args.txt');
       if (!fs.existsSync(userJvmArgsFile)) {
         fs.writeFileSync(userJvmArgsFile, `${memoryArgXms}\n${memoryArgXmx}\n-XX:+AlwaysPreTouch\n`);
@@ -109,7 +109,7 @@ export default class NativeServerService extends EventEmitter {
           memory: stats.memory
         });
       } catch (err) {
-        // pid might no longer exist
+        
       }
     }, 3000);
 
@@ -162,14 +162,14 @@ export default class NativeServerService extends EventEmitter {
   getRequiredJavaVersion(minecraftVersion) {
     const parts = minecraftVersion.split('.');
     
-    // Si la versión usa el nuevo formato de 2026 (ej: 26.2 en lugar de 1.26.2)
+    
     if (parts[0] !== '1') {
       const major = parseInt(parts[0]);
-      if (major >= 26) return 25; // Minecraft 26+ requiere Java 25
+      if (major >= 26) return 25; 
       return 21;
     }
 
-    // Formato clásico (ej: 1.20.4)
+    
     const minor = parseInt(parts[1]);
     if (minor >= 26) return 25; 
     if (minor >= 20.5) return 21;
@@ -366,7 +366,7 @@ export default class NativeServerService extends EventEmitter {
         const text = await res.text();
         const matches = [...text.matchAll(new RegExp(`<version>(${mcVer}-[\\d\\.]+)</version>`, 'g'))];
         if (matches.length > 0) {
-          fullVersion = matches[matches.length - 1][1]; // Último build de la lista XML
+          fullVersion = matches[matches.length - 1][1]; 
           forgeVer = fullVersion.split('-')[1];
           this.emit('log', `Resolved latest Forge build: ${fullVersion}`);
         } else {
@@ -402,7 +402,7 @@ export default class NativeServerService extends EventEmitter {
     const serverLibsDir = path.join(config.dataDir, 'libraries');
     this.smartLink(librariesDir, serverLibsDir, config.compatibilityMode);
 
-    // Link shim jar if it exists (for modern Forge)
+    
     const shimJarName = `forge-${fullVersion}-shim.jar`;
     const shimJarPath = path.join(forgeDir, shimJarName);
     const serverShimJarPath = path.join(config.dataDir, shimJarName);
@@ -415,7 +415,7 @@ export default class NativeServerService extends EventEmitter {
     if (fs.existsSync(unixArgsFile)) {
       return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/minecraftforge/forge/${fullVersion}/unix_args.txt`] };
     } else {
-      // Legacy Forge
+      
       return { type: 'jar', path: legacyJar };
     }
   }
@@ -433,13 +433,13 @@ export default class NativeServerService extends EventEmitter {
       try {
         const res = await fetch('https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml');
         const text = await res.text();
-        // NeoForge usually Maps 1.20.4 to 20.4.X
+        
         const parts = mcVer.split('.');
         const neoPrefix = `${parts[1]}.${parts[2] || '0'}`;
         const matches = [...text.matchAll(new RegExp(`<version>(${neoPrefix}\\.[\\d\\.]+)</version>`, 'g'))];
         
         if (matches.length > 0) {
-          neoVer = matches[matches.length - 1][1]; // Último build
+          neoVer = matches[matches.length - 1][1]; 
           fullVersion = `${mcVer}-${neoVer}`;
           this.emit('log', `Resolved latest NeoForge build: ${fullVersion}`);
         } else {
@@ -456,7 +456,7 @@ export default class NativeServerService extends EventEmitter {
 
     if (!fs.existsSync(librariesDir)) {
       this.emit('log', `Downloading NeoForge installer for ${fullVersion}...`);
-      // Nota: NeoForge URLs changed slightly over time, but typically use neoVer for the installer
+      
       const installerUrl = `https://maven.neoforged.net/releases/net/neoforged/neoforge/${neoVer}/neoforge-${neoVer}-installer.jar`;
       const installerPath = path.join(this.jarsDir, `neoforge-installer-${fullVersion}.jar`);
       await this.downloadFile(installerUrl, installerPath);
@@ -475,7 +475,7 @@ export default class NativeServerService extends EventEmitter {
     const serverLibsDir = path.join(config.dataDir, 'libraries');
     this.smartLink(librariesDir, serverLibsDir, config.compatibilityMode);
 
-    // Link any shim/root jars
+    
     const neoFiles = fs.readdirSync(neoDir);
     for (const file of neoFiles) {
       if (file.endsWith('.jar')) {

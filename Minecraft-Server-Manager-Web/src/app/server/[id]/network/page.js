@@ -68,7 +68,7 @@ export default function NetworkPage({ params }) {
 
   return (
     <div className="p-8 max-w-4xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
-      {/* Header Info */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between bg-surface p-6 rounded-blocky border-2 border-surface-border shadow-sm gap-4">
         <div className="flex items-center gap-4">
           <div className="p-4 bg-primary/10 text-primary rounded-blocky border-2 border-primary/20">
@@ -84,7 +84,7 @@ export default function NetworkPage({ params }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Bore IP Card */}
+        {}
         <div className="bg-surface border-2 border-surface-border rounded-blocky p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <Activity className="w-6 h-6 text-blue-400" />

@@ -6,7 +6,7 @@ import { fsOperation, getMyServers } from "@/features/servers/services/serverApi
 import { searchModrinth, getProjectVersions, getProject } from "@/features/servers/services/modrinthApi";
 import { Input } from "@/shared/ui/Input";
 import { useToast } from "@/shared/ui/ToastProvider";
-const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
+const CHUNK_SIZE = 1024 * 1024 * 5; 
 
 export function ModList({ serverId, mode = "mods" }) {
   const [mods, setMods] = useState([]);
@@ -114,7 +114,7 @@ export function ModList({ serverId, mode = "mods" }) {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
 
-    // Filter valid extensions
+    
     const validFiles = files.filter(f => f.name.endsWith('.jar') || f.name.endsWith('.zip'));
     
     if (validFiles.length === 0) {

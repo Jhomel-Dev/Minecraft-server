@@ -29,7 +29,7 @@ export default function DashboardHome() {
           router.push("/servers/new-server");
         } else {
           setServers(serverList);
-          // Fetch sizes in parallel
+          
           serverList.forEach(server => {
             fsOperation(server.id, { action: "size", filePath: "." })
               .then(res => {
@@ -37,7 +37,7 @@ export default function DashboardHome() {
                   setServerSizes(prev => ({ ...prev, [server.id]: res.size }));
                 }
               })
-              .catch(() => {}); // ignore errors (agent offline)
+              .catch(() => {}); 
           });
         }
       })

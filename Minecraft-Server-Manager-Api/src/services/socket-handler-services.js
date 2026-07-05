@@ -115,7 +115,7 @@ const handleTunnelInfo = async (socket, info) => {
           data: updateData
         });
         
-        // Auto-update DNS if server has custom domain
+        
         if (server.customDomain && info.address) {
           dnsService.setCustomDomain(server.customDomain, info.address).catch(e => {
             console.error('Failed to auto-update DNS in background', e);
@@ -123,7 +123,7 @@ const handleTunnelInfo = async (socket, info) => {
         }
       }
       
-      // Notify clients watching the dashboard
+      
       socket.broadcast.to(info.serverId).emit('TUNNEL_INFO', info);
     } catch (e) {
       console.error('Error saving tunnel info', e);
@@ -137,7 +137,7 @@ const handleDisconnect = async (socket, reason) => {
       await prisma.server.updateMany({
         data: { status: 'OFFLINE' }
       });
-      // Notificamos a todos los clientes que el agente se cayó
+      
       socket.broadcast.emit('STATUS_UPDATE', 'OFFLINE');
     } catch (e) {
       console.error('Error marking servers offline on agent disconnect', e);

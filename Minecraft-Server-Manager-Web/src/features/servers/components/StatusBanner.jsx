@@ -9,7 +9,7 @@ export function StatusBanner({ serverId, status }) {
   const [expanded, setExpanded] = useState(false);
   const router = useRouter();
   
-  // Ref para auto-scroll cuando está expandido
+  
   const consoleEndRef = useRef(null);
 
   useEffect(() => {
@@ -18,18 +18,18 @@ export function StatusBanner({ serverId, status }) {
     }
   }, [logs, expanded]);
 
-  // Si está offline y no hay logs relevantes, no mostrar nada intrusivo o mostrar un banner muy apagado
+  
   if (status === "OFFLINE" && logs.length === 0) return null;
 
   const lastLog = logs.length > 0 ? logs[logs.length - 1] : "Esperando conexión...";
   
-  // Quitar el timestamp del último log si lo tiene para que se vea más limpio en la barra
+  
   const cleanLastLog = lastLog.replace(/^\[\d{2}:\d{2}:\d{2}\] /, "");
 
   return (
     <div className="bg-surface border-2 border-surface-border rounded-blocky overflow-hidden shadow-sm transition-all duration-300">
       
-      {/* Banner Principal (Siempre visible si hay actividad) */}
+      {}
       <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-surface-hover/50 transition-colors" onClick={() => setExpanded(!expanded)}>
         <div className="flex items-center gap-3 overflow-hidden flex-1">
           <TerminalSquare className="w-5 h-5 text-secondary flex-shrink-0" />
@@ -46,7 +46,7 @@ export function StatusBanner({ serverId, status }) {
         </div>
       </div>
 
-      {/* Mini-Monitor Expandido */}
+      {}
       {expanded && (
         <div className="border-t-2 border-surface-border bg-background p-4 animate-in slide-in-from-top-2 flex flex-col gap-2">
           <div className="bg-black/80 rounded-blocky p-4 h-48 overflow-y-auto font-mono text-xs text-green-400 custom-scrollbar shadow-inner relative">

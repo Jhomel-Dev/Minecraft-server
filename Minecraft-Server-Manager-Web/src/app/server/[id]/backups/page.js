@@ -37,7 +37,7 @@ export default function BackupsPage() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Settings state
+  
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleTime, setScheduleTime] = useState("03:00");
   const [scheduleProfile, setScheduleProfile] = useState("full");
@@ -67,7 +67,7 @@ export default function BackupsPage() {
         setScheduleMax(conf.maxRetained || 5);
       }
     } catch (e) {
-      // no config exists yet, ignore
+      
     }
   };
 
@@ -137,7 +137,7 @@ export default function BackupsPage() {
 
     setUploading(true);
     try {
-      const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
+      const CHUNK_SIZE = 1024 * 1024 * 5; 
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
       const filePath = `backups/${file.name}`;
       
@@ -219,7 +219,7 @@ export default function BackupsPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto flex flex-col gap-8 h-full overflow-y-auto relative">
       
-      {/* Toast Notification */}
+      {}
       {toast && (
         <div className={`fixed bottom-8 right-8 p-4 rounded-lg shadow-lg font-bold border-2 z-50 animate-in fade-in slide-in-from-bottom-5 ${
           toast.type === 'error' ? 'bg-danger text-white border-danger/50' : 'bg-primary text-white border-primary/50'
@@ -244,7 +244,7 @@ export default function BackupsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* LEFT COLUMN: Backup List */}
+        {}
         <div className="lg:col-span-2 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold flex items-center gap-2">
@@ -331,10 +331,10 @@ export default function BackupsPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Actions & Settings */}
+        {}
         <div className="flex flex-col gap-6">
           
-          {/* Create Backup Box */}
+          {}
           <div className="bg-surface border-2 border-surface-border rounded-blocky p-6 shadow-sm flex flex-col gap-4">
             <h2 className="text-lg font-bold flex items-center gap-2 mb-2">
               <Download className="w-5 h-5 text-primary" /> Crear Backup Manual
@@ -364,7 +364,7 @@ export default function BackupsPage() {
             </Button>
           </div>
 
-          {/* Schedule Settings Box */}
+          {}
           <div className="bg-surface border-2 border-surface-border rounded-blocky p-6 shadow-sm flex flex-col gap-4">
             <h2 className="text-lg font-bold flex items-center gap-2 mb-2 border-b-2 border-surface-border pb-4">
               <Clock className="w-5 h-5 text-warning" /> Programación Automática

@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/Button";
 import { fsOperation } from "@/features/servers/services/serverApi";
 import { useToast } from "@/shared/ui/ToastProvider";
 
-// CodeMirror imports
+
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { yaml } from '@codemirror/lang-yaml';
@@ -91,7 +91,7 @@ export function FileEditor({ serverId, filePath, onBack }) {
     }
   };
 
-  // Debounce for onChange
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       validateSyntax(content, fileExt);
@@ -118,7 +118,7 @@ export function FileEditor({ serverId, filePath, onBack }) {
     }
   };
 
-  // CodeMirror Extensions
+  
   const extensions = useMemo(() => {
     if (fileExt === "json") return [json()];
     if (fileExt === "yaml") return [yaml()];
@@ -155,7 +155,7 @@ export function FileEditor({ serverId, filePath, onBack }) {
 
   return (
     <div className="flex flex-col h-full bg-surface border-2 border-surface-border rounded-blocky shadow-sm overflow-hidden animate-in fade-in">
-      {/* Editor Header */}
+      {}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border-b-2 border-surface-border bg-background/50 gap-4">
         <div className="flex items-center gap-3">
           <Button 
@@ -190,7 +190,7 @@ export function FileEditor({ serverId, filePath, onBack }) {
         </Button>
       </div>
 
-      {/* Exit Warning Overlay */}
+      {}
       {showExitWarning && (
         <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-in fade-in">
           <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky shadow-lg max-w-sm w-full text-center">
@@ -211,7 +211,7 @@ export function FileEditor({ serverId, filePath, onBack }) {
         </div>
       )}
 
-      {/* Warning Box */}
+      {}
       {errorMsg && (
         <div className="bg-danger/10 border-b-2 border-danger p-3 flex items-start gap-3 animate-in slide-in-from-top-1">
           <AlertTriangle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
@@ -222,7 +222,7 @@ export function FileEditor({ serverId, filePath, onBack }) {
         </div>
       )}
 
-      {/* CodeMirror */}
+      {}
       <div className="flex-1 bg-background relative min-h-[500px]">
         <CodeMirror
           value={content}

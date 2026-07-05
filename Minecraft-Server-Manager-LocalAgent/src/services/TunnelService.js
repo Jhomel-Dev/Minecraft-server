@@ -19,7 +19,7 @@ export default class TunnelService extends EventEmitter {
     const managerDir = path.join(os.homedir(), '.minecraft-manager');
     const borePath = path.join(managerDir, 'bore');
     
-    // Auto-install bore if not exists
+    
     if (!fs.existsSync(borePath)) {
       this.emit('log', `[Tunnel] Instalando motor de red sin fricción (bore)...`);
       try {
@@ -45,7 +45,7 @@ export default class TunnelService extends EventEmitter {
 
       this.process.stdout.on('data', (data) => {
         const output = data.toString();
-        // bore outputs: INFO bore_cli::client: listening at bore.pub:PORT
+        
         const match = output.match(/listening at (bore\.pub:\d+)/);
         if (match) {
           const address = match[1];

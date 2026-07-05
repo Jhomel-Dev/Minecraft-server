@@ -22,19 +22,19 @@ export default class DnsService {
 
     console.log(`[DNS] Updating Cloudflare DNS for ${subdomain} pointing to ${tunnelAddress}`);
     try {
-      // 1. Parse playit address (e.g. something.auto.playit.gg:12345)
+      
       const [targetIpOrHost, targetPort] = tunnelAddress.split(':');
       
-      // We would normally first DELETE existing records for this subdomain to avoid duplicates.
-      // Then create a CNAME or A record depending on if playit gives us an IP or a hostname.
-      // Since playit usually gives a hostname (auto.playit.gg), we use CNAME.
+      
+      
+      
       
       const record = {
         type: 'CNAME',
         name: subdomain,
         content: targetIpOrHost,
-        ttl: 120, // 2 minutes
-        proxied: false // Minecraft traffic cannot be proxied through standard Cloudflare HTTP
+        ttl: 120, 
+        proxied: false 
       };
 
       const response = await fetch(this.apiUrl, {
@@ -49,7 +49,7 @@ export default class DnsService {
       const data = await response.json();
       if (!data.success) {
         console.error('[DNS] Cloudflare API Error:', data.errors);
-        // We throw so the frontend knows it failed
+        
         throw new Error('Failed to create DNS record in Cloudflare');
       }
 

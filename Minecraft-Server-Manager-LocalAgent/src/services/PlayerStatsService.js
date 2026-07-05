@@ -12,20 +12,20 @@ export default class PlayerStatsService {
     const managerDir = path.join(os.homedir(), '.minecraft-manager');
     const baseDir = path.resolve(managerDir, 'servers', serverId);
     
-    // 1. Read usercache.json to map UUIDs to Names
+    
     let usercache = [];
     try {
       const cacheStr = await fs.readFile(path.join(baseDir, 'usercache.json'), 'utf-8');
       usercache = JSON.parse(cacheStr);
     } catch(e) {
-      // It's normal if usercache doesn't exist yet
+      
     }
     
     const uuidToName = {};
     usercache.forEach(u => uuidToName[u.uuid] = u.name);
     
-    // 2. Read playerdata directory
-    // Note: Forge/Vanilla use world/playerdata. Some implementations use world/players/data.
+    
+    
     const playerdataDir = path.join(baseDir, 'world', 'playerdata');
     const playersDataAltDir = path.join(baseDir, 'world', 'players', 'data');
     
@@ -142,11 +142,11 @@ export default class PlayerStatsService {
           if (statsObj.stats && statsObj.stats['minecraft:custom']) {
             const custom = statsObj.stats['minecraft:custom'];
             deaths = custom['minecraft:deaths'] || 0;
-            playTime = custom['minecraft:play_time'] || 0; // ticks
-            walkDistance = custom['minecraft:walk_one_cm'] || 0; // cm
+            playTime = custom['minecraft:play_time'] || 0; 
+            walkDistance = custom['minecraft:walk_one_cm'] || 0; 
           }
         } catch (e) {
-          // Stats file might not exist yet
+          
         }
         
         players.push({
@@ -159,7 +159,7 @@ export default class PlayerStatsService {
           pos,
           dimension,
           stats: { deaths, playTime, walkDistance },
-          lastSeen: Date.now(), // Ideally we'd stat the file
+          lastSeen: Date.now(), 
           isOnline: onlineNames.includes(name)
         });
       } catch (err) {

@@ -92,7 +92,7 @@ export default class LocalAgentController {
 
     this.connectionService.on('get_player_stats', async (payload, callback) => {
       try {
-        // Force a save to ensure NBT files are perfectly up to date with live players
+        
         let onlineNames = [];
         if (this.currentServerId && this.nativeServerService.process) {
           onlineNames = Array.from(this.nativeServerService.onlinePlayers || []);

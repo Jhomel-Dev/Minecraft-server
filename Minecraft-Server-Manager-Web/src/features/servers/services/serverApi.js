@@ -48,7 +48,7 @@ const authFetch = async (endpoint, options = {}) => {
         headers: { ...getHeaders(), ...options.headers }
       });
     } catch (err) {
-      // Return a pending promise to halt execution and avoid React unhandled errors while window.location redirects
+      
       return new Promise(() => {}); 
     }
   }
@@ -81,12 +81,12 @@ export async function stopServer(id) {
 }
 
 export async function restartServer(id) {
-  // 1. Send the stop command
+  
   await stopServer(id);
   
-  // 2. Poll until the server status actually becomes OFFLINE
+  
   let isOffline = false;
-  for (let i = 0; i < 30; i++) { // wait up to 30 seconds
+  for (let i = 0; i < 30; i++) { 
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     try {
@@ -105,7 +105,7 @@ export async function restartServer(id) {
     throw new Error("El servidor tardó demasiado en detenerse. No se pudo reiniciar automáticamente.");
   }
 
-  // 3. Start the server again
+  
   return await startServer(id);
 }
 

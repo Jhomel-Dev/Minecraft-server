@@ -1,6 +1,6 @@
-// versionApi.js
 
-// 1. OBTENER VERSIONES DE MINECRAFT POR SOFTWARE
+
+
 export async function getMinecraftVersions(softwareType) {
   try {
     switch (softwareType.toLowerCase()) {
@@ -104,7 +104,7 @@ export async function getMinecraftVersions(softwareType) {
 export async function getSoftwareBuilds(softwareType, mcVersion) {
   try {
     switch (softwareType.toLowerCase()) {
-      case "vanilla": return ["LATEST"]; // Vanilla no usa builds aquí
+      case "vanilla": return ["LATEST"]; 
       case "paper":
       case "folia": {
         try {

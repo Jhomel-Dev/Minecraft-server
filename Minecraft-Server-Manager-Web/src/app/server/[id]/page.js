@@ -57,7 +57,7 @@ export default function ServerOverviewPage({ params }) {
   return (
     <div className="p-8 max-w-6xl mx-auto flex flex-col gap-8 h-full animate-in fade-in">
       
-      {/* Header Info */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between bg-surface p-6 rounded-blocky border-2 border-surface-border shadow-sm gap-4">
         <div className="flex items-center gap-4">
           <div className="p-4 bg-primary/10 text-primary rounded-blocky border-2 border-primary/20">
@@ -97,7 +97,7 @@ export default function ServerOverviewPage({ params }) {
         </div>
       </div>
 
-      {/* Main Actions */}
+      {}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-4">
           <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 h-14 px-8 text-lg flex-1 md:flex-none" onClick={handleStart} disabled={server.status !== "OFFLINE"}>
@@ -117,7 +117,7 @@ export default function ServerOverviewPage({ params }) {
         )}
       </div>
 
-      {/* Hybrid Console Banner / Mini-Monitor */}
+      {}
       <StatusBanner serverId={serverId} status={server.status} />
 
       <PerformanceCharts 
@@ -126,10 +126,10 @@ export default function ServerOverviewPage({ params }) {
         maxMemoryMB={server.memory ? (server.memory.toUpperCase().endsWith('G') ? parseInt(server.memory) * 1024 : parseInt(server.memory)) : 4096} 
       />
 
-      {/* Software and Version Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         
-        {/* Software Card */}
+        {}
         <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky flex flex-col gap-4">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-foreground/70 text-sm tracking-wider uppercase">Software Instalado</h3>
@@ -149,7 +149,7 @@ export default function ServerOverviewPage({ params }) {
           </div>
         </div>
 
-        {/* Version Card */}
+        {}
         <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky flex flex-col gap-4">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-foreground/70 text-sm tracking-wider uppercase">Versión del Juego</h3>

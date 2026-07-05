@@ -41,7 +41,7 @@ httpServer.on('error', (err) => {
     }
 });
 
-// Manejo de errores de Socket.IO
+
 io.engine.on('connection_error', (err) => {
     console.error(' Socket.IO connection error:', {
         code: err.code,

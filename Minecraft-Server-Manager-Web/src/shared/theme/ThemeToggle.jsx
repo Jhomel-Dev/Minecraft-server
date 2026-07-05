@@ -21,13 +21,13 @@ export function ThemeToggle() {
       }`}
       title="Alternar Tema"
     >
-      {/* Iconos de fondo estáticos */}
+      {}
       <div className="absolute w-full flex justify-between px-1.5 z-0 pointer-events-none">
         <Sun className={`w-4 h-4 transition-opacity ${isDark ? "opacity-30" : "opacity-0"}`} />
         <Moon className={`w-4 h-4 transition-opacity ${isDark ? "opacity-0" : "opacity-30"}`} />
       </div>
 
-      {/* Slider / Perilla movible */}
+      {}
       <div
         className={`absolute w-6 h-6 rounded flex items-center justify-center transition-all duration-300 z-10 shadow-sm ${
           isDark 

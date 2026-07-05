@@ -35,7 +35,7 @@ export default function PlayersPage({ params }) {
   const fetchPlayers = async () => {
     try {
       setLoading(true);
-      // Fetch data from NBT parser API
+      
       const playersData = await getPlayers(serverId);
       
       const opsRes = await fsOperation(serverId, { action: "read", filePath: "ops.json" }).catch(() => ({ content: "[]" }));
@@ -48,7 +48,7 @@ export default function PlayersPage({ params }) {
 
       const opUuids = ops.map(op => op.uuid);
       const banUuids = bans.map(ban => ban.uuid);
-      const whitelistNames = whitelist.map(w => w.name.toLowerCase()); // Whitelist sometimes relies on names or uuids depending on server mode
+      const whitelistNames = whitelist.map(w => w.name.toLowerCase()); 
 
       const enrichedPlayers = (Array.isArray(playersData) ? playersData : []).map(p => ({
         ...p,
@@ -57,8 +57,8 @@ export default function PlayersPage({ params }) {
         isWhitelisted: whitelistNames.includes(p.name.toLowerCase())
       }));
 
-      // Add offline players that are on the whitelist but never joined (if we just want to list them)
-      // Actually, let's keep it simple and just show the ones that exist in the NBT data
+      
+      
       setPlayers(enrichedPlayers);
     } catch (error) {
       console.error("Error loading players:", error);
@@ -90,7 +90,7 @@ export default function PlayersPage({ params }) {
           const profile = await res.json();
           whitelist.push({ uuid: profile.uuid, name: profile.username });
         } else {
-          // Aternos Style: Offline mode UUID generation
+          
           const offlineUuid = await generateOfflineUUID(playerName);
           whitelist.push({ uuid: offlineUuid, name: playerName });
         }
@@ -98,7 +98,7 @@ export default function PlayersPage({ params }) {
 
       await fsOperation(serverId, { action: "write", filePath: "whitelist.json", content: JSON.stringify(whitelist, null, 2) });
       
-      // Artificial delay to let the UI feel natural
+      
       setTimeout(fetchPlayers, 500); 
     } catch (err) {
       setCommandError(err.message || "Error al modificar la whitelist estando offline.");
@@ -249,7 +249,7 @@ export default function PlayersPage({ params }) {
     fetchPlayers();
     checkWhitelistStatus();
     
-    // Auto-refresh every 10 seconds
+    
     const interval = setInterval(fetchPlayers, 10000);
     return () => clearInterval(interval);
   }, [serverId]);
@@ -258,7 +258,7 @@ export default function PlayersPage({ params }) {
 
   return (
     <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
-      {/* Header Info */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between bg-surface p-6 rounded-blocky border-2 border-surface-border shadow-sm gap-4">
         <div className="flex items-center gap-4">
           <div className={`p-4 rounded-blocky border-2 ${isWhitelistView ? 'bg-primary/20 text-primary border-primary/40' : 'bg-primary/10 text-primary border-primary/20'}`}>
@@ -299,7 +299,7 @@ export default function PlayersPage({ params }) {
         </div>
       </div>
 
-      {/* Error Banner */}
+      {}
       {commandError && (
         <div className="bg-danger/10 border-2 border-danger text-danger p-4 rounded-blocky flex items-center justify-between animate-in fade-in slide-in-from-top-4">
           <div className="flex items-center gap-3 font-bold">
@@ -315,7 +315,7 @@ export default function PlayersPage({ params }) {
         </div>
       )}
 
-      {/* Players List, Whitelist View, or Selected Player */}
+      {}
       {isWhitelistView ? (
         <div className="bg-surface border-2 border-surface-border rounded-blocky p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 shadow-sm relative overflow-hidden">
           
@@ -478,14 +478,14 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
     return roman[num] || num;
   };
 
-  // Minecraft main inventory: 9-35. Hotbar: 0-8.
+  
   const inventorySlots = [];
   for (let i = 9; i <= 35; i++) inventorySlots.push(i);
-  for (let i = 0; i <= 8; i++) inventorySlots.push(i); // hotbar at the bottom
+  for (let i = 0; i <= 8; i++) inventorySlots.push(i); 
 
   return (
     <div className="bg-surface border-2 border-surface-border rounded-blocky overflow-hidden shadow-sm flex flex-col h-full">
-      {/* HEADER */}
+      {}
       <div className="p-4 border-b-2 border-surface-border flex flex-col md:flex-row md:items-center justify-between bg-surface-hover/30 gap-4">
         <div className="flex items-center gap-4">
           <img 
@@ -509,7 +509,7 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
           </div>
         </div>
 
-        {/* PRIMARY ACTIONS */}
+        {}
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" className="text-secondary border-secondary hover:bg-secondary hover:text-white h-8 text-xs" onClick={() => handleKick(player.name)} title="Expulsar (Kick)">
             Kick
@@ -528,7 +528,7 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
 
       <div className="flex-1 p-4 grid grid-cols-1 lg:grid-cols-2 gap-6 bg-background">
         
-        {/* LEFT COL: Inventory UI (Akira Aesthetic) */}
+        {}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center mb-2">
             <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wider text-primary">Inventario Táctico</h4>
@@ -541,9 +541,9 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
           
           <div className="bg-background p-4 rounded-xl border-2 border-surface-border shadow-sm inline-flex flex-col gap-4 mx-auto lg:mx-0 w-max relative">
             
-            {/* TOP SECTION: Armor, Render, Offhand */}
+            {}
             <div className="flex items-center justify-center gap-6 mb-2">
-              {/* Armor Slots */}
+              {}
               <div className="flex flex-col gap-1">
                 {[103, 102, 101, 100].map(slotId => {
                   const item = player.inventory?.find(item => item.slot === slotId);
@@ -581,11 +581,11 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
                   />
                 </div>
 
-              {/* Offhand Slot */}
+              {}
               <div className="flex flex-col justify-end h-full">
                 <div className="w-10 h-10 bg-surface border-2 border-surface-border rounded flex items-center justify-center relative group hover:border-primary transition-colors mt-auto">
                   {(() => {
-                    const item = player.inventory?.find(item => item.slot === -106 || item.slot === 106); // Sometimes -106 is parsed differently depending on nbt lib
+                    const item = player.inventory?.find(item => item.slot === -106 || item.slot === 106); 
                     return item ? (
                       <>
                         <img src={getSpriteUrl(item.id)} onError={(e) => { e.target.src = getBlockSpriteUrl(item.id); }} alt={item.id} className="w-7 h-7 object-contain pixelated drop-shadow-sm" />
@@ -728,7 +728,7 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
 
         </div>
       </div>
-      {/* TP Modal Overlay */}
+      {}
       {isTpModalOpen && (
         <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-surface border-2 border-primary rounded-xl shadow-[0_0_30px_rgba(255,74,74,0.15)] w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">

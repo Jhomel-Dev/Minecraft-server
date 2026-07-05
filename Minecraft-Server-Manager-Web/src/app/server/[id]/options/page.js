@@ -79,7 +79,7 @@ export default function ServerOptionsPage({ params }) {
     try {
       await updateSettings(serverId, settings);
       
-      // Sync DB settings to properties
+      
       const mergedProps = {
         ...properties,
         "max-players": settings.maxPlayers.toString(),
@@ -101,7 +101,7 @@ export default function ServerOptionsPage({ params }) {
         return line;
       });
 
-      // Add missing keys
+      
       Object.keys(mergedProps).forEach(key => {
         if (!lines.some(l => l.split('=')[0].trim() === key && !l.trim().startsWith('#'))) {
           newLines.push(`${key}=${mergedProps[key]}`);
@@ -174,7 +174,7 @@ export default function ServerOptionsPage({ params }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* Jugadores */}
+        {}
         <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky shadow-sm flex flex-col gap-4">
           <div className="flex items-center gap-3 border-b-2 border-surface-border pb-4">
             <Users className="w-6 h-6 text-primary" />
@@ -199,7 +199,7 @@ export default function ServerOptionsPage({ params }) {
           </div>
         </div>
 
-        {/* Seguridad */}
+        {}
         <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky shadow-sm flex flex-col gap-4">
           <div className="flex items-center gap-3 border-b-2 border-surface-border pb-4">
             <ShieldCheck className="w-6 h-6 text-primary" />
@@ -223,7 +223,7 @@ export default function ServerOptionsPage({ params }) {
           />
         </div>
 
-        {/* Rendimiento & Hardware */}
+        {}
         <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky shadow-sm flex flex-col gap-4 md:col-span-2">
           <div className="flex items-center gap-3 border-b-2 border-surface-border pb-4">
             <HardDrive className="w-6 h-6 text-primary" />
@@ -257,7 +257,7 @@ export default function ServerOptionsPage({ params }) {
           </div>
         </div>
 
-        {/* server.properties Avanzado */}
+        {}
         <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky shadow-sm flex flex-col gap-4 md:col-span-2 mt-4">
           <div className="flex items-center gap-3 border-b-2 border-surface-border pb-4">
             <Settings className="w-6 h-6 text-primary" />
@@ -265,7 +265,7 @@ export default function ServerOptionsPage({ params }) {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Campos visuales dedicados para propiedades comunes */}
+              {}
               
               <div className="flex flex-col gap-2 md:col-span-2">
                 <label className="font-bold text-sm text-foreground/80">Mensaje del Día (MOTD)</label>
@@ -373,7 +373,7 @@ export default function ServerOptionsPage({ params }) {
             </div>
           </div>
 
-        {/* Zona de Peligro */}
+        {}
         <div className="bg-red-500/10 border-2 border-red-500/30 p-6 rounded-blocky shadow-sm flex flex-col gap-4 md:col-span-2 mt-4">
           <div className="flex items-center gap-3 border-b-2 border-red-500/20 pb-4">
             <Trash2 className="w-6 h-6 text-red-500" />
@@ -392,7 +392,7 @@ export default function ServerOptionsPage({ params }) {
 
       </div>
 
-      {/* Delete Modal */}
+      {}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-in fade-in">
           <div className="bg-surface border-2 border-red-500/30 p-8 rounded-blocky shadow-2xl max-w-md w-full animate-in zoom-in-95 slide-in-from-bottom-4">

@@ -100,17 +100,17 @@ export default class ServerService {
     const server = await this.findServerById(serverId);
     if (server.userId !== userId) throw new Error('Unauthorized');
 
-    // Si está encendido, lo detenemos primero (o devolvemos error)
+    
     if (server.status !== 'OFFLINE') {
       throw new Error('Debes detener el servidor antes de eliminarlo');
     }
 
-    // Le pedimos al agente que borre la carpeta (vía socket)
+    
     if (this.io && deleteFiles) {
       this.io.emit('DELETE_SERVER', { id: server.id });
     }
 
-    // Borramos de la BD
+    
     return prisma.server.delete({
       where: { id: serverId }
     });

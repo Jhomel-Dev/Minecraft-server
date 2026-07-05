@@ -92,7 +92,7 @@ export function CreateServerWizard() {
         </div>
       </div>
 
-      {/* STEP 1: Basic Info */}
+      {}
       {step === 1 && (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
           <div>
@@ -136,7 +136,7 @@ export function CreateServerWizard() {
         </div>
       )}
 
-      {/* STEP 2: Version & Hardware */}
+      {}
       {step === 2 && (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
           <div>
@@ -218,7 +218,7 @@ export function CreateServerWizard() {
         </div>
       )}
 
-      {/* STEP 3: Confirmation */}
+      {}
       {step === 3 && (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
           <div className="bg-background border-2 border-surface-border rounded-blocky p-6">

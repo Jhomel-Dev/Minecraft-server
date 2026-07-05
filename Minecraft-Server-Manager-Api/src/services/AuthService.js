@@ -36,7 +36,7 @@ export default class AuthService {
     let email, name, googleId;
 
     if (isAccessToken) {
-      // Usar el access_token para obtener la información del usuario
+      
       const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: { Authorization: `Bearer ${credential}` }
       });
@@ -46,7 +46,7 @@ export default class AuthService {
       name = payload.name;
       googleId = payload.sub;
     } else {
-      // Usar el ID Token (JWT) clásico
+      
       const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
       const ticket = await googleClient.verifyIdToken({
         idToken: credential,

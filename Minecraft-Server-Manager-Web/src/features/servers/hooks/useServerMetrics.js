@@ -22,7 +22,7 @@ export function useServerMetrics(serverId) {
 
     socket.on("connect", () => {
       setIsConnected(true);
-      // We need to join the server room so we get TELEMETRY broadcasts
+      
       socket.emit("JOIN_SERVER_CONSOLE", serverId); 
     });
 

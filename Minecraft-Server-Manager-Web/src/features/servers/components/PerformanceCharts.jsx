@@ -9,7 +9,7 @@ export function PerformanceCharts({ serverId, maxMemoryMB = 4096, status }) {
 
   const isOnline = status === "ONLINE" || status === "STARTING";
 
-  // Simulate drop to 0 when offline
+  
   useEffect(() => {
     let interval;
     if (!isOnline) {
@@ -26,7 +26,7 @@ export function PerformanceCharts({ serverId, maxMemoryMB = 4096, status }) {
     return () => clearInterval(interval);
   }, [isOnline]);
 
-  // Handle real metrics when online
+  
   useEffect(() => {
     if (!isOnline) return;
     setData((current) => {
@@ -55,7 +55,7 @@ export function PerformanceCharts({ serverId, maxMemoryMB = 4096, status }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 mb-6">
       
-      {/* CPU Card */}
+      {}
       <div className={`bg-surface border-2 ${isCpuHigh ? 'border-red-500 animate-pulse-slow' : 'border-surface-border'} p-6 rounded-blocky shadow-sm flex flex-col gap-4 relative overflow-hidden`}>
         <div className="flex justify-between items-start z-10">
           <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ export function PerformanceCharts({ serverId, maxMemoryMB = 4096, status }) {
         </div>
       </div>
 
-      {/* RAM Card */}
+      {}
       <div className={`bg-surface border-2 ${isRamHigh ? 'border-red-500 animate-pulse-slow' : 'border-surface-border'} p-6 rounded-blocky shadow-sm flex flex-col gap-4 relative overflow-hidden`}>
         <div className="flex justify-between items-start z-10">
           <div className="flex items-center gap-3">

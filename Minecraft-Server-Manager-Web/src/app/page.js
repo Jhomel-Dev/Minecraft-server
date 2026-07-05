@@ -6,10 +6,10 @@ import Link from "next/link";
 export default function LandingPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 relative overflow-hidden">
-      {/* Background decorations */}
+      {}
       <div className="absolute top-0 w-full h-full -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface to-background opacity-80" />
 
-      {/* Header */}
+      {}
       <header className="absolute top-0 w-full p-6 flex justify-between items-center max-w-7xl">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary">
           <Pickaxe className="w-6 h-6" />
@@ -26,7 +26,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {}
       <div className="text-center max-w-3xl flex flex-col gap-6 items-center z-10 mt-20">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-border text-sm font-semibold mb-4">
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -55,7 +55,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Features Grid */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mt-24 z-10">
         <FeatureCard 
           icon={<Server className="w-8 h-8 text-primary" />}

@@ -67,7 +67,7 @@ export default class AuthController {
     try {
       const refreshToken = req.cookies?.refreshToken;
       if (refreshToken) {
-        // Optionally decode to get userId and call authService.logout
+        
         res.clearCookie('refreshToken');
       }
       return res.status(200).json({ message: 'Logged out' });
@@ -81,7 +81,7 @@ export default class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000 
     });
   }
 

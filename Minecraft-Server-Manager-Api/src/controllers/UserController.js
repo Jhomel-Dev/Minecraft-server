@@ -27,7 +27,7 @@ export default class UserController {
         data: { username: username.trim() }
       });
 
-      // Regenerate token to include new username
+      
       const secret = process.env.JWT_SECRET;
       const accessToken = jwt.sign(
         { id: updatedUser.id, username: updatedUser.username },

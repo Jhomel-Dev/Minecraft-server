@@ -14,7 +14,7 @@ export default class BackupService {
   }
 
   startScheduler() {
-    // Run every minute to check all servers' schedules
+    
     setInterval(async () => {
       try {
         const serversDir = path.join(os.homedir(), '.minecraft-manager', 'servers');
@@ -34,14 +34,14 @@ export default class BackupService {
             
             if (now.getHours() === hours && now.getMinutes() === minutes) {
               const lastRunKey = `${serverId}-${now.toISOString().split('T')[0]}`;
-              if (this.schedules.get(lastRunKey)) continue; // Already ran today
+              if (this.schedules.get(lastRunKey)) continue; 
               
               this.schedules.set(lastRunKey, true);
               console.log(`[BackupService] Ejecutando backup programado para ${serverId}...`);
               
               await this.createBackup(serverId, config.profile);
               
-              // Cleanup old backups
+              
               const backups = await this.listBackups(serverId);
               if (config.maxRetained && backups.length > config.maxRetained) {
                 const toDelete = backups.slice(config.maxRetained);
@@ -52,13 +52,13 @@ export default class BackupService {
               }
             }
           } catch(e) {
-            // No config or error parsing, skip
+            
           }
         }
       } catch (err) {
         console.error('[BackupService] Error in scheduler loop:', err);
       }
-    }, 60000); // 1 minute
+    }, 60000); 
   }
 
   getServerDir(serverId) {
@@ -81,7 +81,7 @@ export default class BackupService {
 
     let targetPaths = [];
 
-    // Profile Filtering
+    
     if (profile === 'world') {
       targetPaths = ['world', 'world_nether', 'world_the_end'];
     } else if (profile === 'configs') {
@@ -89,26 +89,26 @@ export default class BackupService {
       targetPaths = files.filter(f => f.endsWith('.json') || f.endsWith('.properties') || f.endsWith('.yml'));
       targetPaths.push('plugins');
     } else {
-      // Full (exclude backups folder)
+      
       const files = await fs.readdir(serverDir);
       targetPaths = files.filter(f => f !== 'backups');
     }
 
-    // Verify paths exist before zipping to avoid zip errors
+    
     const validPaths = [];
     for (const p of targetPaths) {
       try {
         await fs.access(path.join(serverDir, p));
         validPaths.push(`"${p}"`);
       } catch (e) {
-        // Path doesn't exist, ignore
+        
       }
     }
 
     if (validPaths.length === 0) throw new Error("No hay archivos válidos para respaldar.");
 
     try {
-      // Hot Backup preparation
+      
       if (isOnline) {
         console.log(`[BackupService] Servidor ${serverId} ONLINE. Iniciando Hot Backup...`);
         try {
@@ -119,7 +119,7 @@ export default class BackupService {
         } catch(e) { console.error("Error al preparar hot backup:", e); }
       }
 
-      // Execute zip
+      
       console.log(`[BackupService] Comprimiendo ${validPaths.join(' ')} -> ${zipName}`);
       const command = `cd "${serverDir}" && zip -r -9 "${zipPath}" ${validPaths.join(' ')}`;
       await execPromise(command);
@@ -130,7 +130,7 @@ export default class BackupService {
       console.error(`[BackupService] Error durante backup:`, err);
       throw new Error("Fallo al crear el backup en zip.");
     } finally {
-      // Always restore saving!
+      
       if (isOnline) {
         try {
           await this.nativeServerService.sendCommand('save-on');
@@ -159,7 +159,7 @@ export default class BackupService {
   async deleteBackup(serverId, fileName) {
     const dir = await this.getBackupsDir(serverId);
     const filePath = path.join(dir, fileName);
-    // basic security check
+    
     if (!fileName.endsWith('.zip') || fileName.includes('/')) throw new Error("Archivo inválido");
     await fs.unlink(filePath);
     return { success: true };

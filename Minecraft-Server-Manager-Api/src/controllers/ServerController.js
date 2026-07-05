@@ -88,7 +88,7 @@ export default class ServerController {
       const serverService = this.getServerService(req);
       const userId = req.user.id;
       const serverId = req.params.id;
-      const { keepFiles } = req.body || {}; // Si keepFiles es true, no borramos los archivos
+      const { keepFiles } = req.body || {}; 
       
       await serverService.deleteServer(serverId, userId, !keepFiles);
       

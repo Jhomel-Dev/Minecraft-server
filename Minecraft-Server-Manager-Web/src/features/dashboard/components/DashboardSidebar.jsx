@@ -8,7 +8,7 @@ import { getMyServers } from "@/features/servers/services/serverApi";
 
 export function DashboardSidebar() {
   const params = useParams();
-  const serverId = params?.id || "unknown"; // since route is /server/[id]
+  const serverId = params?.id || "unknown"; 
   const [serverType, setServerType] = useState(null);
 
   useEffect(() => {

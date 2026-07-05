@@ -10,5 +10,5 @@
             process.exit(0);
         }
     });
-    // Mantiene el proceso vivo
+    
     setInterval(() => {}, 1000); 

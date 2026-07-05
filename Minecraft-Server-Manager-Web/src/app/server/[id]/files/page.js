@@ -9,7 +9,7 @@ import { useToast } from "@/shared/ui/ToastProvider";
 import { Button } from "@/shared/ui/Button";
 import { useEffect, useRef } from "react";
 
-const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
+const CHUNK_SIZE = 1024 * 1024 * 5; 
 
 export default function FilesPage({ params }) {
   const unwrappedParams = use(params);
