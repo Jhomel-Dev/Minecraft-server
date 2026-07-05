@@ -25,6 +25,7 @@ export default function NetworkPage({ params }) {
       if (found) {
         setServer(found);
         setSubdomain(found.customDomain || "");
+        setTunnelSecret(found.tunnelSecret || "");
       }
     } catch (error) {
       console.error("Error loading server:", error);
@@ -47,6 +48,7 @@ export default function NetworkPage({ params }) {
       
       const payload = {};
       if (subdomain !== undefined) payload.customDomain = subdomain;
+      if (tunnelSecret !== undefined) payload.tunnelSecret = tunnelSecret;
 
       await updateSettings(serverId, payload);
       await fetchServer();
@@ -137,6 +139,17 @@ export default function NetworkPage({ params }) {
               placeholder="ej. play.miservidor.com" 
               value={subdomain}
               onChange={(e) => setSubdomain(e.target.value)}
+              className="w-full bg-background border-2 border-surface-border rounded-blocky px-4 py-3 font-bold focus:outline-none focus:border-primary transition-colors"
+            />
+            
+            <p className="text-foreground/70 text-sm font-semibold mt-2">
+              (Opcional) Token secreto si usas un servidor Bore privado:
+            </p>
+            <input 
+              type="password" 
+              placeholder="ej. mi-clave-super-secreta" 
+              value={tunnelSecret}
+              onChange={(e) => setTunnelSecret(e.target.value)}
               className="w-full bg-background border-2 border-surface-border rounded-blocky px-4 py-3 font-bold focus:outline-none focus:border-primary transition-colors"
             />
             {success && (
