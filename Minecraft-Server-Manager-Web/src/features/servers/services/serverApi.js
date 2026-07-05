@@ -29,8 +29,10 @@ const authFetch = async (endpoint, options = {}) => {
           throw new Error("No token returned");
         })
         .catch((err) => {
-          localStorage.removeItem("accessToken");
-          window.location.href = "/login";
+          if (err.message === 'SessionExpired') {
+            localStorage.removeItem("accessToken");
+            window.location.href = "/login";
+          }
           throw err;
         })
         .finally(() => {
@@ -79,8 +81,31 @@ export async function stopServer(id) {
 }
 
 export async function restartServer(id) {
+  // 1. Send the stop command
   await stopServer(id);
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  
+  // 2. Poll until the server status actually becomes OFFLINE
+  let isOffline = false;
+  for (let i = 0; i < 30; i++) { // wait up to 30 seconds
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    try {
+      const servers = await getMyServers();
+      const server = servers.find(s => s.id === id);
+      if (server && server.status === 'OFFLINE') {
+        isOffline = true;
+        break;
+      }
+    } catch (e) {
+      console.warn("Error polling server status during restart:", e);
+    }
+  }
+
+  if (!isOffline) {
+    throw new Error("El servidor tardó demasiado en detenerse. No se pudo reiniciar automáticamente.");
+  }
+
+  // 3. Start the server again
   return await startServer(id);
 }
 
