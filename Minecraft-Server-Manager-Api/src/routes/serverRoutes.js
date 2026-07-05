@@ -16,5 +16,9 @@ router.post('/:id/command', serverController.executeCommand);
 router.delete('/:id', serverController.deleteServer);
 router.post('/:id/fs', serverController.handleFileSystem);
 router.get('/:id/players', serverController.getPlayers);
+router.get('/:id/backups', serverController.getBackups);
+router.post('/:id/backups', serverController.createBackup);
+router.delete('/:id/backups/:fileName', serverController.deleteBackup);
+router.get('/:id/backups/:fileName/download', serverController.downloadBackup);
 
 export default router;
