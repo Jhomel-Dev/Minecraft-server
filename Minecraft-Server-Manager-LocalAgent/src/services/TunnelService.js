@@ -17,13 +17,22 @@ export default class TunnelService extends EventEmitter {
     }
 
     const managerDir = path.join(os.homedir(), '.minecraft-manager');
-    const borePath = path.join(managerDir, 'bore');
-    
+    const isWin = os.platform() === 'win32';
+    const boreExe = isWin ? 'bore.exe' : 'bore';
+    const borePath = path.join(managerDir, boreExe);
     
     if (!fs.existsSync(borePath)) {
       this.emit('log', `[Tunnel] Instalando motor de red sin fricción (bore)...`);
       try {
-        execSync(`curl -sSL https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz | tar -xz -C "${managerDir}" && chmod +x "${borePath}"`);
+        if (isWin) {
+          const zipUrl = 'https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-pc-windows-msvc.zip';
+          const zipPath = path.join(managerDir, 'bore.zip');
+          execSync(`curl -sSL -o "${zipPath}" "${zipUrl}"`);
+          execSync(`powershell -command "Expand-Archive -Force '${zipPath}' '${managerDir}'"`);
+        } else {
+          const tarUrl = 'https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz';
+          execSync(`curl -sSL "${tarUrl}" | tar -xz -C "${managerDir}" && chmod +x "${borePath}"`);
+        }
       } catch (err) {
         this.emit('log', `[Tunnel] Error instalando bore: ${err.message}`);
         return;

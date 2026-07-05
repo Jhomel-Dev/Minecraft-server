@@ -379,7 +379,9 @@ export default class NativeServerService extends EventEmitter {
 
     const forgeDir = path.join(this.jarsDir, `Forge-${fullVersion}`);
     const librariesDir = path.join(forgeDir, 'libraries');
-    const unixArgsFile = path.join(forgeDir, 'libraries', 'net', 'minecraftforge', 'forge', fullVersion, 'unix_args.txt');
+    const isWin = os.platform() === 'win32';
+    const argsFileName = isWin ? 'win_args.txt' : 'unix_args.txt';
+    const argsFile = path.join(forgeDir, 'libraries', 'net', 'minecraftforge', 'forge', fullVersion, argsFileName);
     const legacyJar = path.join(forgeDir, `forge-${fullVersion}.jar`);
 
     if (!fs.existsSync(librariesDir) && !fs.existsSync(legacyJar)) {
@@ -412,8 +414,8 @@ export default class NativeServerService extends EventEmitter {
       }
     }
 
-    if (fs.existsSync(unixArgsFile)) {
-      return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/minecraftforge/forge/${fullVersion}/unix_args.txt`] };
+    if (fs.existsSync(argsFile)) {
+      return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/minecraftforge/forge/${fullVersion}/${argsFileName}`] };
     } else {
       
       return { type: 'jar', path: legacyJar };
@@ -452,7 +454,9 @@ export default class NativeServerService extends EventEmitter {
 
     const neoDir = path.join(this.jarsDir, `NeoForge-${fullVersion}`);
     const librariesDir = path.join(neoDir, 'libraries');
-    const unixArgsFile = path.join(neoDir, 'libraries', 'net', 'neoforged', 'neoforge', neoVer, 'unix_args.txt');
+    const isWin = os.platform() === 'win32';
+    const argsFileName = isWin ? 'win_args.txt' : 'unix_args.txt';
+    const argsFile = path.join(neoDir, 'libraries', 'net', 'neoforged', 'neoforge', neoVer, argsFileName);
 
     if (!fs.existsSync(librariesDir)) {
       this.emit('log', `Downloading NeoForge installer for ${fullVersion}...`);
@@ -487,7 +491,7 @@ export default class NativeServerService extends EventEmitter {
       }
     }
 
-    return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/neoforged/neoforge/${neoVer}/unix_args.txt`] };
+    return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/neoforged/neoforge/${neoVer}/${argsFileName}`] };
   }
 
   async ensurePaperIsInstalled(fullVersion) {

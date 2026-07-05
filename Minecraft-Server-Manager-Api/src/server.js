@@ -23,7 +23,7 @@ app.set('io', io);
 
 const port = process.env.PORT || 3000;
 
-httpServer.listen(port, '0.0.0.0', () => {
+httpServer.listen(port, () => {
     console.log(`Server HTTP & Socket.io running on port: ${port}`);
 });
 

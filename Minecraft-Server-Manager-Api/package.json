@@ -1,6 +1,6 @@
 {
   "name": "minecraft-server-manager-api",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Panel de gestion para servidores de minceraft",
   "license": "ISC",
   "author": "Jhomel Medina",
