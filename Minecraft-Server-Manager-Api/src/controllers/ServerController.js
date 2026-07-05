@@ -1,4 +1,7 @@
 import ServerService from '../services/ServerService.js';
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
 
 export default class ServerController {
   
@@ -148,6 +151,99 @@ export default class ServerController {
     } catch (error) {
       this.handleError(res, error);
     }
+  };
+  getBackups = async (req, res) => {
+    try {
+      const serverService = this.getServerService(req);
+      const userId = req.user.id;
+      const serverId = req.params.id;
+      
+      const server = await serverService.findServerById(serverId);
+      if (server.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+      const io = req.app.get('io');
+      const agentSocket = (await io.fetchSockets()).find(s => s.isAgent);
+      if (!agentSocket) return res.status(503).json({ error: 'Agent offline' });
+
+      agentSocket.emit('list_backups', { serverId }, (response) => {
+        if (response.success) return res.status(200).json(response.data);
+        return res.status(400).json({ error: response.error });
+      });
+    } catch (error) { this.handleError(res, error); }
+  };
+
+  createBackup = async (req, res) => {
+    try {
+      const serverService = this.getServerService(req);
+      const userId = req.user.id;
+      const serverId = req.params.id;
+      const { profile } = req.body;
+      
+      const server = await serverService.findServerById(serverId);
+      if (server.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+      const io = req.app.get('io');
+      const agentSocket = (await io.fetchSockets()).find(s => s.isAgent);
+      if (!agentSocket) return res.status(503).json({ error: 'Agent offline' });
+
+      agentSocket.emit('create_backup', { serverId, profile: profile || 'full' }, (response) => {
+        if (response.success) return res.status(201).json(response);
+        return res.status(400).json({ error: response.error });
+      });
+    } catch (error) { this.handleError(res, error); }
+  };
+
+  deleteBackup = async (req, res) => {
+    try {
+      const serverService = this.getServerService(req);
+      const userId = req.user.id;
+      const { id: serverId, fileName } = req.params;
+      
+      const server = await serverService.findServerById(serverId);
+      if (server.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+      const io = req.app.get('io');
+      const agentSocket = (await io.fetchSockets()).find(s => s.isAgent);
+      if (!agentSocket) return res.status(503).json({ error: 'Agent offline' });
+
+      agentSocket.emit('delete_backup', { serverId, fileName }, (response) => {
+        if (response.success) return res.status(200).json(response);
+        return res.status(400).json({ error: response.error });
+      });
+    } catch (error) { this.handleError(res, error); }
+  };
+
+  downloadBackup = async (req, res) => {
+    try {
+      const serverService = this.getServerService(req);
+      const userId = req.user.id;
+      const { id: serverId, fileName } = req.params;
+      
+      const server = await serverService.findServerById(serverId);
+      if (server.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+      if (!fileName.endsWith('.zip') || fileName.includes('/')) return res.status(400).json({ error: 'Archivo inválido' });
+
+      const backupPath = path.join(os.homedir(), '.minecraft-manager', 'servers', serverId, 'backups', fileName);
+      console.log(`[downloadBackup] requested fileName: ${fileName}`);
+      console.log(`[downloadBackup] resolved path: ${backupPath}`);
+      console.log(`[downloadBackup] existsSync: ${fs.existsSync(backupPath)}`);
+      
+      if (!fs.existsSync(backupPath)) {
+        return res.status(404).json({ error: 'Backup no encontrado' });
+      }
+
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Type', 'application/zip');
+      
+      const fileStream = fs.createReadStream(backupPath);
+      fileStream.on('error', (err) => {
+        console.error('Error streaming file:', err);
+        if (!res.headersSent) res.status(500).json({ error: 'Error leyendo archivo' });
+      });
+      
+      return fileStream.pipe(res);
+    } catch (error) { this.handleError(res, error); }
   };
 
   getServerService(req) {

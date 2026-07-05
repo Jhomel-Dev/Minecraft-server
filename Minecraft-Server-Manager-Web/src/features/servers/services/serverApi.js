@@ -128,6 +128,42 @@ export async function getMyServers() {
   });
 }
 
+export async function getBackups(id) {
+  return authFetch(`/api/servers/${id}/backups`, {
+    method: "GET"
+  });
+}
+
+export async function createBackup(id, profile) {
+  return authFetch(`/api/servers/${id}/backups`, {
+    method: "POST",
+    body: JSON.stringify({ profile })
+  });
+}
+
+export async function deleteBackup(id, fileName) {
+  return authFetch(`/api/servers/${id}/backups/${fileName}`, {
+    method: "DELETE"
+  });
+}
+
+export async function downloadBackupZip(id, fileName) {
+  const token = localStorage.getItem("accessToken");
+  const res = await fetch(`${API_URL}/api/servers/${id}/backups/${fileName}/download`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error("No se pudo descargar el backup");
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export async function updateSettings(id, data) {
   return authFetch(`/api/servers/${id}/settings`, {
     method: "PUT",
