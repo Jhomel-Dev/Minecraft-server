@@ -24,13 +24,13 @@ export function ConsoleOutput({ logs, onClear }) {
       )}
       <div 
         ref={containerRef}
-        className="bg-[#0A0A0A] text-green-400 font-mono text-sm p-4 rounded-t-blocky border-2 border-b-0 border-surface-border h-[60vh] overflow-y-auto whitespace-pre-wrap break-words shadow-inner"
+        className="bg-[#282c34] text-[#abb2bf] font-mono text-sm p-4 rounded-t-blocky border-2 border-b-0 border-surface-border h-[60vh] overflow-y-auto whitespace-pre-wrap break-words shadow-inner"
       >
         {logs.length === 0 && (
           <span className="text-foreground/40 italic">Esperando conexión con el servidor...</span>
         )}
         {logs.map((log, index) => (
-          <div key={index} className="hover:bg-white/5 px-1 rounded-sm">{log}</div>
+          <div key={index} className="hover:bg-white/5 px-1 rounded-sm leading-relaxed">{log}</div>
         ))}
       </div>
     </div>

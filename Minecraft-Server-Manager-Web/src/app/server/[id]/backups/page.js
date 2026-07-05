@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Save, Trash2, Download, Archive, Globe, Settings, FileJson, Clock, Loader2, RefreshCw } from "lucide-react";
 import { getBackups, createBackup, deleteBackup, fsOperation, downloadBackupZip } from "@/features/servers/services/serverApi";
+import { useRef } from "react";
+import { UploadCloud, Play } from "lucide-react";
 
 function Button({ children, variant = "primary", className = "", ...props }) {
   const base = "px-4 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed";
@@ -24,7 +26,11 @@ export default function BackupsPage() {
   const [error, setError] = useState(null);
   const [manualProfile, setManualProfile] = useState("full");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmRestore, setConfirmRestore] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [toast, setToast] = useState(null);
+  const fileInputRef = useRef(null);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -105,6 +111,75 @@ export default function BackupsPage() {
     }
   };
 
+  const handleRestoreBackup = async (fileName) => {
+    try {
+      setConfirmRestore(null);
+      showToast("Restaurando backup, esto puede tardar unos minutos...", "success");
+      await fsOperation(serverId, {
+        action: "unzip",
+        filePath: `backups/${fileName}`,
+        destPath: "."
+      });
+      showToast("Backup restaurado correctamente. ¡Reinicia el servidor!", "success");
+    } catch (err) {
+      showToast("Error al restaurar: " + err.message, "error");
+    }
+  };
+
+  const handleUploadBackup = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.zip')) {
+      showToast("El backup debe ser un archivo .zip", "error");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      const filePath = `backups/${file.name}`;
+      
+      await fsOperation(serverId, {
+        action: "write",
+        filePath: filePath,
+        content: "",
+        isBase64: false
+      });
+
+      for (let i = 0; i < totalChunks; i++) {
+        setUploadProgress(`Subiendo (${i+1}/${totalChunks})...`);
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+        
+        const base64Chunk = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+          reader.readAsDataURL(chunk);
+        });
+
+        await fsOperation(serverId, {
+          action: "append",
+          filePath: filePath,
+          content: base64Chunk,
+          isBase64: true
+        });
+      }
+
+      showToast("Backup subido correctamente.");
+      fetchBackups();
+    } catch (err) {
+      console.error("Error subiendo backup:", err);
+      showToast(`Fallo al subir: ${err.message}`, "error");
+    } finally {
+      setUploading(false);
+      setUploadProgress("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSaveSettings = async () => {
     try {
       setSavingSettings(true);
@@ -175,17 +250,30 @@ export default function BackupsPage() {
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Save className="w-5 h-5 text-primary" /> Backups Existentes
             </h2>
-            <Button variant="outline" onClick={fetchBackups} disabled={loading} className="h-10 text-sm px-3">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Actualizar
-            </Button>
+            <div className="flex gap-2">
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                accept=".zip" 
+                className="hidden" 
+                onChange={handleUploadBackup}
+                disabled={uploading}
+              />
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading || loading} className="h-10 text-sm px-3 border-primary/50 text-primary hover:bg-primary/10">
+                {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> {uploadProgress}</> : <><UploadCloud className="w-4 h-4" /> Importar</>}
+              </Button>
+              <Button variant="outline" onClick={fetchBackups} disabled={loading || uploading} className="h-10 text-sm px-3">
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Actualizar
+              </Button>
+            </div>
           </div>
 
           <div className="bg-surface border-2 border-surface-border rounded-blocky overflow-hidden shadow-sm flex flex-col min-h-[300px]">
             <div className="grid grid-cols-12 gap-4 p-4 border-b-2 border-surface-border bg-surface-hover/30 text-xs font-bold text-foreground/50 uppercase tracking-wider">
-              <div className="col-span-6">Archivo</div>
+              <div className="col-span-5">Archivo</div>
               <div className="col-span-2">Tamaño</div>
               <div className="col-span-3">Fecha</div>
-              <div className="col-span-1 text-center">Acciones</div>
+              <div className="col-span-2 text-center">Acciones</div>
             </div>
             
             <div className="flex-1 flex flex-col">
@@ -202,23 +290,31 @@ export default function BackupsPage() {
               ) : (
                 backups.map((b) => (
                   <div key={b.name} className="grid grid-cols-12 gap-4 p-4 border-b border-surface-border/30 hover:bg-surface-hover/20 items-center">
-                    <div className="col-span-6 flex items-center gap-3">
-                      <Archive className="w-5 h-5 text-primary opacity-70" />
-                      <div className="flex flex-col">
-                        <span className="font-bold text-sm text-foreground">{b.name}</span>
+                    <div className="col-span-5 flex items-center gap-3">
+                      <Archive className="w-5 h-5 text-primary opacity-70 shrink-0" />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-sm text-foreground break-all">{b.name}</span>
                         <span className="text-xs text-foreground/50">{b.name.includes('world') ? 'Perfil: Mundo' : b.name.includes('configs') ? 'Perfil: Configuraciones' : 'Perfil: Completo'}</span>
                       </div>
                     </div>
                     <div className="col-span-2 text-sm font-mono">{formatSize(b.size)}</div>
                     <div className="col-span-3 text-sm text-foreground/70">{formatDate(b.date)}</div>
-                    <div className="col-span-1 flex justify-center gap-2">
+                    <div className="col-span-2 flex justify-center gap-2">
                       {confirmDelete === b.name ? (
                         <div className="flex items-center gap-1">
-                          <Button variant="danger" className="!p-1 text-xs" onClick={() => handleDeleteBackup(b.name)}>Sí</Button>
+                          <Button variant="danger" className="!p-1 text-xs" onClick={() => handleDeleteBackup(b.name)}>Borrar</Button>
                           <Button variant="ghost" className="!p-1 text-xs" onClick={() => setConfirmDelete(null)}>No</Button>
+                        </div>
+                      ) : confirmRestore === b.name ? (
+                        <div className="flex items-center gap-1">
+                          <Button className="!p-1 text-xs bg-amber-500 hover:bg-amber-600 text-white" onClick={() => handleRestoreBackup(b.name)}>Restaurar</Button>
+                          <Button variant="ghost" className="!p-1 text-xs" onClick={() => setConfirmRestore(null)}>No</Button>
                         </div>
                       ) : (
                         <>
+                          <Button variant="ghost" className="!p-2 text-amber-500 hover:bg-amber-500/20" onClick={() => setConfirmRestore(b.name)} title="Restaurar (Aplicar)">
+                            <Play className="w-4 h-4" />
+                          </Button>
                           <Button variant="ghost" className="!p-2 text-primary hover:bg-primary/20" onClick={() => handleDownloadBackup(b.name)} title="Descargar">
                             <Download className="w-4 h-4" />
                           </Button>

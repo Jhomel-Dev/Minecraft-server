@@ -1,6 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { exec } from 'child_process';
+import util from 'util';
+
+const execPromise = util.promisify(exec);
 
 export default class FileService {
   
@@ -25,6 +29,8 @@ export default class FileService {
         return this.appendFile(targetPath, content, payload.isBase64);
       case 'delete':
         return this.deleteFile(targetPath);
+      case 'unzip':
+        return this.unzipFile(targetPath, payload.destPath ? this.getSafePath(baseDir, payload.destPath) : baseDir);
       case 'download':
         return this.downloadFile(targetPath, payload.url);
       default:
@@ -131,5 +137,17 @@ export default class FileService {
       await fs.unlink(targetPath);
     }
     return { success: true };
+  }
+
+  async unzipFile(zipPath, destPath) {
+    try {
+      await fs.access(zipPath);
+      await this.ensureDirectory(destPath);
+      await execPromise(`unzip -o "${zipPath}" -d "${destPath}"`);
+      return { success: true };
+    } catch (err) {
+      console.error('Error al descomprimir:', err);
+      throw new Error(`Fallo al descomprimir: ${err.message}`);
+    }
   }
 }

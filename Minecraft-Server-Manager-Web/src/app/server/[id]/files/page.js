@@ -1,13 +1,15 @@
 "use client";
 import { useState, use } from "react";
-import { FolderOpen, AlertTriangle } from "lucide-react";
+import { FolderOpen, AlertTriangle, Upload, Loader2 } from "lucide-react";
 import { FileBreadcrumbs } from "@/features/servers/components/FileBreadcrumbs";
 import { FileList } from "@/features/servers/components/FileList";
 import { FileEditor } from "@/features/servers/components/FileEditor";
 import { fsOperation } from "@/features/servers/services/serverApi";
 import { useToast } from "@/shared/ui/ToastProvider";
 import { Button } from "@/shared/ui/Button";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+
+const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
 
 export default function FilesPage({ params }) {
   const unwrappedParams = use(params);
@@ -19,6 +21,12 @@ export default function FilesPage({ params }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCreateFile, setShowCreateFile] = useState(false);
   const [newFileName, setNewFileName] = useState("");
+  
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingText, setUploadingText] = useState("");
+  const fileInputRef = useRef(null);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,8 +85,110 @@ export default function FilesPage({ params }) {
     setNewFileName("");
   };
 
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!uploading && !editingFile) setIsDragging(true);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!uploading && !editingFile) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (uploading || editingFile) return;
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload({ target: { files: e.dataTransfer.files } });
+    }
+  };
+
+  const handleFileUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    let successCount = 0;
+
+    try {
+      for (let f = 0; f < files.length; f++) {
+        const file = files[f];
+        setUploadingText(`Subiendo ${f + 1} de ${files.length}...`);
+        
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        const filePath = currentPath ? `${currentPath}/${file.name}` : file.name;
+        
+        await fsOperation(serverId, {
+          action: "write",
+          filePath: filePath,
+          content: "",
+          isBase64: false
+        });
+
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, file.size);
+          const chunk = file.slice(start, end);
+          
+          const base64Chunk = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+            reader.readAsDataURL(chunk);
+          });
+
+          await fsOperation(serverId, {
+            action: "append",
+            filePath: filePath,
+            content: base64Chunk,
+            isBase64: true
+          });
+        }
+        successCount++;
+      }
+
+      if (successCount > 0) {
+        toast(`${successCount} archivo(s) subido(s) correctamente.`, "success");
+        loadFiles();
+      }
+    } catch (err) {
+      console.error("Error subiendo archivos:", err);
+      toast(`Fallo al subir: ${err.message}`, "error");
+    } finally {
+      setUploading(false);
+      setUploadingText("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
-    <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
+    <div 
+      className="p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full relative"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+    >
+      {isDragging && (
+        <div 
+          className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm border-4 border-dashed border-primary rounded-blocky flex flex-col items-center justify-center animate-in fade-in"
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+        >
+          <Upload className="w-16 h-16 text-primary mb-4 animate-bounce" />
+          <h2 className="text-3xl font-black text-primary mb-2">Suelta tus archivos aquí</h2>
+          <p className="text-foreground/70 font-bold text-lg">Se subirán a <span className="text-foreground font-mono bg-surface-border px-2 py-1 rounded">{currentPath || "/"}</span></p>
+        </div>
+      )}
       <div className="flex items-center justify-between bg-surface p-6 rounded-blocky border-2 border-surface-border shadow-sm">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-primary/10 text-primary rounded-blocky">
@@ -90,9 +200,23 @@ export default function FilesPage({ params }) {
           </div>
         </div>
         {!editingFile && (
-          <Button onClick={() => setShowCreateFile(true)}>
-            Nuevo Archivo
-          </Button>
+          <div className="flex gap-2">
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              className="hidden" 
+              multiple
+              onChange={handleFileUpload}
+              disabled={uploading}
+            />
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+              {uploading ? uploadingText || "Subiendo..." : "Subir Archivo"}
+            </Button>
+            <Button onClick={() => setShowCreateFile(true)} disabled={uploading}>
+              Nuevo Archivo
+            </Button>
+          </div>
         )}
       </div>
 
