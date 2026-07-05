@@ -62,28 +62,26 @@ export default class ConnectionService extends EventEmitter {
   }
 
   sendTelemetry(stats) {
-    this.verifyConnection();
+    if (!this.verifyConnection()) return;
     this.socket.emit('TELEMETRY_UPDATE', stats);
   }
 
   sendLog(logLine) {
-    this.verifyConnection();
+    if (!this.verifyConnection()) return;
     this.socket.emit('SERVER_LOG', logLine);
   }
 
   sendTunnelInfo(info) {
-    this.verifyConnection();
+    if (!this.verifyConnection()) return;
     this.socket.emit('TUNNEL_INFO', info);
   }
 
   sendStateUpdate(payload) {
-    this.verifyConnection();
+    if (!this.verifyConnection()) return;
     this.socket.emit('STATUS_UPDATE', payload);
   }
 
   verifyConnection() {
-    if (!this.socket || !this.socket.connected) {
-      throw new Error('Socket is not connected');
-    }
+    return this.socket && this.socket.connected;
   }
 }
