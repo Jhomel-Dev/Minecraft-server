@@ -16,6 +16,7 @@
   --secondary-foreground: #FFFFFF;
   
   --danger: #EF4444; /* Rojo redstone */
+  --warning: #F59E0B; /* Ámbar / Amarillo alerta */
   
   --radius: 0.25rem; /* Esquinas sutilmente bloqueadas */
 }
@@ -36,6 +37,7 @@
   --secondary-foreground: #FFFFFF;
   
   --danger: #FF4444;
+  --warning: #FBBF24; /* Ámbar oscuro */
 }
 
 @theme inline {
@@ -49,6 +51,7 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-danger: var(--danger);
+  --color-warning: var(--warning);
   
   --radius-blocky: var(--radius);
 }

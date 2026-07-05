@@ -10,7 +10,7 @@ export default class TunnelService extends EventEmitter {
     this.process = null;
   }
 
-  async startTunnel() {
+  async startTunnel(secret = null) {
     this.verifyNotRunning();
 
     const managerDir = path.join(os.homedir(), '.minecraft-manager');
@@ -29,7 +29,12 @@ export default class TunnelService extends EventEmitter {
 
     try {
       this.emit('log', `[Tunnel] Iniciando túnel TCP dinámico...`);
-      this.process = spawn(borePath, ['local', '25565', '--to', 'bore.pub']);
+      const args = ['local', '25565', '--to', 'bore.pub'];
+      if (secret) {
+        args.push('--secret', secret);
+        this.emit('log', `[Tunnel] Usando token secreto de autenticación.`);
+      }
+      this.process = spawn(borePath, args);
       
       this.process.on('error', (err) => {
         this.emit('log', `[Tunnel] Error: falló al iniciar. (Detalle: ${err.message})`);

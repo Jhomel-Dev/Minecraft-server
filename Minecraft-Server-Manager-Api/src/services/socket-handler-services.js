@@ -1,5 +1,8 @@
 import jwt from 'jsonwebtoken';
 import prisma from '../config/prisma.js';
+import DnsService from './DnsService.js';
+
+const dnsService = new DnsService();
 
 const serverLogsBuffer = new Map();
 
@@ -107,10 +110,17 @@ const handleTunnelInfo = async (socket, info) => {
       if (info.claimLink) updateData.claimLink = info.claimLink;
       
       if (Object.keys(updateData).length > 0) {
-        await prisma.server.update({
+        const server = await prisma.server.update({
           where: { id: info.serverId },
           data: updateData
         });
+        
+        // Auto-update DNS if server has custom domain
+        if (server.customDomain && info.address) {
+          dnsService.setCustomDomain(server.customDomain, info.address).catch(e => {
+            console.error('Failed to auto-update DNS in background', e);
+          });
+        }
       }
       
       // Notify clients watching the dashboard

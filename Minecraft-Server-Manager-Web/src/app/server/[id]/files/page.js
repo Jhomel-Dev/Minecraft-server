@@ -1,9 +1,12 @@
 "use client";
 import { useState, use } from "react";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, AlertTriangle } from "lucide-react";
 import { FileBreadcrumbs } from "@/features/servers/components/FileBreadcrumbs";
 import { FileList } from "@/features/servers/components/FileList";
+import { FileEditor } from "@/features/servers/components/FileEditor";
 import { fsOperation } from "@/features/servers/services/serverApi";
+import { useToast } from "@/shared/ui/ToastProvider";
+import { Button } from "@/shared/ui/Button";
 import { useEffect } from "react";
 
 export default function FilesPage({ params }) {
@@ -11,6 +14,12 @@ export default function FilesPage({ params }) {
   const serverId = unwrappedParams.id;
   const [currentPath, setCurrentPath] = useState("");
   const [files, setFiles] = useState([]);
+  const [editingFile, setEditingFile] = useState(null);
+  const [deletingFile, setDeletingFile] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showCreateFile, setShowCreateFile] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     loadFiles();
@@ -37,6 +46,35 @@ export default function FilesPage({ params }) {
 
   const handleBreadcrumbNavigate = (absolutePath) => {
     setCurrentPath(absolutePath);
+    setEditingFile(null);
+  };
+
+  const handleEdit = (file) => {
+    const fullPath = currentPath ? `${currentPath}/${file.name}` : file.name;
+    setEditingFile(fullPath);
+  };
+
+  const confirmDelete = async (fileName) => {
+    try {
+      setIsDeleting(true);
+      const targetPath = currentPath ? `${currentPath}/${fileName}` : fileName;
+      await fsOperation(serverId, { action: "delete", filePath: targetPath });
+      toast(`Archivo eliminado: ${fileName}`, "success");
+      setDeletingFile(null);
+      loadFiles();
+    } catch (err) {
+      toast(`Error al eliminar: ${err.message}`, "error");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCreateFileSubmit = () => {
+    if (!newFileName.trim()) return;
+    const fullPath = currentPath ? `${currentPath}/${newFileName.trim()}` : newFileName.trim();
+    setEditingFile(fullPath);
+    setShowCreateFile(false);
+    setNewFileName("");
   };
 
   return (
@@ -51,16 +89,64 @@ export default function FilesPage({ params }) {
             <p className="text-foreground/70 font-semibold">{serverId}</p>
           </div>
         </div>
+        {!editingFile && (
+          <Button onClick={() => setShowCreateFile(true)}>
+            Nuevo Archivo
+          </Button>
+        )}
       </div>
+
+      {!editingFile && (
+        <div className="bg-warning/10 border-2 border-warning/20 p-4 rounded-blocky flex items-start gap-4 animate-in slide-in-from-top-2">
+          <AlertTriangle className="w-6 h-6 text-warning shrink-0 mt-0.5" />
+          <div>
+            <h2 className="text-warning font-bold text-lg mb-1">Precaución al modificar archivos</h2>
+            <p className="text-foreground/80 font-semibold text-sm leading-relaxed max-w-4xl">
+              Estás accediendo a la estructura raíz del servidor. Modificar, renombrar o eliminar archivos críticos de forma incorrecta puede <strong>corromper los mundos</strong>, desconfigurar plugins, o impedir que el servidor inicie. Si no estás seguro de lo que hace un archivo, es mejor no tocarlo.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showCreateFile && (
+        <div className="bg-surface p-4 border-2 border-surface-border rounded-blocky shadow-sm animate-in fade-in flex gap-2">
+          <input 
+            type="text"
+            placeholder="ej. config.yml"
+            className="flex-1 bg-background border-2 border-surface-border rounded-blocky px-4 py-2 font-bold focus:outline-none focus:border-primary transition-colors"
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreateFileSubmit()}
+            autoFocus
+          />
+          <Button onClick={handleCreateFileSubmit} disabled={!newFileName.trim()}>Crear</Button>
+          <Button variant="outline" onClick={() => { setShowCreateFile(false); setNewFileName(""); }}>Cancelar</Button>
+        </div>
+      )}
 
       <FileBreadcrumbs path={currentPath} onNavigate={handleBreadcrumbNavigate} />
       
-      <FileList 
-        files={files} 
-        onNavigate={handleNavigate}
-        onEdit={(f) => console.log(f)}
-        onDelete={(f) => console.log(f)}
-      />
+      {editingFile ? (
+        <FileEditor 
+          serverId={serverId} 
+          filePath={editingFile} 
+          onBack={() => {
+            setEditingFile(null);
+            loadFiles();
+          }} 
+        />
+      ) : (
+        <FileList 
+          files={files} 
+          onNavigate={handleNavigate}
+          onEdit={handleEdit}
+          onDeleteRequest={(fileName) => setDeletingFile(fileName)}
+          deletingFile={deletingFile}
+          onConfirmDelete={confirmDelete}
+          onCancelDelete={() => setDeletingFile(null)}
+          isDeleting={isDeleting}
+        />
+      )}
     </div>
   );
 }
