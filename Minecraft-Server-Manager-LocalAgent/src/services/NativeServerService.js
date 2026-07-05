@@ -24,6 +24,17 @@ export default class NativeServerService extends EventEmitter {
   async startMinecraftServer(config) {
     this.validateConfig(config);
 
+    // Kill any existing ghost process on this port
+    try {
+      const port = config.port || 25565;
+      execSync(`fuser -k ${port}/tcp`, { stdio: 'ignore' });
+      this.emit('log', `[System] Liberado el puerto ${port} de procesos anteriores.`);
+      await new Promise(r => setTimeout(r, 1000));
+    } catch (e) {
+      // fuser returns 1 if no process was found, which is fine
+    }
+
+
     if (!fs.existsSync(config.dataDir)) {
       fs.mkdirSync(config.dataDir, { recursive: true });
     }
@@ -105,6 +116,7 @@ export default class NativeServerService extends EventEmitter {
       if (this.metricsInterval) clearInterval(this.metricsInterval);
       this.process = null;
       this.onlinePlayers.clear();
+      this.emit('stopped');
     });
 
     return this.process.pid.toString();

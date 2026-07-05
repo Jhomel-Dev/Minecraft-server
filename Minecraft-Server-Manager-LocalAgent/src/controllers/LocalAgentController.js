@@ -120,6 +120,12 @@ export default class LocalAgentController {
         this.connectionService.sendTelemetry({ serverId: this.currentServerId, stats });
       }
     });
+
+    this.nativeServerService.on('stopped', () => {
+      if (this.currentServerId) {
+        this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'OFFLINE' });
+      }
+    });
   }
 
   setupTunnelListeners() {
