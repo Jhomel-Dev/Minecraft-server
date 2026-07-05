@@ -47,6 +47,18 @@ export default class ConnectionService extends EventEmitter {
     this.socket.on('get_player_stats', (payload, callback) => {
       this.emit('get_player_stats', payload, callback);
     });
+    
+    this.socket.on('list_backups', (payload, callback) => {
+      this.emit('list_backups', payload, callback);
+    });
+    
+    this.socket.on('create_backup', (payload, callback) => {
+      this.emit('create_backup', payload, callback);
+    });
+    
+    this.socket.on('delete_backup', (payload, callback) => {
+      this.emit('delete_backup', payload, callback);
+    });
   }
 
   sendTelemetry(stats) {

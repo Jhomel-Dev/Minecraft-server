@@ -3,6 +3,7 @@ import TunnelService from '../services/TunnelService.js';
 import ConnectionService from '../services/ConnectionService.js';
 import FileService from '../services/FileService.js';
 import PlayerStatsService from '../services/PlayerStatsService.js';
+import BackupService from '../services/BackupService.js';
 import os from 'os';
 import path from 'path';
 
@@ -14,6 +15,7 @@ export default class LocalAgentController {
     this.connectionService = new ConnectionService(config.apiUrl, config.agentToken);
     this.fileService = new FileService();
     this.playerStatsService = new PlayerStatsService();
+    this.backupService = new BackupService(this.nativeServerService);
     
     this.initialize();
   }
@@ -102,6 +104,33 @@ export default class LocalAgentController {
         
         const players = await this.playerStatsService.getPlayers(payload.serverId, onlineNames);
         callback({ success: true, data: players });
+      } catch (error) {
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    this.connectionService.on('list_backups', async (payload, callback) => {
+      try {
+        const backups = await this.backupService.listBackups(payload.serverId);
+        callback({ success: true, data: backups });
+      } catch (error) {
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    this.connectionService.on('create_backup', async (payload, callback) => {
+      try {
+        const result = await this.backupService.createBackup(payload.serverId, payload.profile);
+        callback(result);
+      } catch (error) {
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    this.connectionService.on('delete_backup', async (payload, callback) => {
+      try {
+        const result = await this.backupService.deleteBackup(payload.serverId, payload.fileName);
+        callback(result);
       } catch (error) {
         callback({ success: false, error: error.message });
       }
