@@ -69,13 +69,84 @@ export default class PlayerStatsService {
             const countObj = item.Count || item.count;
             
             if (slotObj && idObj) {
+              let customName = null;
+              let enchantments = [];
+              const tagObj = item.tag;
+              
+              if (tagObj && tagObj.value) {
+                // Parse Custom Name
+                if (tagObj.value.display && tagObj.value.display.value && tagObj.value.display.value.Name) {
+                  try {
+                    const nameData = JSON.parse(tagObj.value.display.value.Name.value);
+                    customName = nameData.text || nameData.translate || nameData.extra?.[0]?.text || tagObj.value.display.value.Name.value;
+                  } catch (e) {
+                    customName = tagObj.value.display.value.Name.value.replace(/§[0-9a-fk-or]/ig, '');
+                  }
+                }
+                
+                // Parse Enchantments (1.20.4 and below)
+                if (tagObj.value.Enchantments && tagObj.value.Enchantments.value && tagObj.value.Enchantments.value.value) {
+                  const enchs = tagObj.value.Enchantments.value.value;
+                  enchs.forEach(e => {
+                    if (e.id && e.lvl) {
+                      enchantments.push({
+                        id: e.id.value.replace('minecraft:', ''),
+                        lvl: e.lvl.value
+                      });
+                    }
+                  });
+                }
+                // Parse StoredEnchantments (Books)
+                if (tagObj.value.StoredEnchantments && tagObj.value.StoredEnchantments.value && tagObj.value.StoredEnchantments.value.value) {
+                  const enchs = tagObj.value.StoredEnchantments.value.value;
+                  enchs.forEach(e => {
+                    if (e.id && e.lvl) {
+                      enchantments.push({
+                        id: e.id.value.replace('minecraft:', ''),
+                        lvl: e.lvl.value
+                      });
+                    }
+                  });
+                }
+              }
+              
               inventory.push({
                 slot: slotObj.value,
                 id: idObj.value,
-                count: countObj ? countObj.value : 1
+                count: countObj ? countObj.value : 1,
+                customName,
+                enchantments
               });
             }
           });
+        }
+        
+        // Extract Position
+        let pos = [0, 0, 0];
+        let dimension = "minecraft:overworld";
+        if (parsed.value.Pos && parsed.value.Pos.value && parsed.value.Pos.value.value) {
+          pos = parsed.value.Pos.value.value.map(p => Math.floor(p));
+        }
+        if (parsed.value.Dimension && parsed.value.Dimension.value) {
+          dimension = parsed.value.Dimension.value;
+        }
+        
+        // Read Stats (world/stats/uuid.json)
+        let deaths = 0;
+        let playTime = 0;
+        let walkDistance = 0;
+        try {
+          const statsPath = path.join(baseDir, 'world', 'stats', `${uuid}.json`);
+          const statsStr = await fs.readFile(statsPath, 'utf-8');
+          const statsObj = JSON.parse(statsStr);
+          if (statsObj.stats && statsObj.stats['minecraft:custom']) {
+            const custom = statsObj.stats['minecraft:custom'];
+            deaths = custom['minecraft:deaths'] || 0;
+            playTime = custom['minecraft:play_time'] || 0; // ticks
+            walkDistance = custom['minecraft:walk_one_cm'] || 0; // cm
+          }
+        } catch (e) {
+          // Stats file might not exist yet
         }
         
         players.push({
@@ -85,6 +156,9 @@ export default class PlayerStatsService {
           food,
           xpLevel,
           inventory,
+          pos,
+          dimension,
+          stats: { deaths, playTime, walkDistance },
           lastSeen: Date.now(), // Ideally we'd stat the file
           isOnline: onlineNames.includes(name)
         });
