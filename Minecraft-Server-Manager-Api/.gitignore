@@ -4,4 +4,7 @@ logs
 !logs/.gitkeep
 
 /src/generated/prisma
-\n# Prisma Database\n*.db\n*.db-journal\n
+
+# Prisma Database
+*.db
+*.db-journal
