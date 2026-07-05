@@ -18,22 +18,27 @@ export default function PlayersPage({ params }) {
       // Fetch data from NBT parser API
       const playersData = await getPlayers(serverId);
       
-      // We can also fetch ops and bans if needed
       const opsRes = await fsOperation(serverId, { action: "read", filePath: "ops.json" }).catch(() => ({ content: "[]" }));
       const bansRes = await fsOperation(serverId, { action: "read", filePath: "banned-players.json" }).catch(() => ({ content: "[]" }));
+      const whitelistRes = await fsOperation(serverId, { action: "read", filePath: "whitelist.json" }).catch(() => ({ content: "[]" }));
 
       const ops = JSON.parse(opsRes.content || "[]");
       const bans = JSON.parse(bansRes.content || "[]");
+      const whitelist = JSON.parse(whitelistRes.content || "[]");
 
       const opUuids = ops.map(op => op.uuid);
       const banUuids = bans.map(ban => ban.uuid);
+      const whitelistNames = whitelist.map(w => w.name.toLowerCase()); // Whitelist sometimes relies on names or uuids depending on server mode
 
       const enrichedPlayers = (Array.isArray(playersData) ? playersData : []).map(p => ({
         ...p,
         isOp: opUuids.includes(p.uuid),
-        isBanned: banUuids.includes(p.uuid)
+        isBanned: banUuids.includes(p.uuid),
+        isWhitelisted: whitelistNames.includes(p.name.toLowerCase())
       }));
 
+      // Add offline players that are on the whitelist but never joined (if we just want to list them)
+      // Actually, let's keep it simple and just show the ones that exist in the NBT data
       setPlayers(enrichedPlayers);
     } catch (error) {
       console.error("Error loading players:", error);
@@ -56,6 +61,15 @@ export default function PlayersPage({ params }) {
   const handleKick = (playerName) => handleCommand(`kick ${playerName}`);
   const handleBanToggle = (player) => handleCommand(player.isBanned ? `pardon ${player.name}` : `ban ${player.name}`);
   const handleOpToggle = (player) => handleCommand(player.isOp ? `deop ${player.name}` : `op ${player.name}`);
+  const handleWhitelistToggle = (player) => handleCommand(player.isWhitelisted ? `whitelist remove ${player.name}` : `whitelist add ${player.name}`);
+
+  const [newWhitelistName, setNewWhitelistName] = useState("");
+  const handleManualWhitelistAdd = (e) => {
+    e.preventDefault();
+    if (!newWhitelistName) return;
+    handleCommand(`whitelist add ${newWhitelistName}`);
+    setNewWhitelistName("");
+  };
 
   useEffect(() => {
     fetchPlayers();
@@ -84,6 +98,18 @@ export default function PlayersPage({ params }) {
         </div>
 
         <div className="flex gap-4 items-center">
+          <form onSubmit={handleManualWhitelistAdd} className="flex gap-2">
+            <input 
+              type="text" 
+              placeholder="Añadir a whitelist..."
+              value={newWhitelistName}
+              onChange={(e) => setNewWhitelistName(e.target.value)}
+              className="bg-background border-2 border-surface-border rounded-blocky px-3 py-2 text-sm outline-none focus:border-primary w-40"
+            />
+            <Button type="submit" variant="outline" className="border-2 border-surface-border" title="Añadir jugador">
+              +
+            </Button>
+          </form>
           <Button variant="outline" onClick={fetchPlayers} disabled={loading} className="border-2 border-surface-border">
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Actualizar
           </Button>
@@ -149,6 +175,9 @@ export default function PlayersPage({ params }) {
                 <div className="flex gap-2">
                   <Button variant="outline" className="text-secondary border-secondary hover:bg-secondary hover:text-white" size="sm" onClick={() => handleKick(player.name)} title="Expulsar (Kick)">
                     Kick
+                  </Button>
+                  <Button variant="outline" className="text-primary border-primary hover:bg-primary hover:text-white" size="sm" onClick={() => handleWhitelistToggle(player)} title={player.isWhitelisted ? "Quitar de Whitelist" : "Añadir a Whitelist"}>
+                    {player.isWhitelisted ? "W-ON" : "W-OFF"}
                   </Button>
                   <Button variant="outline" className="text-warning border-warning hover:bg-warning hover:text-white" size="sm" onClick={() => handleOpToggle(player)} title={player.isOp ? "Quitar OP" : "Dar OP"}>
                     {player.isOp ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
