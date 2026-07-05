@@ -191,7 +191,7 @@ export default class LocalAgentController {
 
       this.connectionService.sendLog({ serverId: this.currentServerId, logLine: '[System] Booting Native server...' });
       await this.nativeServerService.startMinecraftServer(serverConfig);
-      this.tunnelService.startTunnel(serverConfig.tunnelSecret);
+      await this.tunnelService.startTunnel(serverConfig.tunnelSecret);
       this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'ONLINE' });
     } catch (error) {
       console.error("Error in handleStartCommand:", error);

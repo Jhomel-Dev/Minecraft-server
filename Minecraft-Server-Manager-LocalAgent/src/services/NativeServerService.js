@@ -47,7 +47,8 @@ export default class NativeServerService extends EventEmitter {
     // Modo de Compatibilidad (Desactivar Zero-Copy)
     if (config.compatibilityMode && softwareConfig.type === 'jar') {
       this.emit('log', '[Compatibility Mode] Copiando servidor localmente para evitar conflictos...');
-      const localJarPath = path.join(config.dataDir, 'server.jar');
+      const fileName = path.basename(softwareConfig.path);
+      const localJarPath = path.join(config.dataDir, fileName);
       fs.copyFileSync(softwareConfig.path, localJarPath);
       softwareConfig.path = localJarPath;
     }
@@ -243,12 +244,45 @@ export default class NativeServerService extends EventEmitter {
     return { type: 'jar', path: jarPath };
   }
 
-  async ensurePurpurIsInstalled(version) {
+  async resolvePurpurVersion(fullVersion) {
+    const res = await fetch('https://api.purpurmc.org/v2/purpur');
+    if (!res.ok) throw new Error('Failed to fetch Purpur metadata');
+    const data = await res.json();
+    
+    let mcVer = fullVersion;
+    let buildVer = null;
+    
+    const versionsArr = data.versions;
+    if (!versionsArr.includes(fullVersion)) {
+      versionsArr.sort((a, b) => b.length - a.length);
+      for (const v of versionsArr) {
+        if (fullVersion.startsWith(v + '-')) {
+          mcVer = v;
+          buildVer = fullVersion.substring(v.length + 1);
+          break;
+        }
+      }
+    }
+    return { mcVer, buildVer };
+  }
+
+  async ensurePurpurIsInstalled(fullVersion) {
+    const { mcVer: version, buildVer } = await this.resolvePurpurVersion(fullVersion);
     this.emit('log', `Fetching Purpur builds for ${version}...`);
     const res = await fetch(`https://api.purpurmc.org/v2/purpur/${version}`);
     if (!res.ok) throw new Error(`Failed to fetch Purpur metadata: ${res.status}`);
     const data = await res.json();
-    const latestBuild = data.builds.latest;
+    
+    let latestBuild;
+    if (buildVer) {
+      if (!data.builds.all.includes(buildVer)) {
+        throw new Error(`Build ${buildVer} not found for Purpur ${version}`);
+      }
+      latestBuild = buildVer;
+    } else {
+      latestBuild = data.builds.latest;
+    }
+
     const jarName = `purpur-${version}-b${latestBuild}.jar`;
     const jarPath = path.join(this.jarsDir, jarName);
 
@@ -260,18 +294,58 @@ export default class NativeServerService extends EventEmitter {
     return { type: 'jar', path: jarPath };
   }
 
-  async ensureFoliaIsInstalled(version) {
+  async resolvePaperFoliaVersion(software, fullVersion) {
+    const projectRes = await fetch(`https://fill.papermc.io/v3/projects/${software}`, { headers: { 'User-Agent': 'Minecraft-Server-Manager/1.0 (contact@example.com)' } });
+    if (!projectRes.ok) throw new Error(`Failed to fetch ${software} metadata`);
+    const projectData = await projectRes.json();
+    
+    let versionsArr = [];
+    if (Array.isArray(projectData.versions)) {
+      versionsArr = projectData.versions;
+    } else if (typeof projectData.versions === 'object') {
+      versionsArr = Object.values(projectData.versions).flat();
+    }
+    
+    let mcVer = fullVersion;
+    let buildVer = null;
+    
+    if (!versionsArr.includes(fullVersion)) {
+      versionsArr.sort((a, b) => b.length - a.length);
+      for (const v of versionsArr) {
+        if (fullVersion.startsWith(v + '-')) {
+          mcVer = v;
+          buildVer = fullVersion.substring(v.length + 1);
+          break;
+        }
+      }
+    }
+    
+    return { mcVer, buildVer };
+  }
+
+  async ensureFoliaIsInstalled(fullVersion) {
+    const { mcVer: version, buildVer } = await this.resolvePaperFoliaVersion('folia', fullVersion);
     this.emit('log', `Fetching Folia builds for ${version}...`);
-    const res = await fetch(`https://api.papermc.io/v2/projects/folia/versions/${version}`);
+    const res = await fetch(`https://fill.papermc.io/v3/projects/folia/versions/${version}`, { headers: { 'User-Agent': 'Minecraft-Server-Manager/1.0 (contact@example.com)' } });
     if (!res.ok) throw new Error(`Failed to fetch Folia metadata`);
     const data = await res.json();
-    const latestBuild = data.builds[data.builds.length - 1];
+    
+    let latestBuild;
+    if (buildVer) {
+      if (!data.builds.includes(parseInt(buildVer))) throw new Error(`Build ${buildVer} not found for Folia ${version}`);
+      latestBuild = parseInt(buildVer);
+    } else {
+      latestBuild = data.builds[data.builds.length - 1];
+    }
+    
     const jarName = `folia-${version}-b${latestBuild}.jar`;
     const jarPath = path.join(this.jarsDir, jarName);
 
     if (!fs.existsSync(jarPath)) {
       this.emit('log', `Downloading Folia ${version}...`);
-      const downloadUrl = `https://api.papermc.io/v2/projects/folia/versions/${version}/builds/${latestBuild}/downloads/folia-${version}-${latestBuild}.jar`;
+      const buildRes = await fetch(`https://fill.papermc.io/v3/projects/folia/versions/${version}/builds/${latestBuild}`, { headers: { 'User-Agent': 'Minecraft-Server-Manager/1.0 (contact@example.com)' } });
+      const buildData = await buildRes.json();
+      const downloadUrl = buildData.downloads['server:default']?.url || buildData.downloads.application?.url || Object.values(buildData.downloads)[0].url;
       await this.downloadFile(downloadUrl, jarPath);
     }
     return { type: 'jar', path: jarPath };
@@ -282,9 +356,9 @@ export default class NativeServerService extends EventEmitter {
     let forgeVer = null;
     
     if (fullVersion.includes('-')) {
-      const parts = fullVersion.split('-');
-      mcVer = parts[0];
-      forgeVer = parts[1];
+      const splitIdx = fullVersion.indexOf('-');
+      mcVer = fullVersion.substring(0, splitIdx);
+      forgeVer = fullVersion.substring(splitIdx + 1);
     } else {
       this.emit('log', `Fetching latest Forge build for ${mcVer}...`);
       try {
@@ -351,9 +425,9 @@ export default class NativeServerService extends EventEmitter {
     let neoVer = null;
 
     if (fullVersion.includes('-')) {
-      const parts = fullVersion.split('-');
-      mcVer = parts[0];
-      neoVer = parts[1];
+      const splitIdx = fullVersion.indexOf('-');
+      mcVer = fullVersion.substring(0, splitIdx);
+      neoVer = fullVersion.substring(splitIdx + 1);
     } else {
       this.emit('log', `Fetching latest NeoForge build for ${mcVer}...`);
       try {
@@ -378,7 +452,7 @@ export default class NativeServerService extends EventEmitter {
 
     const neoDir = path.join(this.jarsDir, `NeoForge-${fullVersion}`);
     const librariesDir = path.join(neoDir, 'libraries');
-    const unixArgsFile = path.join(neoDir, 'libraries', 'net', 'neoforged', 'neoforge', fullVersion, 'unix_args.txt');
+    const unixArgsFile = path.join(neoDir, 'libraries', 'net', 'neoforged', 'neoforge', neoVer, 'unix_args.txt');
 
     if (!fs.existsSync(librariesDir)) {
       this.emit('log', `Downloading NeoForge installer for ${fullVersion}...`);
@@ -413,23 +487,32 @@ export default class NativeServerService extends EventEmitter {
       }
     }
 
-    return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/neoforged/neoforge/${fullVersion}/unix_args.txt`] };
+    return { type: 'args', args: ['@user_jvm_args.txt', `@libraries/net/neoforged/neoforge/${neoVer}/unix_args.txt`] };
   }
 
-  async ensurePaperIsInstalled(version) {
+  async ensurePaperIsInstalled(fullVersion) {
+    const { mcVer: version, buildVer } = await this.resolvePaperFoliaVersion('paper', fullVersion);
     this.emit('log', `Fetching PaperMC builds for ${version}...`);
-    const res = await fetch(`https://api.papermc.io/v2/projects/paper/versions/${version}`);
+    const res = await fetch(`https://fill.papermc.io/v3/projects/paper/versions/${version}`, { headers: { 'User-Agent': 'Minecraft-Server-Manager/1.0 (contact@example.com)' } });
     if (!res.ok) throw new Error(`Failed to fetch Paper version metadata: ${res.status}`);
 
     const data = await res.json();
-    const latestBuild = data.builds[data.builds.length - 1];
+    let latestBuild;
+    if (buildVer) {
+      if (!data.builds.includes(parseInt(buildVer))) throw new Error(`Build ${buildVer} not found for Paper ${version}`);
+      latestBuild = parseInt(buildVer);
+    } else {
+      latestBuild = data.builds[data.builds.length - 1];
+    }
 
     const jarName = `paper-${version}-b${latestBuild}.jar`;
     const jarPath = path.join(this.jarsDir, jarName);
 
     if (!fs.existsSync(jarPath)) {
       this.emit('log', `Downloading Paper ${version} build ${latestBuild} to Vault...`);
-      const downloadUrl = `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/${latestBuild}/downloads/paper-${version}-${latestBuild}.jar`;
+      const buildRes = await fetch(`https://fill.papermc.io/v3/projects/paper/versions/${version}/builds/${latestBuild}`, { headers: { 'User-Agent': 'Minecraft-Server-Manager/1.0 (contact@example.com)' } });
+      const buildData = await buildRes.json();
+      const downloadUrl = buildData.downloads['server:default']?.url || buildData.downloads.application?.url || Object.values(buildData.downloads)[0].url;
       await this.downloadFile(downloadUrl, jarPath);
       this.emit('log', `Paper ${version} build ${latestBuild} downloaded successfully.`);
     }
@@ -455,8 +538,31 @@ export default class NativeServerService extends EventEmitter {
     }
   }
 
-  async ensureFabricIsInstalled(version, dataDir) {
-    const fabricDir = path.join(this.jarsDir, `Fabric-${version}`);
+  async resolveFabricVersion(fullVersion) {
+    const res = await fetch("https://meta.fabricmc.net/v2/versions/game");
+    if (!res.ok) throw new Error('Failed to fetch Fabric metadata');
+    const data = await res.json();
+    const versionsArr = data.map(v => v.version);
+    
+    let mcVer = fullVersion;
+    let loaderVer = null;
+    
+    if (!versionsArr.includes(fullVersion)) {
+      versionsArr.sort((a, b) => b.length - a.length);
+      for (const v of versionsArr) {
+        if (fullVersion.startsWith(v + '-')) {
+          mcVer = v;
+          loaderVer = fullVersion.substring(v.length + 1);
+          break;
+        }
+      }
+    }
+    return { mcVer, loaderVer };
+  }
+
+  async ensureFabricIsInstalled(fullVersion, dataDir) {
+    const { mcVer, loaderVer } = await this.resolveFabricVersion(fullVersion);
+    const fabricDir = path.join(this.jarsDir, `Fabric-${fullVersion}`);
     const launchJar = path.join(fabricDir, 'fabric-server-launch.jar');
     const librariesDir = path.join(fabricDir, 'libraries');
 
@@ -468,22 +574,29 @@ export default class NativeServerService extends EventEmitter {
       const installerVersion = data.find(i => i.stable).version;
       const installerUrl = `https://maven.fabricmc.net/net/fabricmc/fabric-installer/${installerVersion}/fabric-installer-${installerVersion}.jar`;
       
-      const installerPath = path.join(this.jarsDir, 'fabric-installer.jar');
+      const installerPath = path.join(this.jarsDir, `fabric-installer-${fullVersion}.jar`);
       await this.downloadFile(installerUrl, installerPath);
       
-      this.emit('log', `Installing Fabric ${version} to Vault...`);
+      this.emit('log', `Installing Fabric (MC: ${mcVer}${loaderVer ? ', Loader: ' + loaderVer : ''}) to Vault...`);
       if (!fs.existsSync(fabricDir)) fs.mkdirSync(fabricDir, { recursive: true });
       
-      const javaExe = await this.ensureJavaIsInstalled(this.getRequiredJavaVersion(version));
-      execSync(`"${javaExe}" -jar "${installerPath}" server -mcversion ${version} -downloadMinecraft`, { cwd: fabricDir });
+      const javaExe = await this.ensureJavaIsInstalled(this.getRequiredJavaVersion(mcVer));
+      const loaderArg = loaderVer ? `-loader ${loaderVer}` : '';
+      execSync(`"${javaExe}" -jar "${installerPath}" server -mcversion ${mcVer} ${loaderArg} -downloadMinecraft`, { cwd: fabricDir });
       
       fs.unlinkSync(installerPath);
-      this.emit('log', `Fabric ${version} installed in Vault.`);
+      this.emit('log', `Fabric ${fullVersion} installed in Vault.`);
     }
 
     this.emit('log', `Linking Fabric libraries to server...`);
     const serverLibsDir = path.join(dataDir, 'libraries');
     this.smartLink(librariesDir, serverLibsDir);
+
+    const vaultServerJar = path.join(fabricDir, 'server.jar');
+    const localServerJar = path.join(dataDir, 'server.jar');
+    if (fs.existsSync(vaultServerJar)) {
+      this.smartLink(vaultServerJar, localServerJar);
+    }
 
     return { type: 'jar', path: launchJar };
   }

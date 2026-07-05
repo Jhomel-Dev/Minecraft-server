@@ -11,7 +11,10 @@ export default class TunnelService extends EventEmitter {
   }
 
   async startTunnel(secret = null) {
-    this.verifyNotRunning();
+    if (this.isRunning()) {
+      this.emit('log', '[Tunnel] El túnel ya está en ejecución, ignorando orden.');
+      return;
+    }
 
     const managerDir = path.join(os.homedir(), '.minecraft-manager');
     const borePath = path.join(managerDir, 'bore');
@@ -77,7 +80,7 @@ export default class TunnelService extends EventEmitter {
     this.process = null;
   }
 
-  verifyNotRunning() {
-    if (this.process) throw new Error('Tunnel is already running');
+  isRunning() {
+    return this.process !== null;
   }
 }
