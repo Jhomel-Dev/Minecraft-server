@@ -5,6 +5,7 @@ import path from 'path';
 import os from 'os';
 import { pipeline } from 'stream/promises';
 import pidusage from 'pidusage';
+import { isWindows, getOsInfo, extractArchive, freePort, killProcessHard } from '../utils/osUtils.js';
 
 export default class NativeServerService extends EventEmitter {
   constructor() {
@@ -27,7 +28,7 @@ export default class NativeServerService extends EventEmitter {
     
     try {
       const port = config.port || 25565;
-      execSync(`fuser -k ${port}/tcp`, { stdio: 'ignore' });
+      freePort(port);
       this.emit('log', `[System] Liberado el puerto ${port} de procesos anteriores.`);
       await new Promise(r => setTimeout(r, 1000));
     } catch (e) {
@@ -137,7 +138,7 @@ export default class NativeServerService extends EventEmitter {
 
       setTimeout(() => {
         if (this.process) {
-          this.process.kill('SIGKILL');
+          killProcessHard(this.process.pid);
           this.process = null;
         }
         resolve();
@@ -180,8 +181,9 @@ export default class NativeServerService extends EventEmitter {
   }
 
   async ensureJavaIsInstalled(version) {
+    const osInfo = getOsInfo();
     const javaDir = path.join(this.javaDir, version.toString());
-    const expectedExe = path.join(javaDir, 'bin', 'java');
+    const expectedExe = path.join(javaDir, 'bin', `java${osInfo.executableExt}`);
 
     if (fs.existsSync(expectedExe)) {
       return expectedExe;
@@ -189,15 +191,15 @@ export default class NativeServerService extends EventEmitter {
 
     this.emit('log', `Downloading Java ${version}...`);
 
-    const downloadUrl = `https://api.adoptium.net/v3/binary/latest/${version}/ga/linux/x64/jdk/hotspot/normal/eclipse`;
-    const archivePath = path.join(this.javaDir, `java${version}.tar.gz`);
+    const downloadUrl = `https://api.adoptium.net/v3/binary/latest/${version}/ga/${osInfo.platform}/x64/jdk/hotspot/normal/eclipse`;
+    const archivePath = path.join(this.javaDir, `java${version}${osInfo.archiveExt}`);
     const extractPath = path.join(this.javaDir, `extract_${version}`);
 
     await this.downloadFile(downloadUrl, archivePath);
 
     this.emit('log', `Extracting Java ${version}...`);
     if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath, { recursive: true });
-    execSync(`tar -xzf "${archivePath}" -C "${extractPath}"`);
+    await extractArchive(archivePath, extractPath);
 
     const extractedFolders = fs.readdirSync(extractPath);
     const jdkFolder = path.join(extractPath, extractedFolders[0]);
@@ -206,7 +208,10 @@ export default class NativeServerService extends EventEmitter {
 
     fs.rmSync(extractPath, { recursive: true, force: true });
     fs.rmSync(archivePath, { force: true });
-    execSync(`chmod +x "${expectedExe}"`);
+    
+    if (!isWindows) {
+      execSync(`chmod +x "${expectedExe}"`);
+    }
 
     this.emit('log', `Java ${version} installed successfully.`);
     return expectedExe;
