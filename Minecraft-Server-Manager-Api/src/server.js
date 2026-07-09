@@ -21,17 +21,19 @@ handleSocketEvents(io);
 app.set('io', io);
 
 
-const port = process.env.PORT || 3000;
+let port = parseInt(process.env.PORT) || 3000;
 
-httpServer.listen(port, () => {
-    console.log(`Server HTTP & Socket.io running on port: ${port}`);
-});
-
+const startServer = (currentPort) => {
+    httpServer.listen(currentPort, () => {
+        console.log(`Server HTTP & Socket.io running on port: ${currentPort}`);
+    });
+};
 
 httpServer.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-        console.error(` ERROR: Puerto ${port} ya está en uso`);
-        process.exit(1);
+        console.error(` ERROR: Puerto ${port} ya está en uso, intentando el siguiente...`);
+        port++;
+        startServer(port);
     } else if (err.code === 'EACCES') {
         console.error(` ERROR: Sin permisos para usar puerto ${port}`);
         process.exit(1);
@@ -40,6 +42,8 @@ httpServer.on('error', (err) => {
         process.exit(1);
     }
 });
+
+startServer(port);
 
 
 io.engine.on('connection_error', (err) => {
