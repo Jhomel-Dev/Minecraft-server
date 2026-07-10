@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
 import app from "./index.js"; 
-import { handleSocketEvents } from "./services/socket-handler-services.js";
+import { handleSocketEvents } from "./modules/agent/gateways/agent.gateway.js";
 import dotenv from "dotenv"
 
 dotenv.config();
