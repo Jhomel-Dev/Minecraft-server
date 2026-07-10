@@ -150,6 +150,12 @@ export default class LocalAgentController {
       }
     });
 
+    this.nativeServerService.on('started', () => {
+      if (this.currentServerId) {
+        this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'ONLINE' });
+      }
+    });
+
     this.nativeServerService.on('stopped', () => {
       if (this.currentServerId) {
         this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'OFFLINE' });
@@ -192,7 +198,6 @@ export default class LocalAgentController {
       this.connectionService.sendLog({ serverId: this.currentServerId, logLine: '[System] Booting Native server...' });
       await this.nativeServerService.startMinecraftServer(serverConfig);
       await this.tunnelService.startTunnel(serverConfig.tunnelSecret);
-      this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'ONLINE' });
     } catch (error) {
       console.error("Error in handleStartCommand:", error);
       this.connectionService.sendLog({ serverId: this.currentServerId, logLine: `Error starting server: ${error.message}` });
