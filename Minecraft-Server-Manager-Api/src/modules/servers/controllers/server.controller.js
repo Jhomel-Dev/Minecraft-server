@@ -1,4 +1,4 @@
-import ServerService from '../services/ServerService.js';
+import ServerService from '../services/server.service.js';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';

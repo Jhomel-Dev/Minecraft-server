@@ -1,5 +1,5 @@
-import prisma from '../config/prisma.js';
-import DnsService from './DnsService.js';
+import prisma from '../../../core/database/prisma.client.js';
+import DnsService from './dns.service.js';
 
 const dnsService = new DnsService();
 

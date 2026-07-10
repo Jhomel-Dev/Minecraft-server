@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import VersionService from '../services/VersionService.js';
+import VersionService from '../services/version.service.js';
 
 const router = Router();
 
