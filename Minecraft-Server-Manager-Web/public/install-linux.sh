@@ -9,6 +9,20 @@ if ! command -v unzip &> /dev/null; then
     exit 1
 fi
 
+# Definir ruta de instalación estándar (Documentos)
+if [ -d "$HOME/Documentos" ]; then
+    DOC_DIR="$HOME/Documentos"
+elif [ -d "$HOME/Documents" ]; then
+    DOC_DIR="$HOME/Documents"
+else
+    DOC_DIR="$HOME"
+fi
+
+INSTALL_DIR="$DOC_DIR/CraftControlAgent"
+echo "Instalando en: $INSTALL_DIR"
+mkdir -p "$INSTALL_DIR"
+cd "$INSTALL_DIR" || exit 1
+
 # Descargar Node.js si no existe
 if ! command -v node &> /dev/null; then
     echo "Node.js no detectado. Descargando versión portable (v20)..."
@@ -17,8 +31,7 @@ if ! command -v node &> /dev/null; then
     export PATH="$PWD/node-v20.11.1-linux-x64/bin:$PATH"
 fi
 
-# Descargar Agente si no existe
-if [ ! -d "craft-control-agent" ]; then
+if [ ! -f "index.js" ]; then
     echo "Descargando código del Agente..."
     # Asumimos que el script está en la misma URL base que el zip
     BASE_URL=$(echo "$1" | sed 's|/install-linux.sh||')
@@ -28,10 +41,9 @@ if [ ! -d "craft-control-agent" ]; then
     fi
     curl -sL -o agent.zip "$BASE_URL/craft-control-agent-full.zip"
     echo "Extrayendo Agente..."
-    unzip -q agent.zip -d craft-control-agent
+    unzip -q agent.zip
     rm agent.zip
 fi
 
-cd craft-control-agent
 echo "Iniciando Agente..."
 node index.js

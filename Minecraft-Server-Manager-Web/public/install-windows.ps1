@@ -3,6 +3,15 @@ Write-Host "=========================================="
 Write-Host "    Instalando CraftControl Agent         "
 Write-Host "=========================================="
 
+# Definir ruta de instalación estándar (Documentos)
+$DocDir = [Environment]::GetFolderPath("MyDocuments")
+$InstallDir = Join-Path $DocDir "CraftControlAgent"
+if (-not (Test-Path $InstallDir)) {
+    New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+}
+Write-Host "Instalando en: $InstallDir"
+Set-Location $InstallDir
+
 # Check for Node.js
 $NodeInstalled = Get-Command "node" -ErrorAction SilentlyContinue
 if (-not $NodeInstalled) {
@@ -14,7 +23,7 @@ if (-not $NodeInstalled) {
     $env:Path = "$PWD\node-v20.11.1-win-x64;$env:Path"
 }
 
-if (-not (Test-Path "craft-control-agent")) {
+if (-not (Test-Path "index.js")) {
     Write-Host "Descargando código del Agente..."
     $BaseUrl = $args[0]
     if (-not $BaseUrl) {
@@ -23,10 +32,9 @@ if (-not (Test-Path "craft-control-agent")) {
     }
     Invoke-WebRequest -Uri "$BaseUrl/craft-control-agent-full.zip" -OutFile "agent.zip"
     Write-Host "Extrayendo Agente..."
-    Expand-Archive -Path "agent.zip" -DestinationPath "craft-control-agent" -Force
+    Expand-Archive -Path "agent.zip" -DestinationPath "." -Force
     Remove-Item "agent.zip"
 }
 
-Set-Location "craft-control-agent"
 Write-Host "Iniciando Agente..."
 node index.js
