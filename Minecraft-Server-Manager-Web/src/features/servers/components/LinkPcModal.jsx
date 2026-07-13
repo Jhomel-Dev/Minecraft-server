@@ -35,20 +35,23 @@ export function LinkPcModal({ token, onClose }) {
           <div>
             <h3 className="font-bold mb-2 flex items-center gap-2">
               <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span> 
-              Descarga el Agente
-            </h3>
             <p className="text-sm text-foreground/70 mb-3">
-              Puedes descargar el archivo comprimido directamente o clonarlo desde GitHub.
+              Descarga la versión para tu sistema. No necesitas tener nada instalado, ¡ni siquiera Node.js!
             </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <a href="/craft-control-agent.zip" download>
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+              <a href="/agent-win.exe" download>
                 <Button variant="primary" className="w-full sm:w-auto">
-                  Descargar Archivo (.zip)
+                  Windows (.exe)
+                </Button>
+              </a>
+              <a href="/agent-linux" download>
+                <Button variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10">
+                  Linux
                 </Button>
               </a>
               <a href="https://github.com/Jhomel-Dev/Minecraft-server/tree/main/Minecraft-Server-Manager-LocalAgent" target="_blank" rel="noreferrer">
                 <Button variant="outline" className="w-full sm:w-auto border-surface-border text-foreground/70">
-                  <ExternalLink className="w-4 h-4 mr-2 inline-block" /> Ver en GitHub
+                  <ExternalLink className="w-4 h-4 mr-2 inline-block" /> Código (GitHub)
                 </Button>
               </a>
             </div>
@@ -57,10 +60,10 @@ export function LinkPcModal({ token, onClose }) {
           <div>
             <h3 className="font-bold mb-2 flex items-center gap-2">
               <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span> 
-              Instala y Ejecuta
+              Inicia el Agente
             </h3>
             <p className="text-sm text-foreground/70 mb-3">
-              Descomprime el archivo descargado. Abre una terminal en esa carpeta y ejecuta <strong>npm install</strong>. Finalmente, pega tu comando secreto para conectar:
+              Haz doble clic en el archivo que descargaste. Se abrirá una ventana negra pidiéndote tu URL y Comando Secreto. Cópialo de aquí abajo y pégalo allí:
             </p>
             <div className="relative group">
               <pre className="bg-background border-2 border-surface-border p-4 rounded-blocky text-xs sm:text-sm font-mono overflow-x-auto text-primary/90">
