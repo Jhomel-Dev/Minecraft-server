@@ -17,10 +17,7 @@ export default function ServerConsolePage({ params }) {
   const { server, errorMsg, clearError, handleStart, handleStop, handleRestart } = useServerControl(serverId);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/login");
-    }
+    // Auth is now handled by httpOnly cookies and authFetch interceptors
   }, [router]);
 
   return (
