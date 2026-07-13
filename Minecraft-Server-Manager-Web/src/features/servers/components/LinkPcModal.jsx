@@ -38,22 +38,29 @@ export function LinkPcModal({ token, onClose }) {
               Descarga el Agente
             </h3>
             <p className="text-sm text-foreground/70 mb-3">
-              El agente es un programa ultraligero que conecta la PC física con este panel web.
+              Puedes descargar el archivo comprimido directamente o clonarlo desde GitHub.
             </p>
-            <a href="https://github.com/Jhomel-Dev/Minecraft-server/tree/main/Minecraft-Server-Manager-LocalAgent" target="_blank" rel="noreferrer">
-              <Button variant="outline" className="w-full sm:w-auto">
-                <ExternalLink className="w-4 h-4 mr-2" /> Descargar agent.js (GitHub)
-              </Button>
-            </a>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a href="/craft-control-agent.zip" download>
+                <Button variant="primary" className="w-full sm:w-auto">
+                  Descargar Archivo (.zip)
+                </Button>
+              </a>
+              <a href="https://github.com/Jhomel-Dev/Minecraft-server/tree/main/Minecraft-Server-Manager-LocalAgent" target="_blank" rel="noreferrer">
+                <Button variant="outline" className="w-full sm:w-auto border-surface-border text-foreground/70">
+                  <ExternalLink className="w-4 h-4 mr-2 inline-block" /> Ver en GitHub
+                </Button>
+              </a>
+            </div>
           </div>
 
           <div>
             <h3 className="font-bold mb-2 flex items-center gap-2">
               <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span> 
-              Ejecuta este comando en la PC
+              Instala y Ejecuta
             </h3>
             <p className="text-sm text-foreground/70 mb-3">
-              Abre la terminal en la carpeta donde guardaste el agente, asegúrate de tener Node.js instalado, y pega tu comando secreto:
+              Descomprime el archivo descargado. Abre una terminal en esa carpeta y ejecuta <strong>npm install</strong>. Finalmente, pega tu comando secreto para conectar:
             </p>
             <div className="relative group">
               <pre className="bg-background border-2 border-surface-border p-4 rounded-blocky text-xs sm:text-sm font-mono overflow-x-auto text-primary/90">
