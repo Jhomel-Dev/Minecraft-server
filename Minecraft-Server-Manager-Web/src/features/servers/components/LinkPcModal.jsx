@@ -35,6 +35,8 @@ export function LinkPcModal({ token, onClose }) {
           <div>
             <h3 className="font-bold mb-2 flex items-center gap-2">
               <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span> 
+              Descarga el Agente
+            </h3>
             <p className="text-sm text-foreground/70 mb-3">
               Descarga la versión para tu sistema. No necesitas tener nada instalado, ¡ni siquiera Node.js!
             </p>
