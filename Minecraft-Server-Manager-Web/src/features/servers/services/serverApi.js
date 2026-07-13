@@ -1,10 +1,8 @@
 import { API_URL, refreshAccessToken } from "@/features/auth/services/api";
 
 const getHeaders = () => {
-  const token = localStorage.getItem("accessToken");
   return {
-    "Content-Type": "application/json",
-    ...(token && { "Authorization": `Bearer ${token}` })
+    "Content-Type": "application/json"
   };
 };
 
@@ -14,6 +12,7 @@ let refreshPromise = null;
 const authFetch = async (endpoint, options = {}) => {
   let res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
+    credentials: "include",
     headers: { ...getHeaders(), ...options.headers }
   });
 
@@ -22,15 +21,10 @@ const authFetch = async (endpoint, options = {}) => {
       isRefreshing = true;
       refreshPromise = refreshAccessToken()
         .then((data) => {
-          if (data.token) {
-            localStorage.setItem("accessToken", data.token);
-            return data.token;
-          }
-          throw new Error("No token returned");
+          return true;
         })
         .catch((err) => {
           if (err.message === 'SessionExpired') {
-            localStorage.removeItem("accessToken");
             window.location.href = "/login";
           }
           throw err;
@@ -45,6 +39,7 @@ const authFetch = async (endpoint, options = {}) => {
       await refreshPromise;
       res = await fetch(`${API_URL}${endpoint}`, {
         ...options,
+        credentials: "include",
         headers: { ...getHeaders(), ...options.headers }
       });
     } catch (err) {
@@ -148,9 +143,8 @@ export async function deleteBackup(id, fileName) {
 }
 
 export async function downloadBackupZip(id, fileName) {
-  const token = localStorage.getItem("accessToken");
   const res = await fetch(`${API_URL}/api/servers/${id}/backups/${fileName}/download`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: "include"
   });
   if (!res.ok) throw new Error("No se pudo descargar el backup");
   const blob = await res.blob();
