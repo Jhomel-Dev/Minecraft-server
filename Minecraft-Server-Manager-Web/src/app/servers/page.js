@@ -3,6 +3,10 @@ import { Server, Plus, HardDrive, Activity } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/Button";
 import { useServers } from "@/features/servers/hooks/useServers";
+import { useState } from "react";
+import { LinkPcModal } from "@/features/servers/components/LinkPcModal";
+import { getAgentToken } from "@/features/auth/services/api";
+import { useToast } from "@/shared/ui/ToastProvider";
 
 export default function DashboardHome() {
   const { servers, serverSizes, loading, formatSize } = useServers();
@@ -34,18 +38,40 @@ export default function DashboardHome() {
 }
 
 function Header() {
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [agentToken, setAgentToken] = useState("");
+  const { toast } = useToast();
+
+  const handleLinkPc = async () => {
+    try {
+      const res = await getAgentToken();
+      setAgentToken(res.agentToken);
+      setShowLinkModal(true);
+    } catch (err) {
+      toast("Error al obtener el token: " + err.message, "error");
+    }
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-surface p-6 rounded-blocky border-2 border-surface-border shadow-sm gap-4">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-black">Mis Servidores</h1>
-        <p className="text-foreground/70 font-semibold text-sm sm:text-base">Administra tu red de Minecraft</p>
+    <>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-surface p-6 rounded-blocky border-2 border-surface-border shadow-sm gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black">Mis Servidores</h1>
+          <p className="text-foreground/70 font-semibold text-sm sm:text-base">Administra tu red de Minecraft</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10" onClick={handleLinkPc}>
+            <HardDrive className="w-5 h-5 mr-2 inline-block" /> Vincular PC
+          </Button>
+          <Link href="/servers/new-server" className="w-full sm:w-auto">
+            <Button variant="primary" className="w-full sm:w-auto">
+              <Plus className="w-5 h-5 mr-2 inline-block" /> Crear Servidor
+            </Button>
+          </Link>
+        </div>
       </div>
-      <Link href="/servers/new-server" className="w-full sm:w-auto">
-        <Button variant="primary" className="w-full sm:w-auto">
-          <Plus className="w-5 h-5 mr-2 inline-block" /> Crear Servidor
-        </Button>
-      </Link>
-    </div>
+      {showLinkModal && <LinkPcModal token={agentToken} onClose={() => setShowLinkModal(false)} />}
+    </>
   );
 }
 
