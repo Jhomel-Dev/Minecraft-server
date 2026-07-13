@@ -46,6 +46,4 @@ if [ ! -f "index.js" ]; then
 fi
 
 echo "Iniciando Agente..."
-# Reconectar la entrada estándar a la terminal del usuario (porque se ejecutó via pipe)
-exec < /dev/tty
 node index.js

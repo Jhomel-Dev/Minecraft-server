@@ -61,10 +61,10 @@ export function LinkPcModal({ token, onClose }) {
                 <label className="text-xs font-bold text-foreground/60 uppercase">Para Linux / Mac (Bash)</label>
                 <div className="relative group mt-1">
                   <pre className="bg-background border-2 border-surface-border p-3 pr-12 rounded-blocky text-xs font-mono overflow-x-auto text-primary/90 whitespace-pre-wrap break-all">
-                    {`curl -sL ${typeof window !== 'undefined' ? window.location.origin : ''}/install-linux.sh | bash -s ${typeof window !== 'undefined' ? window.location.origin : ''}`}
+                    {`curl -sLO ${typeof window !== 'undefined' ? window.location.origin : ''}/install-linux.sh && bash install-linux.sh ${typeof window !== 'undefined' ? window.location.origin : ''}`}
                   </pre>
                   <button 
-                    onClick={() => copyToClipboard(`curl -sL ${typeof window !== 'undefined' ? window.location.origin : ''}/install-linux.sh | bash -s ${typeof window !== 'undefined' ? window.location.origin : ''}`, 'linux')}
+                    onClick={() => copyToClipboard(`curl -sLO ${typeof window !== 'undefined' ? window.location.origin : ''}/install-linux.sh && bash install-linux.sh ${typeof window !== 'undefined' ? window.location.origin : ''}`, 'linux')}
                     className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
                     title="Copiar Comando Linux"
                   >
