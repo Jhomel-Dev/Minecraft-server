@@ -5,6 +5,7 @@ import os from 'os';
 import fs from 'fs';
 import { isWindows, extractArchive } from '../utils/osUtils.js';
 import { downloadFile } from '../utils/httpUtils.js';
+import { verifyFileChecksum } from '../utils/cryptoUtils.js';
 
 export default class TunnelService extends EventEmitter {
     constructor() {
@@ -38,11 +39,22 @@ export default class TunnelService extends EventEmitter {
         const archivePath = path.join(this.managerDir, `bore${archiveExt}`);
         const downloadUrl = this.getBoreDownloadUrl();
         
+        const expectedHash = this.getBoreExpectedHash();
+        
         await downloadFile(downloadUrl, archivePath);
+        await verifyFileChecksum(archivePath, expectedHash);
+        
         await extractArchive(archivePath, this.managerDir);
         
         fs.unlinkSync(archivePath);
         this.setExecutionPermissions(borePath);
+    }
+
+    getBoreExpectedHash() {
+        if (isWindows) {
+            return 'a072e180039f78d804e1743ca56a25335593862701bd606f2a317828c28ba337';
+        }
+        return 'f73f3c608fcb926cadeecd7615302e452eea60998abe7204c4383980f1e2912e';
     }
 
     getBoreDownloadUrl() {

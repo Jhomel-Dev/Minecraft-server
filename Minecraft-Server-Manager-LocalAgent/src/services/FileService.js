@@ -1,10 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import util from 'util';
 
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 
 export default class FileService {
   
@@ -54,7 +54,8 @@ export default class FileService {
 
   getSafePath(baseDir, relativePath) {
     const targetPath = path.join(baseDir, relativePath);
-    if (!targetPath.startsWith(baseDir)) {
+    const relative = path.relative(baseDir, targetPath);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new Error('Path traversal detected');
     }
     return targetPath;
@@ -145,7 +146,7 @@ export default class FileService {
     try {
       await fs.access(zipPath);
       await this.ensureDirectory(destPath);
-      await execPromise(`unzip -o "${zipPath}" -d "${destPath}"`);
+      await execFilePromise('unzip', ['-o', zipPath, '-d', destPath]);
       return { success: true };
     } catch (err) {
       console.error('Error al descomprimir:', err);
@@ -155,7 +156,7 @@ export default class FileService {
 
   async getDirectorySize(targetPath) {
     try {
-      const { stdout } = await execPromise(`du -sb "${targetPath}"`);
+      const { stdout } = await execFilePromise('du', ['-sb', targetPath]);
       const sizeBytes = parseInt(stdout.split('\t')[0]);
       return { size: sizeBytes };
     } catch (err) {

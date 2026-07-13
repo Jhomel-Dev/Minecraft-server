@@ -47,8 +47,9 @@ export default class ServerController {
     try {
       const serverService = this.getServerService(req);
       const serverId = req.params.id;
+      const userId = req.user.id;
       
-      const server = await serverService.startServer(serverId);
+      const server = await serverService.startServer(serverId, userId);
       
       return res.status(200).json(server);
     } catch (error) {
@@ -60,8 +61,9 @@ export default class ServerController {
     try {
       const serverService = this.getServerService(req);
       const serverId = req.params.id;
+      const userId = req.user.id;
       
-      const server = await serverService.stopServer(serverId);
+      const server = await serverService.stopServer(serverId, userId);
       
       return res.status(200).json(server);
     } catch (error) {
@@ -73,9 +75,10 @@ export default class ServerController {
     try {
       const serverService = this.getServerService(req);
       const serverId = req.params.id;
+      const userId = req.user.id;
       const { command } = req.body;
       
-      const result = await serverService.executeCommand(serverId, command);
+      const result = await serverService.executeCommand(serverId, userId, command);
       
       return res.status(200).json(result);
     } catch (error) {
@@ -225,9 +228,6 @@ export default class ServerController {
       if (!fileName.endsWith('.zip') || fileName.includes('/')) return res.status(400).json({ error: 'Archivo inválido' });
 
       const backupPath = path.join(os.homedir(), '.minecraft-manager', 'servers', serverId, 'backups', fileName);
-      console.log(`[downloadBackup] requested fileName: ${fileName}`);
-      console.log(`[downloadBackup] resolved path: ${backupPath}`);
-      console.log(`[downloadBackup] existsSync: ${fs.existsSync(backupPath)}`);
       
       if (!fs.existsSync(backupPath)) {
         return res.status(404).json({ error: 'Backup no encontrado' });

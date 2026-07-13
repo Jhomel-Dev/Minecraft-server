@@ -24,7 +24,9 @@ export function LoginForm() {
     try {
       const data = await loginWithCredentials(email, password);
       setUser(data.user);
-      if(data.token) localStorage.setItem("accessToken", data.token);
+      if(data.token) {
+        window.location.href = "/servers";
+      }
       router.push("/servers");
     } catch (err) {
       setError("Credenciales inválidas. Verifica tu correo y contraseña.");
@@ -38,7 +40,9 @@ export function LoginForm() {
       try {
         const data = await loginWithGoogle(tokenResponse.access_token, true);
         setUser(data.user);
-        if(data.token) localStorage.setItem("accessToken", data.token);
+        if(data.token) {
+          window.location.href = "/servers";
+        }
         router.push("/servers");
       } catch (err) {
         setError("Error autenticando con Google. Inténtalo más tarde.");

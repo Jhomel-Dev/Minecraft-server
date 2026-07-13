@@ -64,8 +64,9 @@ export default class ServerService {
     });
   }
 
-  async startServer(serverId) {
+  async startServer(serverId, userId) {
     const server = await this.findServerById(serverId);
+    if (server.userId !== userId) throw new Error('Unauthorized');
     this.verifyServerIsOffline(server);
 
     await prisma.server.update({
@@ -78,8 +79,9 @@ export default class ServerService {
     return server;
   }
 
-  async stopServer(serverId) {
+  async stopServer(serverId, userId) {
     const server = await this.findServerById(serverId);
+    if (server.userId !== userId) throw new Error('Unauthorized');
 
     if (server.status === 'STOPPING') {
       await prisma.server.update({
@@ -169,25 +171,26 @@ export default class ServerService {
       compatibilityMode: server.compatibilityMode
     };
 
-    this.io.emit('START_SERVER', config);
+    this.io.to(`agent-${server.userId}`).to('agent-global').emit('START_SERVER', config);
   }
 
   emitStopCommandToAgent(server) {
     if (!this.io) throw new Error('WebSocket instance not configured');
-    this.io.emit('STOP_SERVER', { id: server.id });
+    this.io.to(`agent-${server.userId}`).to('agent-global').emit('STOP_SERVER', { id: server.id });
   }
 
-  async executeCommand(serverId, command) {
+  async executeCommand(serverId, userId, command) {
     if (!serverId) throw new Error('Server ID is required');
     if (!command) throw new Error('Command is required');
 
     const server = await this.findServerById(serverId);
+    if (server.userId !== userId) throw new Error('Unauthorized');
     if (server.status !== 'ONLINE') {
       throw new Error('Server must be ONLINE to execute commands');
     }
 
     if (!this.io) throw new Error('WebSocket instance not configured');
-    this.io.emit('SEND_COMMAND', command);
+    this.io.to(`agent-${server.userId}`).to('agent-global').emit('SEND_COMMAND', command);
 
     return { success: true, message: 'Command sent' };
   }

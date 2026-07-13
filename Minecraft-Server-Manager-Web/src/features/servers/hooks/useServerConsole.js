@@ -10,11 +10,8 @@ export function useServerConsole(serverId) {
   useEffect(() => {
     if (!serverId) return;
 
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
-
     const socket = io(API_URL, {
-      auth: { jwt: token },
+      withCredentials: true,
       transports: ["websocket"]
     });
 

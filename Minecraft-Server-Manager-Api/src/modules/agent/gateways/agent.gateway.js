@@ -13,13 +13,39 @@ export const handleSocketEvents = (io) => {
   });
 };
 
-const authenticateSocket = (socket, next) => {
+const authenticateSocket = async (socket, next) => {
   const agentToken = socket.handshake.auth?.token;
-  const clientToken = socket.handshake.auth?.jwt;
   
-  if (agentToken === process.env.AGENT_SECRET_TOKEN) {
-    socket.isAgent = true;
-    return next();
+  let cookieAccessToken = null;
+  const cookieHeader = socket.handshake.headers?.cookie;
+  if (cookieHeader) {
+    const cookies = cookieHeader.split(';').reduce((acc, current) => {
+      const [name, ...value] = current.trim().split('=');
+      acc[name] = value.join('=');
+      return acc;
+    }, {});
+    cookieAccessToken = cookies.accessToken;
+  }
+  
+  const clientToken = socket.handshake.auth?.jwt || cookieAccessToken;
+  
+  if (agentToken) {
+    try {
+      const user = await prisma.user.findUnique({ where: { agentToken } });
+      if (user) {
+        socket.isAgent = true;
+        socket.userId = user.id;
+        return next();
+      }
+    } catch (e) {
+      console.error('DB error auth agent', e);
+    }
+    
+    if (agentToken === process.env.AGENT_SECRET_TOKEN) {
+      socket.isAgent = true;
+      socket.userId = 'LEGACY';
+      return next();
+    }
   }
   
   if (clientToken) {
@@ -37,6 +63,12 @@ const authenticateSocket = (socket, next) => {
 };
 
 const registerAgentEvents = (socket) => {
+  if (socket.userId !== 'LEGACY') {
+    socket.join(`agent-${socket.userId}`);
+  } else {
+    socket.join('agent-global');
+  }
+
   socket.on('TELEMETRY_UPDATE', (payload) => handleTelemetry(socket, payload));
   socket.on('SERVER_LOG', (payload) => handleServerLog(socket, payload));
   socket.on('TUNNEL_INFO', (payload) => handleTunnelInfo(socket, payload));
@@ -51,12 +83,19 @@ const registerClientEvents = (socket) => {
   socket.on('SEND_COMMAND', (payload) => socket.broadcast.emit('SEND_COMMAND', payload.command));
 };
 
-const joinServerConsole = (socket, serverId) => {
-  socket.join(serverId);
-  const history = serverLogsBuffer.get(serverId) || [];
-  
-  if (history.length > 0) {
-    socket.emit('CONSOLE_LOG_HISTORY', history);
+const joinServerConsole = async (socket, serverId) => {
+  try {
+    const server = await prisma.server.findUnique({ where: { id: serverId } });
+    if (!server || server.userId !== socket.user.id) return;
+    
+    socket.join(serverId);
+    const history = serverLogsBuffer.get(serverId) || [];
+    
+    if (history.length > 0) {
+      socket.emit('CONSOLE_LOG_HISTORY', history);
+    }
+  } catch (e) {
+    console.error('[Agent Gateway] Error joining console:', e);
   }
 };
 
