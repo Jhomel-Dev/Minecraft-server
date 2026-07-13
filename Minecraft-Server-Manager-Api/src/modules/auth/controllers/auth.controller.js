@@ -11,6 +11,7 @@ export default class AuthController {
       const { accessToken, refreshToken, user } = await this.authService.register(username, email, password);
       
       this.setRefreshCookie(res, refreshToken);
+      this.setAccessCookie(res, accessToken);
       return res.status(201).json({
         message: 'User registered successfully',
         token: accessToken,
@@ -27,6 +28,7 @@ export default class AuthController {
       const { accessToken, refreshToken, user } = await this.authService.login(email, password);
       
       this.setRefreshCookie(res, refreshToken);
+      this.setAccessCookie(res, accessToken);
       return res.status(200).json({ token: accessToken, user: { username: user.username, email: user.email } });
     } catch (error) {
       this.handleError(res, error);
@@ -42,6 +44,7 @@ export default class AuthController {
       const { accessToken, refreshToken, user } = await this.authService.googleLogin(tokenToVerify, isAccessToken);
       
       this.setRefreshCookie(res, refreshToken);
+      this.setAccessCookie(res, accessToken);
       return res.status(200).json({ token: accessToken, user: { username: user.username, email: user.email } });
     } catch (error) {
       this.handleError(res, error);
@@ -56,6 +59,7 @@ export default class AuthController {
       const { accessToken, refreshToken: newRefreshToken, user } = await this.authService.refreshToken(refreshToken);
       
       this.setRefreshCookie(res, newRefreshToken);
+      this.setAccessCookie(res, accessToken);
       return res.status(200).json({ token: accessToken, user: { username: user.username, email: user.email } });
     } catch (error) {
       res.clearCookie('refreshToken');
@@ -65,11 +69,8 @@ export default class AuthController {
 
   logout = async (req, res) => {
     try {
-      const refreshToken = req.cookies?.refreshToken;
-      if (refreshToken) {
-        
-        res.clearCookie('refreshToken');
-      }
+      res.clearCookie('refreshToken');
+      res.clearCookie('accessToken');
       return res.status(200).json({ message: 'Logged out' });
     } catch (error) {
       this.handleError(res, error);
@@ -82,6 +83,15 @@ export default class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 
+    });
+  }
+
+  setAccessCookie(res, accessToken) {
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000 
     });
   }
 
