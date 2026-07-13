@@ -9,10 +9,9 @@ export function LinkPcModal({ token, onClose }) {
   const { toast } = useToast();
   
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://tu-api.onrender.com";
-  const command = `node agent.js --url="${apiUrl}" --token="${token}"`;
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(command);
+  const copyToClipboard = (textToCopy) => {
+    navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     toast("¡Comando copiado al portapapeles!", "success");
     setTimeout(() => setCopied(false), 3000);
@@ -65,22 +64,48 @@ export function LinkPcModal({ token, onClose }) {
               Inicia el Agente
             </h3>
             <p className="text-sm text-foreground/70 mb-3">
-              Haz doble clic en el archivo que descargaste. Se abrirá una ventana negra pidiéndote tu URL y Comando Secreto. Cópialo de aquí abajo y pégalo allí:
+              Haz doble clic en el archivo descargado. Se abrirá una ventana negra interactiva. Copia estos datos cuando te los pida:
             </p>
-            <div className="relative group">
-              <pre className="bg-background border-2 border-surface-border p-4 rounded-blocky text-xs sm:text-sm font-mono overflow-x-auto text-primary/90">
-                {command}
-              </pre>
-              <button 
-                onClick={copyToClipboard}
-                className="absolute top-2 right-2 p-2 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
-                title="Copiar comando"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-              </button>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-foreground/60 uppercase">URL del Panel</label>
+                <div className="relative group mt-1">
+                  <pre className="bg-background border-2 border-surface-border p-3 pr-12 rounded-blocky text-sm font-mono overflow-x-auto text-primary/90">
+                    {apiUrl}
+                  </pre>
+                  <button 
+                    onClick={() => copyToClipboard(apiUrl)}
+                    className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
+                    title="Copiar URL"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-foreground/60 uppercase">Comando Secreto / Token</label>
+                <div className="relative group mt-1">
+                  <pre className="bg-background border-2 border-surface-border p-3 pr-12 rounded-blocky text-sm font-mono overflow-x-auto text-red-400">
+                    {token}
+                  </pre>
+                  <button 
+                    onClick={() => copyToClipboard(token)}
+                    className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
+                    title="Copiar Token"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-red-400 mt-2 font-bold">
-              ⚠️ ATENCIÓN: Este comando contiene tu código secreto. No lo compartas con extraños, ya que les daría acceso a tu panel.
+
+            <p className="text-xs text-red-400 mt-3 font-bold">
+              ⚠️ ATENCIÓN: El Token es tu código secreto. No lo compartas con extraños, ya que les daría acceso a tu panel.
+            </p>
+            <p className="text-xs text-foreground/50 mt-1">
+              <i>Nota para usuarios de Linux: Primero dale permisos de ejecución (chmod +x agent-linux) y ejecútalo con ./agent-linux</i>
             </p>
           </div>
         </div>
