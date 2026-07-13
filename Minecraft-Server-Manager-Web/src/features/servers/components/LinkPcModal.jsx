@@ -86,6 +86,22 @@ export function LinkPcModal({ token, onClose }) {
 
             <div className="space-y-3">
               <div>
+                <label className="text-xs font-bold text-foreground/60 uppercase">URL del Panel</label>
+                <div className="relative group mt-1">
+                  <pre className="bg-background border-2 border-surface-border p-3 pr-12 rounded-blocky text-sm font-mono overflow-x-auto text-primary/90">
+                    {apiUrl}
+                  </pre>
+                  <button 
+                    onClick={() => copyToClipboard(apiUrl, 'url')}
+                    className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
+                    title="Copiar URL"
+                  >
+                    {copiedId === 'url' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
                 <label className="text-xs font-bold text-foreground/60 uppercase">Comando Secreto / Token</label>
                 <div className="relative group mt-1">
                   <pre className="bg-background border-2 border-surface-border p-3 pr-12 rounded-blocky text-sm font-mono overflow-x-auto text-red-400">
