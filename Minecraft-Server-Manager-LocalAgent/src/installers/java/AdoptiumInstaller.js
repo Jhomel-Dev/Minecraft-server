@@ -3,6 +3,7 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { getOsInfo, extractArchive, isWindows } from '../../utils/osUtils.js';
 import { downloadFile } from '../../utils/httpUtils.js';
+import { verifyFileChecksum } from '../../utils/cryptoUtils.js';
 
 export default class AdoptiumInstaller {
     constructor(vaultDir) {
@@ -41,7 +42,14 @@ export default class AdoptiumInstaller {
         const archivePath = path.join(this.javaDir, `java${version}${osInfo.archiveExt}`);
         const extractPath = path.join(this.javaDir, `extract_${version}`);
 
+        const metadataUrl = `https://api.adoptium.net/v3/assets/latest/${version}/hotspot?os=${osInfo.platform}&architecture=x64&image_type=jdk&vendor=eclipse`;
+        const checksum = await this.fetchExpectedChecksum(metadataUrl);
+
         await downloadFile(downloadUrl, archivePath);
+        if (checksum) {
+            await verifyFileChecksum(archivePath, checksum);
+        }
+
         this.createExtractDir(extractPath);
         await extractArchive(archivePath, extractPath);
         
@@ -50,6 +58,17 @@ export default class AdoptiumInstaller {
         this.setExecutionPermissions(expectedExe);
 
         return expectedExe;
+    }
+
+    async fetchExpectedChecksum(metadataUrl) {
+        try {
+            const res = await fetch(metadataUrl);
+            const data = await res.json();
+            return data[0]?.binary?.package?.checksum || null;
+        } catch (e) {
+            console.error('Failed to fetch JDK checksum:', e);
+            return null;
+        }
     }
 
     createExtractDir(extractPath) {
