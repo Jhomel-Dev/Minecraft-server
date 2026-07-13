@@ -2,12 +2,13 @@
   "name": "minecraft-server-manager-localagent",
   "version": "1.3.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/agent.cjs",
+  "bin": "dist/agent.cjs",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "vitest run",
-    "build": "esbuild index.js --bundle --platform=node --format=esm --outfile=dist/agent.js --minify"
+    "build": "esbuild index.js --bundle --packages=external --platform=node --format=cjs --outfile=dist/agent.cjs"
   },
   "keywords": [],
   "author": "",
