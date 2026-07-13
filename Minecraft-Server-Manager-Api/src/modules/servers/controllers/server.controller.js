@@ -2,14 +2,33 @@ import ServerService from '../services/server.service.js';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import { z } from 'zod';
+import prisma from '../../../core/database/prisma.client.js';
+import { agentHardwareMap } from '../../agent/gateways/agent.gateway.js';
+
+const createServerSchema = z.object({
+  name: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_\- ]+$/, 'Nombre inválido'),
+  type: z.string(),
+  version: z.string(),
+  memory: z.string().regex(/^\d{1,4}[MG]$/, 'Formato de RAM inválido (ej. 4G o 4096M)'),
+  compatibilityMode: z.boolean().optional().default(false)
+});
 
 export default class ServerController {
   
   createServer = async (req, res) => {
     try {
+      const parsedBody = createServerSchema.parse(req.body);
+      
       const serverService = this.getServerService(req);
       const userId = req.user.id;
-      const { name, type, version, memory, compatibilityMode } = req.body;
+      
+      const serverCount = await prisma.server.count({ where: { userId } });
+      if (serverCount >= 3) {
+        return res.status(403).json({ error: 'Has alcanzado el límite de 3 servidores' });
+      }
+
+      const { name, type, version, memory, compatibilityMode } = parsedBody;
       
       const server = await serverService.createServer(userId, name, type, version, memory, compatibilityMode);
       
@@ -25,6 +44,16 @@ export default class ServerController {
       const userId = req.user.id;
       const servers = await serverService.getMyServers(userId);
       return res.status(200).json(servers);
+    } catch (error) {
+      this.handleError(res, error);
+    }
+  };
+
+  getAgentHardware = async (req, res) => {
+    try {
+      const hardware = agentHardwareMap.get(req.user.id);
+      if (!hardware) return res.status(404).json({ error: 'Agent offline' });
+      return res.status(200).json(hardware);
     } catch (error) {
       this.handleError(res, error);
     }
@@ -252,6 +281,10 @@ export default class ServerController {
   }
 
   handleError(res, error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+    }
+
     if (error.message.includes('required') || 
         error.message.includes('not found') ||
         error.message.includes('already running') ||

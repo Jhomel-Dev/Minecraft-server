@@ -77,21 +77,25 @@ export default class AuthController {
     }
   };
 
-  setRefreshCookie(res, refreshToken) {
-    res.cookie('refreshToken', refreshToken, {
+  setAccessCookie(res, token) {
+    const isProd = process.env.NODE_ENV === 'production';
+    
+    res.cookie('accessToken', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000 
     });
   }
 
-  setAccessCookie(res, accessToken) {
-    res.cookie('accessToken', accessToken, {
+  setRefreshCookie(res, token) {
+    const isProd = process.env.NODE_ENV === 'production';
+    
+    res.cookie('refreshToken', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000 
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
   }
 

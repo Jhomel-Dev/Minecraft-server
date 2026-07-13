@@ -4,8 +4,9 @@ import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Pickaxe, Server, Settings, ArrowRight, Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/shared/ui/ToastProvider";
 
-import { createServer } from "@/features/servers/services/serverApi";
+import { createServer, getAgentHardware } from "@/features/servers/services/serverApi";
 import { getMinecraftVersions, getSoftwareBuilds } from "@/features/servers/services/versionApi";
 
 const SOFTWARE_TYPES = [
@@ -22,6 +23,7 @@ export function CreateServerWizard() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const [serverName, setServerName] = useState("");
   const [software, setSoftware] = useState("paper");
@@ -34,7 +36,17 @@ export function CreateServerWizard() {
   const [loadingBuilds, setLoadingBuilds] = useState(false);
   const [build, setBuild] = useState("LATEST");
   
-  const [memory, setMemory] = useState("2048");
+  const [memoryGB, setMemoryGB] = useState(2);
+  const [agentHardware, setAgentHardware] = useState(null);
+
+  useEffect(() => {
+    getAgentHardware().then(hw => {
+      setAgentHardware(hw);
+      const freeGB = Math.floor(hw.freeMem / (1024*1024*1024));
+      if (freeGB > 2) setMemoryGB(2);
+      else setMemoryGB(Math.max(1, freeGB - 1));
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (step === 2) {
@@ -68,13 +80,14 @@ export function CreateServerWizard() {
         name: serverName,
         type: software.toUpperCase(),
         version: fullVersion,
-        memory: memory
+        memory: `${memoryGB}G`
       });
       if (res.id) {
+        toast("¡Servidor creado exitosamente!", "success");
         router.push(`/server/${res.id}`);
       }
     } catch (err) {
-      console.error(err);
+      toast(err.message || "Error al crear el servidor", "error");
     } finally {
       setLoading(false);
     }
@@ -198,18 +211,38 @@ export function CreateServerWizard() {
             <label className="font-bold block mb-2 flex items-center gap-2">
               <Settings className="w-5 h-5 text-secondary" /> Memoria RAM Asignada
             </label>
-            <select 
-              value={memory}
-              onChange={(e) => setMemory(e.target.value)}
-              className="w-full bg-surface border-2 border-surface-border text-foreground rounded-blocky px-4 py-3 outline-none focus:border-primary transition-colors appearance-none"
-            >
-              <option value="1024">1 GB (Básico, Vanilla)</option>
-              <option value="2048">2 GB (Recomendado, pocos plugins)</option>
-              <option value="4096">4 GB (Avanzado, muchos plugins)</option>
-              <option value="6144">6 GB (Extremo, servidores grandes)</option>
-              <option value="8192">8 GB (Máximo rendimiento)</option>
-            </select>
-            <p className="text-xs text-foreground/60 mt-2">Internamente se convertirá a MB para el motor de Java.</p>
+            {agentHardware ? (
+              <div className="w-full bg-surface border-2 border-surface-border p-4 rounded-blocky">
+                <div className="flex justify-between mb-4">
+                  <span className="text-foreground/70 text-sm">
+                    Host: {(agentHardware.freeMem / (1024*1024*1024)).toFixed(1)} GB libres de {(agentHardware.totalMem / (1024*1024*1024)).toFixed(1)} GB
+                  </span>
+                  <span className="font-bold text-primary text-lg">{memoryGB} GB</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max={Math.max(1, Math.floor(agentHardware.freeMem / (1024*1024*1024)))} 
+                  step="1"
+                  value={memoryGB}
+                  onChange={(e) => setMemoryGB(e.target.value)}
+                  className="w-full h-2 bg-surface-border rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+              </div>
+            ) : (
+              <Input 
+                type="number" 
+                placeholder="Ej. 4 (Gigabytes)" 
+                value={memoryGB}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (e.target.value === "") setMemoryGB("");
+                  else if (!isNaN(val)) setMemoryGB(Math.max(1, val));
+                }}
+                min="1"
+              />
+            )}
+            <p className="text-xs text-foreground/60 mt-2">La memoria será asignada nativamente al motor de Java (-Xmx y -Xms).</p>
           </div>
           <div className="flex justify-between mt-4">
             <Button variant="outline" onClick={() => setStep(1)}>Atrás</Button>
@@ -227,7 +260,7 @@ export function CreateServerWizard() {
               <li className="flex justify-between"><span className="text-foreground/70">Nombre:</span> <span>{serverName}</span></li>
               <li className="flex justify-between"><span className="text-foreground/70">Software:</span> <span className="uppercase">{software}</span></li>
               <li className="flex justify-between"><span className="text-foreground/70">Versión:</span> <span>{version}</span></li>
-              <li className="flex justify-between"><span className="text-foreground/70">RAM:</span> <span>{Number(memory) / 1024} GB</span></li>
+              <li className="flex justify-between"><span className="text-foreground/70">RAM:</span> <span>{memoryGB} GB</span></li>
             </ul>
           </div>
           <p className="text-sm text-foreground/80 text-center">

@@ -178,3 +178,9 @@ export async function sendCommand(id, command) {
     body: JSON.stringify({ command })
   });
 }
+
+export async function getAgentHardware() {
+  return authFetch(`/api/servers/agent-hardware`, {
+    method: "GET"
+  });
+}

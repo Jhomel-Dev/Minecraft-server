@@ -8,6 +8,7 @@ const serverController = new ServerController();
 router.use(verifyToken);
 
 router.get('/', serverController.getMyServers);
+router.get('/agent-hardware', serverController.getAgentHardware);
 router.post('/create', serverController.createServer);
 router.put('/:id/settings', serverController.updateSettings);
 router.post('/:id/start', serverController.startServer);

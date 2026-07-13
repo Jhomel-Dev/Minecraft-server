@@ -37,6 +37,7 @@ export default class NativeServerService extends EventEmitter {
 
     async startMinecraftServer(config) {
         this.validateConfig(config);
+        this.validateHardwareLimits(config);
         await this.preparePort(config.port || 25565);
         this.ensureDataDir(config.dataDir);
 
@@ -62,6 +63,23 @@ export default class NativeServerService extends EventEmitter {
         if (!config) throw new Error('Missing server configuration');
         if (!config.dataDir) throw new Error('Missing data directory');
         if (!config.version) throw new Error('Missing Minecraft version');
+    }
+
+    validateHardwareLimits(config) {
+        if (!config.memory) return;
+        const memMatch = config.memory.match(/^(\d+)([MG])$/i);
+        if (memMatch) {
+            let requestedBytes = parseInt(memMatch[1]);
+            requestedBytes *= memMatch[2].toUpperCase() === 'G' ? 1024 * 1024 * 1024 : 1024 * 1024;
+            
+            if (requestedBytes > os.freemem()) {
+                const requestedStr = (requestedBytes / (1024*1024*1024)).toFixed(1) + 'GB';
+                const freeStr = (os.freemem() / (1024*1024*1024)).toFixed(1) + 'GB';
+                const msg = `[System] Arranque cancelado: Intentas asignar ${requestedStr} pero la máquina solo tiene ${freeStr} libres.`;
+                this.emit('log', msg);
+                throw new Error(msg);
+            }
+        }
     }
 
     async preparePort(port) {
