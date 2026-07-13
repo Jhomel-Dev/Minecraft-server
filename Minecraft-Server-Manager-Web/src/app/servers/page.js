@@ -1,5 +1,5 @@
 "use client";
-import { Server, Plus, HardDrive } from "lucide-react";
+import { Server, Plus, HardDrive, Activity } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/Button";
 import { useServers } from "@/features/servers/hooks/useServers";
@@ -78,12 +78,21 @@ function ServerGrid({ servers, serverSizes, formatSize }) {
 }
 
 function ServerCard({ server, size, formatSize }) {
+  const isOnline = server.status === "ONLINE";
+  const isStarting = server.status === "STARTING";
+  const isOffline = server.status === "OFFLINE";
+
   return (
     <Link href={`/server/${server.id}`}>
-      <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky hover:-translate-y-1 hover:border-primary transition-all cursor-pointer shadow-sm group h-full">
+      <div className="bg-surface border-2 border-surface-border p-6 rounded-blocky hover:-translate-y-1 hover:border-primary transition-all cursor-pointer shadow-sm group h-full flex flex-col">
         <div className="flex justify-between items-start mb-4">
-          <div className="p-3 bg-primary/10 rounded-blocky text-primary">
-            <Server className="w-6 h-6" />
+          <div className="flex items-center gap-3">
+            <div className={`p-3 rounded-blocky transition-colors ${isOnline ? 'bg-green-500/10 text-green-500' : isStarting ? 'bg-yellow-500/10 text-yellow-500 animate-pulse' : 'bg-primary/10 text-primary'}`}>
+              <Server className="w-6 h-6" />
+            </div>
+            {isOnline && <span className="px-2 py-0.5 bg-green-500/10 text-green-500 rounded-full text-xs font-bold border border-green-500/20 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> ONLINE</span>}
+            {isStarting && <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-500 rounded-full text-xs font-bold border border-yellow-500/20 flex items-center gap-1"><Activity className="w-3 h-3 animate-spin" /> STARTING</span>}
+            {isOffline && <span className="px-2 py-0.5 bg-red-500/10 text-red-500 rounded-full text-xs font-bold border border-red-500/20 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> OFFLINE</span>}
           </div>
           <span className="px-2 py-1 bg-surface-border rounded-full text-xs font-bold uppercase truncate max-w-[100px]">{server.type}</span>
         </div>

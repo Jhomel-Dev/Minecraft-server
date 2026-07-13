@@ -17,26 +17,30 @@ export function useServers() {
     } catch {}
   };
 
-  const loadServers = async () => {
+  const loadServers = async (isInitial = false) => {
     try {
       const data = await getMyServers();
       const serverList = Array.isArray(data) ? data : [];
       
-      if (serverList.length === 0) {
+      if (isInitial && serverList.length === 0) {
         router.push("/servers/new-server");
         return;
       }
       
       setServers(serverList);
-      serverList.forEach(server => loadServerSize(server.id));
+      if (isInitial) {
+        serverList.forEach(server => loadServerSize(server.id));
+      }
     } catch {
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadServers();
+    loadServers(true);
+    const interval = setInterval(() => loadServers(false), 3000);
+    return () => clearInterval(interval);
   }, [router]);
 
   const formatSize = (bytes) => {
