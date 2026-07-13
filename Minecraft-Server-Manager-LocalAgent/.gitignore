@@ -8,3 +8,4 @@ servers/
 # Local tests & Zero-Copy Vault
 vault/
 ServerNavidenoTest/
+dist/
