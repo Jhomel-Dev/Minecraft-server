@@ -10,12 +10,13 @@ import path from 'path';
 export default class LocalAgentController {
   constructor(config) {
     this.validateConfig(config);
-    this.nativeServerService = new NativeServerService();
-    this.tunnelService = new TunnelService();
+    this.activeServers = new Map();
+    this.nextPort = 25565;
+    
     this.connectionService = new ConnectionService(config.apiUrl, config.agentToken);
     this.fileService = new FileService();
     this.playerStatsService = new PlayerStatsService();
-    this.backupService = new BackupService(this.nativeServerService);
+    this.backupService = new BackupService((serverId) => this.activeServers.get(serverId)?.nativeServerService);
     
     this.initialize();
   }
@@ -28,8 +29,6 @@ export default class LocalAgentController {
 
   initialize() {
     this.setupConnectionListeners();
-    this.setupTunnelListeners();
-    this.setupServerListeners();
   }
 
   start() {
@@ -51,12 +50,11 @@ export default class LocalAgentController {
 
     this.connectionService.on('command_start', async (serverConfig) => {
       console.log(`Recibida orden de inicio para el servidor: ${serverConfig.id}`);
-      this.currentServerId = serverConfig.id;
       await this.handleStartCommand(serverConfig);
     });
 
     this.connectionService.on('command_stop', (payload) => {
-      console.log('Recibida orden de apagado.');
+      console.log(`Recibida orden de apagado para servidor: ${payload?.id}`);
       this.handleStopCommand(payload?.id);
     });
 
@@ -73,9 +71,12 @@ export default class LocalAgentController {
       }
     });
 
-    this.connectionService.on('server_command', async (cmd) => {
+    this.connectionService.on('server_command', async (payload) => {
       try {
-        await this.nativeServerService.sendCommand(cmd);
+        const active = this.activeServers.get(payload.serverId || payload.id);
+        if (active) {
+            await active.nativeServerService.sendCommand(payload.command || payload);
+        }
       } catch (err) {
         console.error('Error enviando comando:', err);
       }
@@ -94,10 +95,11 @@ export default class LocalAgentController {
       try {
         
         let onlineNames = [];
-        if (this.currentServerId && this.nativeServerService.process) {
-          onlineNames = Array.from(this.nativeServerService.onlinePlayers || []);
+        const active = this.activeServers.get(payload.serverId);
+        if (active && active.nativeServerService.process) {
+          onlineNames = Array.from(active.nativeServerService.onlinePlayers || []);
           try {
-            await this.nativeServerService.sendCommand('save-all');
+            await active.nativeServerService.sendCommand('save-all');
             await new Promise(resolve => setTimeout(resolve, 1500));
           } catch(e) {}
         }
@@ -137,89 +139,101 @@ export default class LocalAgentController {
     });
   }
 
-  setupServerListeners() {
-    this.nativeServerService.on('log', (logLine) => {
-      if (this.currentServerId) {
-        this.connectionService.sendLog({ serverId: this.currentServerId, logLine });
-      }
+  setupServerListeners(serverId, nativeServerService) {
+    nativeServerService.on('log', (logLine) => {
+      this.connectionService.sendLog({ serverId, logLine });
     });
 
-    this.nativeServerService.on('telemetry', (stats) => {
-      if (this.currentServerId) {
-        this.connectionService.sendTelemetry({ serverId: this.currentServerId, stats });
-      }
+    nativeServerService.on('telemetry', (stats) => {
+      this.connectionService.sendTelemetry({ serverId, stats });
     });
 
-    this.nativeServerService.on('started', () => {
-      if (this.currentServerId) {
-        this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'ONLINE' });
-      }
+    nativeServerService.on('started', () => {
+      this.connectionService.sendStateUpdate({ serverId, status: 'ONLINE' });
     });
 
-    this.nativeServerService.on('stopped', () => {
-      if (this.currentServerId) {
-        this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'OFFLINE' });
-      }
+    nativeServerService.on('stopped', () => {
+      this.connectionService.sendStateUpdate({ serverId, status: 'OFFLINE' });
+      this.activeServers.delete(serverId);
     });
   }
 
-  setupTunnelListeners() {
-    this.tunnelService.on('address_assigned', (address) => {
-      if (this.currentServerId) {
-        this.connectionService.sendTunnelInfo({ serverId: this.currentServerId, address });
-      }
+  setupTunnelListeners(serverId, tunnelService) {
+    tunnelService.on('address_assigned', (address) => {
+      this.connectionService.sendTunnelInfo({ serverId, address });
     });
 
-    this.tunnelService.on('claim_link', (link) => {
-      if (this.currentServerId) {
-        this.connectionService.sendTunnelInfo({ serverId: this.currentServerId, claimLink: link });
-      }
+    tunnelService.on('claim_link', (link) => {
+      this.connectionService.sendTunnelInfo({ serverId, claimLink: link });
     });
 
-    this.tunnelService.on('log', (logLine) => {
-      if (this.currentServerId) {
-        this.connectionService.sendLog({ serverId: this.currentServerId, logLine });
-      }
+    tunnelService.on('log', (logLine) => {
+      this.connectionService.sendLog({ serverId, logLine });
     });
 
-    this.tunnelService.on('error', (err) => {
-      console.error('[Tunnel Error]:', err);
-      if (this.currentServerId) {
-        this.connectionService.sendLog({ serverId: this.currentServerId, logLine: `[Tunnel Error]: ${err}` });
-      }
+    tunnelService.on('error', (err) => {
+      console.error(`[Tunnel Error Server ${serverId}]:`, err);
+      this.connectionService.sendLog({ serverId, logLine: `[Tunnel Error]: ${err}` });
     });
+  }
+
+  getAvailablePort() {
+    let port = this.nextPort;
+    const usedPorts = Array.from(this.activeServers.values()).map(s => s.port);
+    while (usedPorts.includes(port)) {
+        port++;
+    }
+    return port;
   }
 
   async handleStartCommand(serverConfig) {
+    const serverId = serverConfig.id;
+    if (this.activeServers.has(serverId)) {
+      this.connectionService.sendLog({ serverId, logLine: '[System] Servidor ya esta en ejecucion.' });
+      return;
+    }
+
     try {
       const managerDir = path.join(os.homedir(), '.minecraft-manager');
-      serverConfig.dataDir = path.join(managerDir, 'servers', serverConfig.id);
+      serverConfig.dataDir = path.join(managerDir, 'servers', serverId);
 
-      this.connectionService.sendLog({ serverId: this.currentServerId, logLine: '[System] Booting Native server...' });
-      await this.nativeServerService.startMinecraftServer(serverConfig);
-      await this.tunnelService.startTunnel(serverConfig.tunnelSecret);
+      const port = this.getAvailablePort();
+      serverConfig.port = port;
+
+      const nativeServerService = new NativeServerService();
+      const tunnelService = new TunnelService();
+
+      this.setupServerListeners(serverId, nativeServerService);
+      this.setupTunnelListeners(serverId, tunnelService);
+
+      this.activeServers.set(serverId, { nativeServerService, tunnelService, port });
+
+      this.connectionService.sendLog({ serverId, logLine: '[System] Booting Native server...' });
+      await nativeServerService.startMinecraftServer(serverConfig);
+      await tunnelService.startTunnel(port, serverConfig.tunnelSecret);
     } catch (error) {
       console.error("Error in handleStartCommand:", error);
-      this.connectionService.sendLog({ serverId: this.currentServerId, logLine: `Error starting server: ${error.message}` });
-      this.connectionService.sendStateUpdate({ serverId: this.currentServerId, status: 'OFFLINE' });
+      this.connectionService.sendLog({ serverId, logLine: `Error starting server: ${error.message}` });
+      this.connectionService.sendStateUpdate({ serverId, status: 'OFFLINE' });
+      this.activeServers.delete(serverId);
     }
   }
 
   async handleStopCommand(requestedServerId) {
-    const targetId = requestedServerId || this.currentServerId;
-    if (!targetId) return;
+    if (!requestedServerId) return;
+
+    const active = this.activeServers.get(requestedServerId);
+    if (!active) return;
 
     try {
-      this.tunnelService.stopTunnel();
-      await this.nativeServerService.stopMinecraftServer();
-      this.connectionService.sendLog({ serverId: targetId, logLine: '[System] Servidor y Túnel detenidos localmente.' });
+      active.tunnelService.stopTunnel();
+      await active.nativeServerService.stopMinecraftServer();
+      this.connectionService.sendLog({ serverId: requestedServerId, logLine: '[System] Servidor y Túnel detenidos localmente.' });
     } catch (error) {
-      this.connectionService.sendLog({ serverId: targetId, logLine: `[System] Error al detener servidor: ${error.message}` });
+      this.connectionService.sendLog({ serverId: requestedServerId, logLine: `[System] Error al detener servidor: ${error.message}` });
     } finally {
-      this.connectionService.sendStateUpdate({ serverId: targetId, status: 'OFFLINE' });
-      if (this.currentServerId === targetId) {
-        this.currentServerId = null;
-      }
+      this.connectionService.sendStateUpdate({ serverId: requestedServerId, status: 'OFFLINE' });
+      this.activeServers.delete(requestedServerId);
     }
   }
 }
