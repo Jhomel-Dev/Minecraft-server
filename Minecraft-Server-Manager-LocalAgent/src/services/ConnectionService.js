@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import EventEmitter from 'events';
+import os from 'os';
 
 export default class ConnectionService extends EventEmitter {
   constructor(apiUrl, agentToken) {
@@ -31,7 +32,10 @@ export default class ConnectionService extends EventEmitter {
   }
 
   attachSocketListeners() {
-    this.socket.on('connect', () => this.emit('connected'));
+    this.socket.on('connect', () => {
+      this.emit('connected');
+      this.socket.emit('AGENT_INFO', { totalMem: os.totalmem(), freeMem: os.freemem(), cpus: os.cpus().length });
+    });
     this.socket.on('disconnect', () => this.emit('disconnected'));
     this.socket.on('connect_error', (err) => this.emit('error', err));
     
