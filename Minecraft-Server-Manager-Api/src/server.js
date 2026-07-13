@@ -3,11 +3,19 @@ import { Server } from "socket.io";
 import app from "./index.js"; 
 import { handleSocketEvents } from "./modules/agent/gateways/agent.gateway.js";
 import dotenv from "dotenv"
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
 const httpServer = createServer(app);
 
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 100, 
+  message: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo en un minuto'
+});
+
+app.use('/api/', apiLimiter);
 
 const io = new Server(httpServer, {
     cors: {
