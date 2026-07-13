@@ -5,16 +5,16 @@ import { Laptop, Copy, Check, ExternalLink } from "lucide-react";
 import { useToast } from "@/shared/ui/ToastProvider";
 
 export function LinkPcModal({ token, onClose }) {
-  const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const { toast } = useToast();
   
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://tu-api.onrender.com";
 
-  const copyToClipboard = (textToCopy) => {
+  const copyToClipboard = (textToCopy, id) => {
     navigator.clipboard.writeText(textToCopy);
-    setCopied(true);
+    setCopiedId(id);
     toast("¡Comando copiado al portapapeles!", "success");
-    setTimeout(() => setCopied(false), 3000);
+    setTimeout(() => setCopiedId(null), 3000);
   };
 
   return (
@@ -48,11 +48,11 @@ export function LinkPcModal({ token, onClose }) {
                     {`Invoke-RestMethod -Uri "${apiUrl.replace('/api', '')}/install-windows.ps1" -OutFile "install.ps1"; .\\install.ps1 "${apiUrl.replace('/api', '')}"`}
                   </pre>
                   <button 
-                    onClick={() => copyToClipboard(`Invoke-RestMethod -Uri "${apiUrl.replace('/api', '')}/install-windows.ps1" -OutFile "install.ps1"; .\\install.ps1 "${apiUrl.replace('/api', '')}"`)}
+                    onClick={() => copyToClipboard(`Invoke-RestMethod -Uri "${apiUrl.replace('/api', '')}/install-windows.ps1" -OutFile "install.ps1"; .\\install.ps1 "${apiUrl.replace('/api', '')}"`, 'win')}
                     className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
                     title="Copiar Comando Windows"
                   >
-                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    {copiedId === 'win' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -64,11 +64,11 @@ export function LinkPcModal({ token, onClose }) {
                     {`curl -sL ${apiUrl.replace('/api', '')}/install-linux.sh | bash -s ${apiUrl.replace('/api', '')}`}
                   </pre>
                   <button 
-                    onClick={() => copyToClipboard(`curl -sL ${apiUrl.replace('/api', '')}/install-linux.sh | bash -s ${apiUrl.replace('/api', '')}`)}
+                    onClick={() => copyToClipboard(`curl -sL ${apiUrl.replace('/api', '')}/install-linux.sh | bash -s ${apiUrl.replace('/api', '')}`, 'linux')}
                     className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
                     title="Copiar Comando Linux"
                   >
-                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    {copiedId === 'linux' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -92,11 +92,11 @@ export function LinkPcModal({ token, onClose }) {
                     {token}
                   </pre>
                   <button 
-                    onClick={() => copyToClipboard(token)}
+                    onClick={() => copyToClipboard(token, 'token')}
                     className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
                     title="Copiar Token"
                   >
-                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    {copiedId === 'token' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
