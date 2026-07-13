@@ -47,7 +47,6 @@ export async function refreshAccessToken() {
     }
     throw new Error('Refresh failed');
   }
-  }
   return res.json();
 }
 
