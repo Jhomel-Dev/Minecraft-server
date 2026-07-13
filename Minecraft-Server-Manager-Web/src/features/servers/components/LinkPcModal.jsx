@@ -45,10 +45,10 @@ export function LinkPcModal({ token, onClose }) {
                 <label className="text-xs font-bold text-foreground/60 uppercase">Para Windows (PowerShell)</label>
                 <div className="relative group mt-1">
                   <pre className="bg-background border-2 border-surface-border p-3 pr-12 rounded-blocky text-xs font-mono overflow-x-auto text-primary/90 whitespace-pre-wrap break-all">
-                    {`Invoke-RestMethod -Uri "${apiUrl.replace('/api', '')}/install-windows.ps1" -OutFile "install.ps1"; .\\install.ps1 "${apiUrl.replace('/api', '')}"`}
+                    {`Invoke-RestMethod -Uri "${typeof window !== 'undefined' ? window.location.origin : ''}/install-windows.ps1" -OutFile "install.ps1"; .\\install.ps1 "${typeof window !== 'undefined' ? window.location.origin : ''}"`}
                   </pre>
                   <button 
-                    onClick={() => copyToClipboard(`Invoke-RestMethod -Uri "${apiUrl.replace('/api', '')}/install-windows.ps1" -OutFile "install.ps1"; .\\install.ps1 "${apiUrl.replace('/api', '')}"`, 'win')}
+                    onClick={() => copyToClipboard(`Invoke-RestMethod -Uri "${typeof window !== 'undefined' ? window.location.origin : ''}/install-windows.ps1" -OutFile "install.ps1"; .\\install.ps1 "${typeof window !== 'undefined' ? window.location.origin : ''}"`, 'win')}
                     className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
                     title="Copiar Comando Windows"
                   >
@@ -61,10 +61,10 @@ export function LinkPcModal({ token, onClose }) {
                 <label className="text-xs font-bold text-foreground/60 uppercase">Para Linux / Mac (Bash)</label>
                 <div className="relative group mt-1">
                   <pre className="bg-background border-2 border-surface-border p-3 pr-12 rounded-blocky text-xs font-mono overflow-x-auto text-primary/90 whitespace-pre-wrap break-all">
-                    {`curl -sL ${apiUrl.replace('/api', '')}/install-linux.sh | bash -s ${apiUrl.replace('/api', '')}`}
+                    {`curl -sL ${typeof window !== 'undefined' ? window.location.origin : ''}/install-linux.sh | bash -s ${typeof window !== 'undefined' ? window.location.origin : ''}`}
                   </pre>
                   <button 
-                    onClick={() => copyToClipboard(`curl -sL ${apiUrl.replace('/api', '')}/install-linux.sh | bash -s ${apiUrl.replace('/api', '')}`, 'linux')}
+                    onClick={() => copyToClipboard(`curl -sL ${typeof window !== 'undefined' ? window.location.origin : ''}/install-linux.sh | bash -s ${typeof window !== 'undefined' ? window.location.origin : ''}`, 'linux')}
                     className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors"
                     title="Copiar Comando Linux"
                   >
