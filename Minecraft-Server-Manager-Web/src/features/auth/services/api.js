@@ -51,13 +51,9 @@ export async function refreshAccessToken() {
 }
 
 export async function getAgentToken() {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No auth token found');
-
   const res = await fetch(`${API_URL}/api/auth/me/agent-token`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
+    method: 'GET',
+    credentials: 'include'
   });
   if (!res.ok) throw new Error('Failed to fetch agent token');
   return res.json();
