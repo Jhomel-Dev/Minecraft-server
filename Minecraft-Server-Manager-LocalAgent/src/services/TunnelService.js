@@ -14,7 +14,7 @@ export default class TunnelService extends EventEmitter {
         this.managerDir = path.join(os.homedir(), '.minecraft-manager');
     }
 
-    async startTunnel(secret = null) {
+    async startTunnel(port, secret = null) {
         if (this.isRunning()) {
             this.emit('log', '[Tunnel] El tunel ya esta en ejecucion, ignorando orden.');
             return;
@@ -24,7 +24,7 @@ export default class TunnelService extends EventEmitter {
         
         try {
             await this.ensureBoreIsInstalled(borePath);
-            this.launchBoreProcess(borePath, secret);
+            this.launchBoreProcess(borePath, secret, port);
         } catch (error) {
             this.emit('log', `[Tunnel] Excepcion al lanzar el tunel: ${error.message}`);
         }
@@ -69,16 +69,16 @@ export default class TunnelService extends EventEmitter {
         fs.chmodSync(borePath, 0o755);
     }
 
-    launchBoreProcess(borePath, secret) {
-        this.emit('log', `[Tunnel] Iniciando tunel TCP dinamico...`);
-        const args = this.buildBoreArgs(secret);
+    launchBoreProcess(borePath, secret, port) {
+        this.emit('log', `[Tunnel] Iniciando tunel TCP dinamico en puerto ${port}...`);
+        const args = this.buildBoreArgs(secret, port);
         
         this.process = spawn(borePath, args);
         this.attachProcessListeners();
     }
 
-    buildBoreArgs(secret) {
-        const args = ['local', '25565', '--to', 'bore.pub'];
+    buildBoreArgs(secret, port) {
+        const args = ['local', port.toString(), '--to', 'bore.pub'];
         if (!secret) return args;
         
         args.push('--secret', secret);

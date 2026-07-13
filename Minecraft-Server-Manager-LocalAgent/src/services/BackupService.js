@@ -4,8 +4,8 @@ import os from 'os';
 import AdmZip from 'adm-zip';
 
 export default class BackupService {
-    constructor(nativeServerService) {
-        this.nativeServerService = nativeServerService;
+    constructor(getNativeServerService) {
+        this.getNativeServerService = getNativeServerService;
         this.schedules = new Map();
         this.startScheduler();
     }
@@ -89,16 +89,16 @@ export default class BackupService {
         const validPaths = await this.getValidBackupPaths(serverDir, profile);
         if (validPaths.length === 0) throw new Error("No hay archivos validos para respaldar");
 
-        const isOnline = this.isServerOnline();
+        const isOnline = this.isServerOnline(serverId);
         
         try {
-            await this.prepareServerForBackup(isOnline);
+            await this.prepareServerForBackup(serverId, isOnline);
             await this.compressFiles(serverDir, validPaths, zipPath);
             return { success: true, file: zipName };
         } catch (err) {
             throw new Error("Fallo al crear el backup en zip.");
         } finally {
-            await this.resumeServerAfterBackup(isOnline);
+            await this.resumeServerAfterBackup(serverId, isOnline);
         }
     }
 
@@ -129,24 +129,27 @@ export default class BackupService {
         return files.filter(f => f !== 'backups');
     }
 
-    isServerOnline() {
-        return this.nativeServerService && this.nativeServerService.process;
+    isServerOnline(serverId) {
+        const service = this.getNativeServerService(serverId);
+        return service && service.process;
     }
 
-    async prepareServerForBackup(isOnline) {
+    async prepareServerForBackup(serverId, isOnline) {
         if (!isOnline) return;
         try {
-            await this.nativeServerService.sendCommand('save-all flush');
+            const service = this.getNativeServerService(serverId);
+            await service.sendCommand('save-all flush');
             await new Promise(res => setTimeout(res, 2000));
-            await this.nativeServerService.sendCommand('save-off');
+            await service.sendCommand('save-off');
             await new Promise(res => setTimeout(res, 1000));
         } catch(e) {}
     }
 
-    async resumeServerAfterBackup(isOnline) {
+    async resumeServerAfterBackup(serverId, isOnline) {
         if (!isOnline) return;
         try {
-            await this.nativeServerService.sendCommand('save-on');
+            const service = this.getNativeServerService(serverId);
+            await service.sendCommand('save-on');
         } catch(e) {}
     }
 
