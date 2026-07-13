@@ -4,6 +4,7 @@ import DnsService from '../../servers/services/dns.service.js';
 
 const dnsService = new DnsService();
 const serverLogsBuffer = new Map();
+export const agentHardwareMap = new Map();
 
 export const handleSocketEvents = (io) => {
   io.use(authenticateSocket);
@@ -70,6 +71,7 @@ const registerAgentEvents = (socket) => {
   }
 
   socket.on('TELEMETRY_UPDATE', (payload) => handleTelemetry(socket, payload));
+  socket.on('AGENT_INFO', (info) => agentHardwareMap.set(socket.userId, info));
   socket.on('SERVER_LOG', (payload) => handleServerLog(socket, payload));
   socket.on('TUNNEL_INFO', (payload) => handleTunnelInfo(socket, payload));
   socket.on('STATUS_UPDATE', (payload) => handleStatusUpdate(socket, payload));
@@ -189,6 +191,7 @@ const updateDnsBackground = async (server, address) => {
 
 const handleAgentDisconnect = async (socket) => {
   try {
+    agentHardwareMap.delete(socket.userId);
     const whereClause = socket.userId === 'LEGACY' ? {} : { userId: socket.userId };
     await prisma.server.updateMany({
       where: whereClause,
