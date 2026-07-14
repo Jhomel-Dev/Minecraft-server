@@ -24,7 +24,7 @@ if (-not $NodeInstalled) {
 if (-not (Test-Path "index.js")) {
     Write-Host "Descargando código del Agente..."
     # TODO: Cambiar esta URL al lugar oficial donde alojes el ZIP (ej. GitHub Releases o AWS S3)
-    Invoke-WebRequest -Uri "https://craftcontrol.vercel.app/craft-control-agent-full.zip" -OutFile "agent.zip"
+    Invoke-WebRequest -Uri "https://github.com/Jhomel-Dev/Minecraft-server/releases/download/release/v1.1.0/craft-control-agent-full.zip" -OutFile "agent.zip"
     Write-Host "Extrayendo Agente..."
     Expand-Archive -Path "agent.zip" -DestinationPath "." -Force
     Remove-Item "agent.zip"
