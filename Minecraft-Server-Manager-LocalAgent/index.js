@@ -97,9 +97,19 @@ const start = async () => {
   try {
     const apiUrl = getApiUrl();
     let agentToken = getAgentToken();
+    const isSetupMode = process.argv.includes('--setup');
 
     if (!agentToken) {
       agentToken = await performDeviceFlowPairing(apiUrl);
+      if (isSetupMode) {
+        console.log('\n✅ Vinculación completada exitosamente.');
+        console.log('El instalador continuará con la configuración de segundo plano...\n');
+        process.exit(0);
+      }
+    } else if (isSetupMode) {
+      console.log('\n✅ El Agente ya se encontraba vinculado con la nube.');
+      console.log('El instalador continuará con la configuración de segundo plano...\n');
+      process.exit(0);
     }
 
     bootstrapAgent(apiUrl, agentToken);
