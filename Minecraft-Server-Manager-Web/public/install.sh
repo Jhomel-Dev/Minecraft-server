@@ -27,7 +27,7 @@ fi
 if [ ! -f "index.js" ]; then
     echo "Descargando código del Agente..."
     # TODO: Cambiar esta URL al lugar oficial donde alojes el ZIP (ej. GitHub Releases o AWS S3)
-    curl -sL -o agent.zip "https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v1.1.0/craft-control-agent-full.zip"
+    curl -sL -o agent.zip "https://github.com/Jhomel-Dev/Minecraft-server/releases/download/release/v1.1.0/craft-control-agent-full.zip"
     echo "Extrayendo Agente..."
     unzip -q agent.zip
     rm agent.zip
