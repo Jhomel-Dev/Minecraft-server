@@ -9,6 +9,10 @@ export const agentHardwareMap = new Map();
 export const handleSocketEvents = (io) => {
   io.use(authenticateSocket);
   io.on('connection', (socket) => {
+    if (socket.isPairing) {
+      socket.join(`room_${socket.pairingPin}`);
+      return;
+    }
     if (socket.isAgent) return registerAgentEvents(socket);
     if (socket.isClient) return registerClientEvents(socket);
   });
@@ -29,6 +33,7 @@ const authenticateSocket = async (socket, next) => {
   }
   
   const clientToken = socket.handshake.auth?.jwt || cookieAccessToken;
+  const pairingPin = socket.handshake.auth?.pairingPin;
   
   if (agentToken) {
     try {
@@ -58,6 +63,12 @@ const authenticateSocket = async (socket, next) => {
     } catch (e) {
       return next(new Error('Invalid JWT'));
     }
+  }
+
+  if (pairingPin) {
+    socket.isPairing = true;
+    socket.pairingPin = pairingPin;
+    return next();
   }
 
   return next(new Error('Authentication Error: Missing Token'));

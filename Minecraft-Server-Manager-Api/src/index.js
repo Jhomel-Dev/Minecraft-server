@@ -7,6 +7,7 @@ import authRoutes from './modules/auth/routes/auth.routes.js';
 import serverRoutes from './modules/servers/routes/server.routes.js';
 import versionRoutes from './modules/versions/routes/version.routes.js';
 import userRoutes from './modules/users/routes/user.routes.js';
+import agentRoutes from './modules/agent/routes/agent.routes.js';
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/servers', serverRoutes);
 app.use('/api/versions', versionRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/agent', agentRoutes);
 
 export default app;
