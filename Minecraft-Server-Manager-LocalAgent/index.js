@@ -1,76 +1,112 @@
 import 'dotenv/config';
+import fs from 'fs';
+import { io } from 'socket.io-client';
 import LocalAgentController from './src/controllers/LocalAgentController.js';
-import readline from 'readline';
 
-function bootstrap(apiUrl, agentToken) {
-  const config = { apiUrl, agentToken };
-  const agent = new LocalAgentController(config);
+const DEFAULT_API_URL = 'https://minecraft-server-pl80.onrender.com';
+
+const getApiUrl = () => {
+  const argUrl = process.argv.find(arg => arg.startsWith('--api='));
+  if (argUrl) return argUrl.split('=')[1];
+  return process.env.API_URL || DEFAULT_API_URL;
+};
+
+const getAgentToken = () => {
+  const argToken = process.argv.find(arg => arg.startsWith('--token='));
+  if (argToken) return argToken.split('=')[1];
+  return process.env.AGENT_SECRET_TOKEN || process.env.AGENT_TOKEN;
+};
+
+const saveTokenToEnv = (token) => {
+  const envPath = '.env';
+  let envContent = '';
   
+  if (fs.existsSync(envPath)) {
+    envContent = fs.readFileSync(envPath, 'utf8');
+  }
+  
+  if (envContent.includes('AGENT_SECRET_TOKEN=')) {
+    envContent = envContent.replace(/AGENT_SECRET_TOKEN=.*/, `AGENT_SECRET_TOKEN=${token}`);
+  } else {
+    envContent += `\nAGENT_SECRET_TOKEN=${token}\n`;
+  }
+  
+  fs.writeFileSync(envPath, envContent.trim() + '\n');
+};
+
+const requestPairingPin = async (apiUrl) => {
+  const response = await fetch(`${apiUrl}/api/agent/pairing/request`, { method: 'POST' });
+  if (!response.ok) throw new Error('PairingRequestFailed');
+  return response.json();
+};
+
+const waitForSocketPairing = (apiUrl, pin) => {
+  return new Promise((resolve, reject) => {
+    const socket = io(apiUrl, {
+      auth: { pairingPin: pin },
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('paired', (data) => {
+      if (!data || !data.token) return;
+      socket.disconnect();
+      resolve(data.token);
+    });
+
+    socket.on('connect_error', (err) => {
+      reject(new Error(`WebSocketConnectionFailed: ${err.message}`));
+    });
+  });
+};
+
+const performDeviceFlowPairing = async (apiUrl) => {
+  console.log('\n=================================================');
+  console.log('   Iniciando Vinculación de Nuevo Agente');
+  console.log('=================================================\n');
+
+  const { pin } = await requestPairingPin(apiUrl);
+  
+  console.log(`Paso 1: Ve a tu panel web en la sección "Vincular PC"`);
+  console.log(`Paso 2: Ingresa el siguiente PIN de seguridad:\n`);
+  console.log(`      --->  ${pin}  <--- \n`);
+  console.log(`Esperando confirmación en la nube...\n`);
+
+  const finalToken = await waitForSocketPairing(apiUrl, pin);
+  
+  console.log('¡Vinculación Exitosa! Guardando credenciales...');
+  saveTokenToEnv(finalToken);
+  
+  return finalToken;
+};
+
+const bootstrapAgent = (apiUrl, agentToken) => {
+  const agent = new LocalAgentController({ apiUrl, agentToken });
   agent.start();
-  console.log('Local Agent initialized and attempting to connect...');
+  
+  console.log('\n✅ Local Agent inicializado y conectado exitosamente.\n');
 
   process.on('SIGINT', async () => {
-    console.log('\n[System] Deteniendo agente y limpiando procesos huerfanos...');
+    console.log('\n[System] Deteniendo agente...');
     if (agent.tunnelService) agent.tunnelService.stopTunnel();
     if (agent.nativeServerService) await agent.nativeServerService.stopMinecraftServer();
     process.exit(0);
   });
-}
+};
 
-function extractConfig() {
-  const args = process.argv.slice(2);
-  let apiUrl = process.env.API_URL;
-  let agentToken = process.env.AGENT_SECRET_TOKEN || process.env.AGENT_TOKEN;
-
-  args.forEach(arg => {
-    if (arg.startsWith('--url=')) apiUrl = arg.split('=')[1];
-    if (arg.startsWith('--token=')) agentToken = arg.split('=')[1];
-  });
-
-  return { apiUrl, agentToken };
-}
-
-async function main() {
+const start = async () => {
   try {
-    let { apiUrl, agentToken } = extractConfig();
-
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    const askQuestion = (query) => new Promise(resolve => rl.question(query, resolve));
-
-    if (!apiUrl || !agentToken) {
-      console.log("=================================================");
-      console.log("   Bienvenido al Agente de CraftControl Local    ");
-      console.log("=================================================");
-      console.log("");
-    }
-
-    if (!apiUrl) {
-      const answer = await askQuestion("Por favor, ingresa la URL de tu panel (ej. https://tu-api.onrender.com): ");
-      apiUrl = answer.trim();
-    }
+    const apiUrl = getApiUrl();
+    let agentToken = getAgentToken();
 
     if (!agentToken) {
-      const answer = await askQuestion("Por favor, pega tu Comando Secreto o Token: ");
-      // In case they paste the whole command: node agent.js --url="..." --token="TOKEN"
-      const tokenMatch = answer.match(/--token="?([^"\s]+)"?/);
-      agentToken = tokenMatch ? tokenMatch[1] : answer.trim();
+      agentToken = await performDeviceFlowPairing(apiUrl);
     }
 
-    rl.close();
-
-    if (!apiUrl || !agentToken) {
-      throw new Error("API URL y Token son obligatorios.");
-    }
-
-    bootstrap(apiUrl, agentToken);
+    bootstrapAgent(apiUrl, agentToken);
   } catch (error) {
-    console.error('Failed to start Local Agent:', error.message);
+    console.error('\n❌ Failed to start Local Agent:', error.message);
     process.exit(1);
   }
-}
+};
 
-main();
+start();
