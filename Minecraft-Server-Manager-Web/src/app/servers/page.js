@@ -3,23 +3,42 @@ import { Server, Plus, HardDrive, Activity } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/Button";
 import { useServers } from "@/features/servers/hooks/useServers";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LinkPcModal } from "@/features/servers/components/LinkPcModal";
-import { getAgentToken } from "@/features/auth/services/api";
+import { AgentLinkingStage } from "@/features/servers/components/AgentLinkingStage";
+import { getAgentStatus } from "@/features/auth/services/api";
 import { useToast } from "@/shared/ui/ToastProvider";
 
 export default function DashboardHome() {
   const { servers, serverSizes, loading, formatSize } = useServers();
+  const [isAgentLinked, setIsAgentLinked] = useState(null);
 
-  if (loading) {
+  useEffect(() => {
+    getAgentStatus()
+      .then(res => setIsAgentLinked(res.isLinked))
+      .catch(() => setIsAgentLinked(false));
+  }, []);
+
+  if (loading || isAgentLinked === null) {
     return (
       <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
-        <Header />
-        <p className="text-center text-foreground/50 font-bold mt-10">Cargando servidores...</p>
+        <Header hideLinkButton />
+        <p className="text-center text-foreground/50 font-bold mt-10">Cargando datos...</p>
       </div>
     );
   }
 
+  // Si no tiene agente vinculado, forzamos la pantalla completa bonita de vinculación
+  if (!isAgentLinked) {
+    return (
+      <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
+        <Header hideLinkButton />
+        <AgentLinkingStage onLinked={() => setIsAgentLinked(true)} />
+      </div>
+    );
+  }
+
+  // Si tiene agente vinculado, pero 0 servidores, mostramos el EmptyState clásico
   if (servers.length === 0) {
     return (
       <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
@@ -37,19 +56,12 @@ export default function DashboardHome() {
   );
 }
 
-function Header() {
+function Header({ hideLinkButton }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
-  const [agentToken, setAgentToken] = useState("");
   const { toast } = useToast();
 
-  const handleLinkPc = async () => {
-    try {
-      const res = await getAgentToken();
-      setAgentToken(res.agentToken);
-      setShowLinkModal(true);
-    } catch (err) {
-      toast("Error al obtener el token: " + err.message, "error");
-    }
+  const handleLinkPc = () => {
+    setShowLinkModal(true);
   };
 
   return (
@@ -60,17 +72,21 @@ function Header() {
           <p className="text-foreground/70 font-semibold text-sm sm:text-base">Administra tu red de Minecraft</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10" onClick={handleLinkPc}>
-            <HardDrive className="w-5 h-5 mr-2 inline-block" /> Vincular PC
-          </Button>
-          <Link href="/servers/new-server" className="w-full sm:w-auto">
-            <Button variant="primary" className="w-full sm:w-auto">
-              <Plus className="w-5 h-5 mr-2 inline-block" /> Crear Servidor
+          {!hideLinkButton && (
+            <Button variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10" onClick={handleLinkPc}>
+              <HardDrive className="w-5 h-5 mr-2 inline-block" /> Vincular otra PC
             </Button>
-          </Link>
+          )}
+          {!hideLinkButton && (
+            <Link href="/servers/new-server" className="w-full sm:w-auto">
+              <Button variant="primary" className="w-full sm:w-auto">
+                <Plus className="w-5 h-5 mr-2 inline-block" /> Crear Servidor
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
-      {showLinkModal && <LinkPcModal token={agentToken} onClose={() => setShowLinkModal(false)} />}
+      {showLinkModal && <LinkPcModal onClose={() => setShowLinkModal(false)} />}
     </>
   );
 }
