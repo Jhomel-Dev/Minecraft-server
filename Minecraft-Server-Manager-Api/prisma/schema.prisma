@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -45,4 +43,13 @@ model Server {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model PairingCode {
+  id        String   @id @default(uuid())
+  pin       String   @unique
+  expiresAt DateTime
+  isClaimed Boolean  @default(false)
+  userId    String?
+  createdAt DateTime @default(now())
 }
