@@ -85,11 +85,7 @@ export default class AuthController {
       if (!user) return res.status(404).json({ error: 'User not found' });
       
       if (!user.agentToken) {
-        const token = crypto.randomBytes(32).toString('hex');
-        user = await prisma.user.update({
-          where: { id: req.user.id },
-          data: { agentToken: token }
-        });
+        return res.status(200).json({ agentToken: null });
       }
       
       return res.status(200).json({ agentToken: user.agentToken });
