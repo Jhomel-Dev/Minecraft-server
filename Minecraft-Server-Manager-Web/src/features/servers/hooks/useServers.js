@@ -22,10 +22,7 @@ export function useServers() {
       const data = await getMyServers();
       const serverList = Array.isArray(data) ? data : [];
       
-      if (isInitial && serverList.length === 0) {
-        router.push("/servers/new-server");
-        return;
-      }
+
       
       setServers(serverList);
       if (isInitial) {
