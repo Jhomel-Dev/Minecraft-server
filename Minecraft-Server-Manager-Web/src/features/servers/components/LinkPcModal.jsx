@@ -134,19 +134,19 @@ export function LinkPcModal({ onClose }) {
             <div className="space-y-4">
               <div className="relative group">
                 <label className="text-xs font-bold text-foreground/60 uppercase absolute -top-2 left-3 bg-surface px-1">Bash (Linux / Mac)</label>
-                <pre className="bg-background border-2 border-surface-border p-4 pt-5 rounded-blocky text-sm font-mono overflow-x-auto text-primary/90">
-                  {`curl -sL ${getBaseUrl()}/install-linux.sh | bash`}
-                </pre>
-                <button onClick={() => copyToClipboard(`curl -sL ${getBaseUrl()}/install-linux.sh | bash`, 'linux')} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors">
+                <div className="relative font-mono text-sm bg-background p-4 rounded-blocky border-2 border-surface-border text-foreground/80 overflow-x-auto">
+                  {`curl -sL ${getBaseUrl()}/install.sh | bash`}
+                </div>
+                <button onClick={() => copyToClipboard(`curl -sL ${getBaseUrl()}/install.sh | bash`, 'linux')} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors">
                   {copiedId === 'linux' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
               <div className="relative group">
                 <label className="text-xs font-bold text-foreground/60 uppercase absolute -top-2 left-3 bg-surface px-1">PowerShell (Windows)</label>
-                <pre className="bg-background border-2 border-surface-border p-4 pt-5 rounded-blocky text-sm font-mono overflow-x-auto text-primary/90">
-                  {`iwr -useb ${getBaseUrl()}/install-windows.ps1 | iex`}
-                </pre>
-                <button onClick={() => copyToClipboard(`iwr -useb ${getBaseUrl()}/install-windows.ps1 | iex`, 'win')} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors">
+                <div className="relative font-mono text-sm bg-background p-4 rounded-blocky border-2 border-surface-border text-foreground/80 overflow-x-auto">
+                  {`iwr -useb ${getBaseUrl()}/install.ps1 | iex`}
+                </div>
+                <button onClick={() => copyToClipboard(`iwr -useb ${getBaseUrl()}/install.ps1 | iex`, 'win')} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors">
                   {copiedId === 'win' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
