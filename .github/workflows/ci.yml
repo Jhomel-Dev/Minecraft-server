@@ -37,6 +37,7 @@ jobs:
           }
           Wait-Job $job -Timeout 20
           if ($job.State -eq 'Running') {
+            Receive-Job $job -Keep
             Stop-Job $job
             Write-Host "¡Instalador funcionó perfectamente y se quedó esperando el PIN!"
             exit 0
