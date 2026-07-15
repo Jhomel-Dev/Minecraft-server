@@ -19,8 +19,8 @@ cd "$INSTALL_DIR" || exit 1
 
 if ! command -v node &> /dev/null; then
     echo "Node.js no detectado. Descargando versión portable (v20)..."
-    curl -sL -o node.tar.xz https://nodejs.org/dist/v20.11.1/node-v20.11.1-linux-x64.tar.xz
-    tar -xf node.tar.xz
+    curl -sL -o node.tar.gz https://nodejs.org/dist/v20.11.1/node-v20.11.1-linux-x64.tar.gz
+    tar -xzf node.tar.gz
     export PATH="$PWD/node-v20.11.1-linux-x64/bin:$PATH"
 fi
 
