@@ -1,0 +1,49 @@
+name: CD Pipeline - Empaquetado del Agente
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Minecraft-Server-Manager-LocalAgent/**' # Solo correr si se editó el Agente
+
+permissions:
+  contents: write # Necesario para poder subir el zip a los Releases
+
+jobs:
+  build-and-release:
+    name: Empaquetar y Actualizar Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar Dependencias de Producción
+        run: |
+          cd Minecraft-Server-Manager-LocalAgent
+          # Instalamos dependencias, ignorando las de desarrollo para que el zip pese menos
+          npm install --omit=dev
+
+      - name: Esterilizar y Comprimir
+        run: |
+          cd Minecraft-Server-Manager-LocalAgent
+          # Borramos archivos de prueba o basura que no deben ir a producción
+          rm -f .env agent.log Dockerfile.test package-lock.json
+          # Comprimimos todo en el zip
+          zip -r ../craft-control-agent-full.zip .
+
+      - name: Actualizar GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: release/v1.1.0 # Actualizamos el release estático
+          files: craft-control-agent-full.zip
+          # Esto sobreescribe el archivo zip anterior sin crear un release nuevo
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
