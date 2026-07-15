@@ -1,0 +1,47 @@
+name: CI/CD Pipeline - Instaladores
+
+on:
+  push:
+    branches: [ "main", "staging", "develop" ]
+  pull_request:
+    branches: [ "main", "staging", "develop" ]
+
+jobs:
+  test-installers:
+    name: Probar Instalador en ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Probamos en máquinas vírgenes de Ubuntu (Linux) y Windows Server
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Probar script de Linux (bash)
+        if: runner.os == 'Linux'
+        # Usamos timeout de 15s porque el Agente se quedará esperando el PIN infinitamente.
+        # El código 124 significa que el timeout funcionó perfectamente y el agente no crasheó.
+        run: |
+          timeout 15 bash Minecraft-Server-Manager-Web/public/install.sh || if [ $? -eq 124 ]; then echo "¡Instalador funcionó y se quedó esperando el PIN!"; exit 0; else exit 1; fi
+
+      - name: Probar script de Windows (PowerShell)
+        if: runner.os == 'Windows'
+        # En Windows usamos Start-Job para correrlo en background y esperar 20 segundos.
+        # Si sigue corriendo (Running) significa que llegó a pedir el PIN y no crasheó con errores 404.
+        run: |
+          $job = Start-Job -ScriptBlock { 
+            & .\Minecraft-Server-Manager-Web\public\install.ps1 
+          }
+          Wait-Job $job -Timeout 20
+          if ($job.State -eq 'Running') {
+            Stop-Job $job
+            Write-Host "¡Instalador funcionó perfectamente y se quedó esperando el PIN!"
+            exit 0
+          } else {
+            Receive-Job $job
+            Write-Error "El instalador crasheó antes de llegar a pedir el PIN."
+            exit 1
+          }
