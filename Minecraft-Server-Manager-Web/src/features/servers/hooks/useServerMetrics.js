@@ -10,12 +10,8 @@ export function useServerMetrics(serverId) {
   useEffect(() => {
     if (!serverId) return;
 
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
-
     const socket = io(API_URL, {
-      auth: { jwt: token },
-      transports: ["websocket"]
+      withCredentials: true,
     });
 
     socketRef.current = socket;

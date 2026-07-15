@@ -1,18 +1,29 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
 import app from "./index.js"; 
-import { handleSocketEvents } from "./services/socket-handler-services.js";
+import { handleSocketEvents } from "./modules/agent/gateways/agent.gateway.js";
 import dotenv from "dotenv"
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
 const httpServer = createServer(app);
 
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 300, 
+  message: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo en un minuto'
+});
+
+app.use('/api/', apiLimiter);
 
 const io = new Server(httpServer, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: function (origin, callback) {
+            callback(null, origin || true);
+        },
+        methods: ["GET", "POST"],
+        credentials: true
     },
     transports: ['websocket', 'polling']
 });
@@ -21,17 +32,19 @@ handleSocketEvents(io);
 app.set('io', io);
 
 
-const port = process.env.PORT || 3000;
+let port = parseInt(process.env.PORT) || 3000;
 
-httpServer.listen(port, '0.0.0.0', () => {
-    console.log(`Server HTTP & Socket.io running on port: ${port}`);
-});
-
+const startServer = (currentPort) => {
+    httpServer.listen(currentPort, () => {
+        console.log(`Server HTTP & Socket.io running on port: ${currentPort}`);
+    });
+};
 
 httpServer.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-        console.error(` ERROR: Puerto ${port} ya está en uso`);
-        process.exit(1);
+        console.error(` ERROR: Puerto ${port} ya está en uso, intentando el siguiente...`);
+        port++;
+        startServer(port);
     } else if (err.code === 'EACCES') {
         console.error(` ERROR: Sin permisos para usar puerto ${port}`);
         process.exit(1);
@@ -41,6 +54,8 @@ httpServer.on('error', (err) => {
     }
 });
 
+startServer(port);
+
 
 io.engine.on('connection_error', (err) => {
     console.error(' Socket.IO connection error:', {
@@ -48,4 +63,12 @@ io.engine.on('connection_error', (err) => {
         message: err.message,
         context: err.context
     });
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('\n[CRÍTICO] Uncaught Exception atrapada:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('\n[CRÍTICO] Unhandled Rejection atrapada:', reason);
 });

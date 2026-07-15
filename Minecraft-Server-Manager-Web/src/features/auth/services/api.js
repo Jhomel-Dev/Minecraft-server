@@ -49,3 +49,21 @@ export async function refreshAccessToken() {
   }
   return res.json();
 }
+
+export async function getAgentToken() {
+  const res = await fetch(`${API_URL}/api/auth/me/agent-token`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Failed to fetch agent token');
+  return res.json();
+}
+
+export async function getAgentStatus() {
+  const res = await fetch(`${API_URL}/api/agent/status`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Failed to fetch agent status');
+  return res.json();
+}

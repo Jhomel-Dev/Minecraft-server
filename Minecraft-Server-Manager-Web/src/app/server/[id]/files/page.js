@@ -1,9 +1,9 @@
 "use client";
 import { useState, use } from "react";
 import { FolderOpen, AlertTriangle, Upload, Loader2 } from "lucide-react";
-import { FileBreadcrumbs } from "@/features/servers/components/FileBreadcrumbs";
-import { FileList } from "@/features/servers/components/FileList";
-import { FileEditor } from "@/features/servers/components/FileEditor";
+import { FileBreadcrumbs } from "@/features/file-manager/components/FileBreadcrumbs";
+import { FileList } from "@/features/file-manager/components/FileList";
+import { FileEditor } from "@/features/file-manager/components/FileEditor";
 import { fsOperation } from "@/features/servers/services/serverApi";
 import { useToast } from "@/shared/ui/ToastProvider";
 import { Button } from "@/shared/ui/Button";

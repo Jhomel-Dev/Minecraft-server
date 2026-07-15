@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function SidebarItem({ href, icon, label, exact = false }) {
+export function SidebarItem({ href, icon, label, exact = false, onClick }) {
   const pathname = usePathname();
   const isActive = exact 
     ? pathname === href 
@@ -14,7 +14,7 @@ export function SidebarItem({ href, icon, label, exact = false }) {
     : "text-foreground hover:bg-surface-hover border-2 border-transparent";
 
   return (
-    <Link href={href} className={`${baseClasses} ${activeClasses}`}>
+    <Link href={href} className={`${baseClasses} ${activeClasses}`} onClick={onClick}>
       {icon}
       <span>{label}</span>
     </Link>

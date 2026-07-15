@@ -3,8 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
 }
 
 model User {
@@ -14,6 +13,7 @@ model User {
   password      String?
   googleId      String?  @unique
   refreshToken  String?
+  agentToken    String?  @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -43,4 +43,13 @@ model Server {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model PairingCode {
+  id        String   @id @default(uuid())
+  pin       String   @unique
+  expiresAt DateTime
+  isClaimed Boolean  @default(false)
+  userId    String?
+  createdAt DateTime @default(now())
 }

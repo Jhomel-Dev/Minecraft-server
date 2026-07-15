@@ -1,26 +1,34 @@
-import express from "express"
-import cors from "cors"
-import morgan from "morgan"
-import cookieParser from "cookie-parser"
-import authRoutes from './routes/authRoutes.js';
-import serverRoutes from './routes/serverRoutes.js';
-import versionRoutes from './routes/versionRoutes.js';
-import userRoutes from './routes/userRoutes.js';
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
 
-const app = express()
+import authRoutes from './modules/auth/routes/auth.routes.js';
+import serverRoutes from './modules/servers/routes/server.routes.js';
+import versionRoutes from './modules/versions/routes/version.routes.js';
+import userRoutes from './modules/users/routes/user.routes.js';
+import agentRoutes from './modules/agent/routes/agent.routes.js';
+import { globalErrorHandler } from './middlewares/errorHandler.middleware.js';
 
-app.use(express.json({ limit: '100mb' }))
-app.use(express.urlencoded({ extended: true, limit: '100mb' }))
+const app = express();
+
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
+  origin: function (origin, callback) {
+    callback(null, origin || true);
+  },
   credentials: true
-}))
-app.use(cookieParser())
-app.use(morgan('dev'))
+}));
+app.use(cookieParser());
+app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/servers', serverRoutes);
 app.use('/api/versions', versionRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/agent', agentRoutes);
+
+app.use(globalErrorHandler);
 
 export default app;

@@ -27,7 +27,9 @@ export function RegisterForm() {
       // Usually register returns the user and we might auto-login or redirect to login.
       // Let's assume the backend logs them in and returns a token.
       if (data.user) setUser(data.user);
-      if (data.token) localStorage.setItem("accessToken", data.token);
+      if (data.token) {
+        window.location.href = "/servers";
+      }
       router.push("/servers");
     } catch (err) {
       setError("No se pudo crear la cuenta. Inténtalo con otro correo o usuario.");
@@ -41,7 +43,9 @@ export function RegisterForm() {
       try {
         const data = await loginWithGoogle(tokenResponse.access_token, true);
         setUser(data.user);
-        if(data.token) localStorage.setItem("accessToken", data.token);
+        if(data.token) {
+          window.location.href = "/servers";
+        }
         router.push("/servers");
       } catch (err) {
         setError("Error autenticando con Google. Inténtalo más tarde.");
