@@ -17,6 +17,10 @@ const getAgentToken = () => {
   return process.env.AGENT_SECRET_TOKEN || process.env.AGENT_TOKEN;
 };
 
+const getAgentStatus = () => {
+  return process.env.AGENT_STATUS || 'ACTIVE';
+};
+
 const saveTokenToEnv = (token) => {
   const envPath = '.env';
   let envContent = '';
@@ -29,6 +33,23 @@ const saveTokenToEnv = (token) => {
     envContent = envContent.replace(/AGENT_SECRET_TOKEN=.*/, `AGENT_SECRET_TOKEN=${token}`);
   } else {
     envContent += `\nAGENT_SECRET_TOKEN=${token}\n`;
+  }
+  
+  fs.writeFileSync(envPath, envContent.trim() + '\n');
+};
+
+const saveStatusToEnv = (status) => {
+  const envPath = '.env';
+  let envContent = '';
+  
+  if (fs.existsSync(envPath)) {
+    envContent = fs.readFileSync(envPath, 'utf8');
+  }
+  
+  if (envContent.includes('AGENT_STATUS=')) {
+    envContent = envContent.replace(/AGENT_STATUS=.*/, `AGENT_STATUS=${status}`);
+  } else {
+    envContent += `\nAGENT_STATUS=${status}\n`;
   }
   
   fs.writeFileSync(envPath, envContent.trim() + '\n');
@@ -79,8 +100,8 @@ const performDeviceFlowPairing = async (apiUrl) => {
   return finalToken;
 };
 
-const bootstrapAgent = (apiUrl, agentToken) => {
-  const agent = new LocalAgentController({ apiUrl, agentToken });
+const bootstrapAgent = (apiUrl, agentToken, agentStatus) => {
+  const agent = new LocalAgentController({ apiUrl, agentToken, agentStatus, saveStatusToEnv });
   agent.start();
   
   console.log('\n✅ Local Agent inicializado y conectado exitosamente.\n');
@@ -112,7 +133,8 @@ const start = async () => {
       process.exit(0);
     }
 
-    bootstrapAgent(apiUrl, agentToken);
+    const agentStatus = getAgentStatus();
+    bootstrapAgent(apiUrl, agentToken, agentStatus);
   } catch (error) {
     console.error('\n❌ Failed to start Local Agent:', error.message);
     process.exit(1);
