@@ -58,6 +58,19 @@ export default class LocalAgentController {
       this.handleStopCommand(payload?.id);
     });
 
+    this.connectionService.on('AGENT_UNLINK', async () => {
+      console.log('❌ Recibida orden de desvinculación desde la web.');
+      const fs = await import('fs/promises');
+      try {
+        let envContent = await fs.readFile('.env', 'utf8');
+        envContent = envContent.replace(/AGENT_SECRET_TOKEN=.*/g, '');
+        await fs.writeFile('.env', envContent);
+        console.log('Credenciales locales borradas.');
+      } catch(e) {}
+      console.log('Agente desconectado. Apagando proceso en 3s...');
+      setTimeout(() => process.exit(0), 3000);
+    });
+
     this.connectionService.on('delete_server', async (payload) => {
       console.log(`Recibida orden de eliminar servidor: ${payload?.id}`);
       try {

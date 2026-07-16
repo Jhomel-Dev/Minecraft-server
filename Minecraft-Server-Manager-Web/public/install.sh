@@ -34,6 +34,7 @@ if [ ! -f "index.js" ]; then
 fi
 
 echo "Iniciando configuración y vinculación inicial..."
+echo "API_URL=https://craft-control-api-staging.onrender.com" > .env
 node index.js --setup
 
 if [ $? -ne 0 ]; then

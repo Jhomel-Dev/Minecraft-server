@@ -11,7 +11,7 @@ const httpServer = createServer(app);
 
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 100, 
+  max: 300, 
   message: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo en un minuto'
 });
 
@@ -63,4 +63,12 @@ io.engine.on('connection_error', (err) => {
         message: err.message,
         context: err.context
     });
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('\n[CRÍTICO] Uncaught Exception atrapada:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('\n[CRÍTICO] Unhandled Rejection atrapada:', reason);
 });

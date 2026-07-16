@@ -67,3 +67,12 @@ export async function getAgentStatus() {
   if (!res.ok) throw new Error('Failed to fetch agent status');
   return res.json();
 }
+
+export async function unlinkAgentReq() {
+  const res = await fetch(`${API_URL}/api/agent/unlink`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Failed to unlink agent');
+  return res.json();
+}

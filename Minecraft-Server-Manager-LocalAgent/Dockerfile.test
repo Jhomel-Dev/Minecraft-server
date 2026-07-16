@@ -1,0 +1,25 @@
+# Imagen base: Ubuntu limpio (como si fuera una PC nueva de un usuario)
+FROM ubuntu:22.04
+
+# Evitar prompts interactivos durante la instalación de paquetes
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Actualizar el sistema e instalar dependencias mínimas que suele tener una PC
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    sudo \
+    cron \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Crear un usuario sin privilegios root (para simular un usuario real)
+RUN useradd -m -s /bin/bash mcuser && \
+    echo "mcuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Cambiamos al usuario "mcuser"
+USER mcuser
+WORKDIR /home/mcuser
+
+# El comando por defecto mantendrá el contenedor vivo para que podamos entrar a su terminal
+CMD ["/bin/bash"]
