@@ -1,12 +1,12 @@
 "use client";
-import { Server, Plus, HardDrive, Activity } from "lucide-react";
+import { Server, Plus, HardDrive, Activity, PauseCircle, Unplug } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/Button";
 import { useServers } from "@/features/servers/hooks/useServers";
 import { useState, useEffect } from "react";
 import { LinkPcModal } from "@/features/servers/components/LinkPcModal";
 import { AgentLinkingStage } from "@/features/servers/components/AgentLinkingStage";
-import { getAgentStatus } from "@/features/auth/services/api";
+import { getAgentStatus, unlinkAgentReq } from "@/features/auth/services/api";
 import { useToast } from "@/shared/ui/ToastProvider";
 
 export default function DashboardHome() {
@@ -42,7 +42,7 @@ export default function DashboardHome() {
   if (servers.length === 0) {
     return (
       <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
-        <Header />
+        <Header isLinked={isAgentLinked} onUnlinked={() => setIsAgentLinked(false)} />
         <EmptyState />
       </div>
     );
@@ -50,18 +50,30 @@ export default function DashboardHome() {
 
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
-      <Header isLinked={isAgentLinked} />
+      <Header isLinked={isAgentLinked} onUnlinked={() => setIsAgentLinked(false)} />
       <ServerGrid servers={servers} serverSizes={serverSizes} formatSize={formatSize} />
     </div>
   );
 }
 
-function Header({ hideLinkButton, isLinked }) {
+function Header({ hideLinkButton, isLinked, onUnlinked }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const { toast } = useToast();
 
   const handleLinkPc = () => {
     setShowLinkModal(true);
+  };
+
+  const handleUnlink = async () => {
+    try {
+      setShowDropdown(false);
+      await unlinkAgentReq();
+      toast("Agente desvinculado con éxito", "success");
+      if (onUnlinked) onUnlinked();
+    } catch (e) {
+      toast("Error al desvincular el agente", "error");
+    }
   };
 
   return (
@@ -78,9 +90,30 @@ function Header({ hideLinkButton, isLinked }) {
             </Button>
           )}
           {!hideLinkButton && isLinked && (
-            <Button variant="outline" className="w-full sm:w-auto border-green-500 text-green-500 hover:bg-green-500/10 cursor-default" onClick={() => {}}>
-              <HardDrive className="w-5 h-5 mr-2 inline-block" /> Agente Conectado
-            </Button>
+            <div className="relative">
+              <Button variant="outline" className="w-full sm:w-auto border-green-500 text-green-500 hover:bg-green-500/10" onClick={() => setShowDropdown(!showDropdown)}>
+                <HardDrive className="w-5 h-5 mr-2 inline-block" /> Agente Conectado
+              </Button>
+              {showDropdown && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)}></div>
+                  <div className="absolute right-0 mt-2 w-48 bg-surface border-2 border-surface-border rounded-blocky shadow-lg z-50 overflow-hidden animate-in slide-in-from-top-2">
+                    <button 
+                      onClick={() => { setShowDropdown(false); console.log("Hibernar..."); }} 
+                      className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-primary/20 hover:text-primary transition-colors border-b border-surface-border flex items-center gap-2"
+                    >
+                      <PauseCircle className="w-4 h-4" /> Hibernar
+                    </button>
+                    <button 
+                      onClick={handleUnlink} 
+                      className="w-full text-left px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                    >
+                      <Unplug className="w-4 h-4" /> Desvincular
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
           {!hideLinkButton && (
             <Link href="/servers/new-server" className="w-full sm:w-auto">
