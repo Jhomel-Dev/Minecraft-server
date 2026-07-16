@@ -1,22 +1,30 @@
 "use client";
-import { Server, Plus, HardDrive, Activity, PauseCircle, Unplug } from "lucide-react";
+import { Server, Plus, HardDrive, Activity, PauseCircle, Unplug, Sun } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/Button";
 import { useServers } from "@/features/servers/hooks/useServers";
 import { useState, useEffect } from "react";
 import { LinkPcModal } from "@/features/servers/components/LinkPcModal";
 import { AgentLinkingStage } from "@/features/servers/components/AgentLinkingStage";
-import { getAgentStatus, unlinkAgentReq } from "@/features/auth/services/api";
+import { getAgentStatus, unlinkAgentReq, hibernateAgentReq, wakeAgentReq } from "@/features/auth/services/api";
 import { useToast } from "@/shared/ui/ToastProvider";
 
 export default function DashboardHome() {
   const { servers, serverSizes, loading, formatSize } = useServers();
   const [isAgentLinked, setIsAgentLinked] = useState(null);
+  const [agentStatus, setAgentStatus] = useState('OFFLINE');
+
+  const fetchStatus = () => {
+    getAgentStatus()
+      .then(res => {
+        setIsAgentLinked(res.isLinked);
+        if (res.status) setAgentStatus(res.status);
+      })
+      .catch(() => setIsAgentLinked(false));
+  };
 
   useEffect(() => {
-    getAgentStatus()
-      .then(res => setIsAgentLinked(res.isLinked))
-      .catch(() => setIsAgentLinked(false));
+    fetchStatus();
   }, []);
 
   if (loading || isAgentLinked === null) {
@@ -42,21 +50,21 @@ export default function DashboardHome() {
   if (servers.length === 0) {
     return (
       <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
-        <Header isLinked={isAgentLinked} onUnlinked={() => setIsAgentLinked(false)} />
-        <EmptyState />
+        <Header isLinked={isAgentLinked} agentStatus={agentStatus} onStatusChange={fetchStatus} onUnlinked={() => setIsAgentLinked(false)} />
+        <EmptyState agentStatus={agentStatus} />
       </div>
     );
   }
 
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
-      <Header isLinked={isAgentLinked} onUnlinked={() => setIsAgentLinked(false)} />
-      <ServerGrid servers={servers} serverSizes={serverSizes} formatSize={formatSize} />
+      <Header isLinked={isAgentLinked} agentStatus={agentStatus} onStatusChange={fetchStatus} onUnlinked={() => setIsAgentLinked(false)} />
+      <ServerGrid servers={servers} serverSizes={serverSizes} formatSize={formatSize} agentStatus={agentStatus} />
     </div>
   );
 }
 
-function Header({ hideLinkButton, isLinked, onUnlinked }) {
+function Header({ hideLinkButton, isLinked, agentStatus, onStatusChange, onUnlinked }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const { toast } = useToast();
@@ -73,6 +81,22 @@ function Header({ hideLinkButton, isLinked, onUnlinked }) {
       if (onUnlinked) onUnlinked();
     } catch (e) {
       toast("Error al desvincular el agente", "error");
+    }
+  };
+
+  const handleToggleHibernate = async () => {
+    try {
+      setShowDropdown(false);
+      if (agentStatus === 'HIBERNATING') {
+        await wakeAgentReq();
+        toast("Agente despertando...", "success");
+      } else {
+        await hibernateAgentReq();
+        toast("Agente hibernando...", "success");
+      }
+      if (onStatusChange) setTimeout(onStatusChange, 1000);
+    } catch (e) {
+      toast("Error al cambiar estado", "error");
     }
   };
 
@@ -99,10 +123,14 @@ function Header({ hideLinkButton, isLinked, onUnlinked }) {
                   <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)}></div>
                   <div className="absolute right-0 mt-2 w-48 bg-surface border-2 border-surface-border rounded-blocky shadow-lg z-50 overflow-hidden animate-in slide-in-from-top-2">
                     <button 
-                      onClick={() => { setShowDropdown(false); console.log("Hibernar..."); }} 
+                      onClick={handleToggleHibernate} 
                       className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-primary/20 hover:text-primary transition-colors border-b border-surface-border flex items-center gap-2"
                     >
-                      <PauseCircle className="w-4 h-4" /> Hibernar
+                      {agentStatus === 'HIBERNATING' ? (
+                        <><Sun className="w-4 h-4" /> Despertar</>
+                      ) : (
+                        <><PauseCircle className="w-4 h-4" /> Hibernar</>
+                      )}
                     </button>
                     <button 
                       onClick={handleUnlink} 
@@ -116,8 +144,8 @@ function Header({ hideLinkButton, isLinked, onUnlinked }) {
             </div>
           )}
           {!hideLinkButton && (
-            <Link href="/servers/new-server" className="w-full sm:w-auto">
-              <Button variant="primary" className="w-full sm:w-auto">
+            <Link href={agentStatus === 'HIBERNATING' ? "#" : "/servers/new-server"} className={`w-full sm:w-auto ${agentStatus === 'HIBERNATING' ? 'pointer-events-none opacity-50' : ''}`}>
+              <Button variant="primary" className="w-full sm:w-auto" disabled={agentStatus === 'HIBERNATING'}>
                 <Plus className="w-5 h-5 mr-2 inline-block" /> Crear Servidor
               </Button>
             </Link>
@@ -129,22 +157,22 @@ function Header({ hideLinkButton, isLinked, onUnlinked }) {
   );
 }
 
-function EmptyState() {
+function EmptyState({ agentStatus }) {
   return (
     <div className="bg-surface p-10 rounded-blocky border-2 border-dashed border-surface-border text-center flex flex-col items-center gap-4 mx-4 sm:mx-0">
       <Server className="w-16 h-16 text-foreground/30" />
       <h2 className="text-xl font-bold">No tienes servidores</h2>
       <p className="text-foreground/60 text-sm sm:text-base">Aún no has creado ningún servidor. ¡Empieza tu aventura ahora!</p>
-      <Link href="/servers/new-server">
-        <Button variant="primary" className="mt-2">Crear mi primer servidor</Button>
+      <Link href={agentStatus === 'HIBERNATING' ? "#" : "/servers/new-server"} className={agentStatus === 'HIBERNATING' ? 'pointer-events-none opacity-50' : ''}>
+        <Button variant="primary" className="mt-2" disabled={agentStatus === 'HIBERNATING'}>Crear mi primer servidor</Button>
       </Link>
     </div>
   );
 }
 
-function ServerGrid({ servers, serverSizes, formatSize }) {
+function ServerGrid({ servers, serverSizes, formatSize, agentStatus }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${agentStatus === 'HIBERNATING' ? 'opacity-50 pointer-events-none' : ''}`}>
       {servers.map(server => (
         <ServerCard 
           key={server.id} 

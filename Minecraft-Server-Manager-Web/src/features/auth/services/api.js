@@ -76,3 +76,21 @@ export async function unlinkAgentReq() {
   if (!res.ok) throw new Error('Failed to unlink agent');
   return res.json();
 }
+
+export async function hibernateAgentReq() {
+  const res = await fetch(`${API_URL}/api/agent/hibernate`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Failed to hibernate agent');
+  return res.json();
+}
+
+export async function wakeAgentReq() {
+  const res = await fetch(`${API_URL}/api/agent/wake`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Failed to wake agent');
+  return res.json();
+}
