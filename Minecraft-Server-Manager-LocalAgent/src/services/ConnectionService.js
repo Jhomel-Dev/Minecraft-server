@@ -3,10 +3,11 @@ import EventEmitter from 'events';
 import os from 'os';
 
 export default class ConnectionService extends EventEmitter {
-  constructor(apiUrl, agentToken) {
+  constructor(apiUrl, agentToken, isHibernating = false) {
     super();
     this.apiUrl = apiUrl;
     this.agentToken = agentToken;
+    this.isHibernating = isHibernating;
     this.socket = null;
   }
 
@@ -34,7 +35,12 @@ export default class ConnectionService extends EventEmitter {
   attachSocketListeners() {
     this.socket.on('connect', () => {
       this.emit('connected');
-      this.socket.emit('AGENT_INFO', { totalMem: os.totalmem(), freeMem: os.freemem(), cpus: os.cpus().length });
+      this.socket.emit('AGENT_INFO', { 
+        totalMem: os.totalmem(), 
+        freeMem: os.freemem(), 
+        cpus: os.cpus().length,
+        status: this.isHibernating ? 'HIBERNATING' : 'ACTIVE'
+      });
     });
     this.socket.on('disconnect', () => this.emit('disconnected'));
     this.socket.on('connect_error', (err) => this.emit('error', err));
@@ -44,6 +50,14 @@ export default class ConnectionService extends EventEmitter {
     this.socket.on('DELETE_SERVER', (payload) => this.emit('delete_server', payload));
     this.socket.on('SEND_COMMAND', (cmd) => this.emit('server_command', cmd));
     this.socket.on('AGENT_UNLINK', () => this.emit('AGENT_UNLINK'));
+    this.socket.on('AGENT_HIBERNATE', () => {
+      this.isHibernating = true;
+      this.emit('AGENT_HIBERNATE');
+    });
+    this.socket.on('AGENT_WAKE', () => {
+      this.isHibernating = false;
+      this.emit('AGENT_WAKE');
+    });
     
     this.socket.on('FS_OPERATION', (payload, callback) => {
       this.emit('fs_operation', payload, callback);
@@ -84,6 +98,11 @@ export default class ConnectionService extends EventEmitter {
   sendStateUpdate(payload) {
     if (!this.verifyConnection()) return;
     this.socket.emit('STATUS_UPDATE', payload);
+  }
+
+  sendAgentStatus(status) {
+    if (!this.verifyConnection()) return;
+    this.socket.emit('AGENT_STATUS_ACK', { status });
   }
 
   verifyConnection() {

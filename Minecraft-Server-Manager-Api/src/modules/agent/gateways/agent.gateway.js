@@ -5,6 +5,7 @@ import DnsService from '../../servers/services/dns.service.js';
 const dnsService = new DnsService();
 const serverLogsBuffer = new Map();
 export const agentHardwareMap = new Map();
+export const agentStateMap = new Map();
 
 export const handleSocketEvents = (io) => {
   io.use(authenticateSocket);
@@ -82,7 +83,13 @@ const registerAgentEvents = (socket) => {
   }
 
   socket.on('TELEMETRY_UPDATE', (payload) => handleTelemetry(socket, payload));
-  socket.on('AGENT_INFO', (info) => agentHardwareMap.set(socket.userId, info));
+  socket.on('AGENT_INFO', (info) => {
+    agentHardwareMap.set(socket.userId, info);
+    if (info.status) agentStateMap.set(socket.userId, info.status);
+  });
+  socket.on('AGENT_STATUS_ACK', (payload) => {
+    if (payload.status) agentStateMap.set(socket.userId, payload.status);
+  });
   socket.on('SERVER_LOG', (payload) => handleServerLog(socket, payload));
   socket.on('TUNNEL_INFO', (payload) => handleTunnelInfo(socket, payload));
   socket.on('STATUS_UPDATE', (payload) => handleStatusUpdate(socket, payload));

@@ -12,8 +12,10 @@ export default class LocalAgentController {
     this.validateConfig(config);
     this.activeServers = new Map();
     this.nextPort = 25565;
+    this.isHibernating = config.agentStatus === 'HIBERNATING';
+    this.saveStatusToEnv = config.saveStatusToEnv;
     
-    this.connectionService = new ConnectionService(config.apiUrl, config.agentToken);
+    this.connectionService = new ConnectionService(config.apiUrl, config.agentToken, this.isHibernating);
     this.fileService = new FileService();
     this.playerStatsService = new PlayerStatsService();
     this.backupService = new BackupService((serverId) => this.activeServers.get(serverId)?.nativeServerService);
@@ -49,11 +51,19 @@ export default class LocalAgentController {
     });
 
     this.connectionService.on('command_start', async (serverConfig) => {
+      if (this.isHibernating) {
+        console.log(`[Hibernación] Orden de inicio bloqueada para el servidor: ${serverConfig.id}`);
+        return;
+      }
       console.log(`Recibida orden de inicio para el servidor: ${serverConfig.id}`);
       await this.handleStartCommand(serverConfig);
     });
 
     this.connectionService.on('command_stop', (payload) => {
+      if (this.isHibernating) {
+        console.log(`[Hibernación] Orden de apagado bloqueada para el servidor: ${payload?.id}`);
+        return;
+      }
       console.log(`Recibida orden de apagado para servidor: ${payload?.id}`);
       this.handleStopCommand(payload?.id);
     });
@@ -71,7 +81,22 @@ export default class LocalAgentController {
       setTimeout(() => process.exit(0), 3000);
     });
 
+    this.connectionService.on('AGENT_HIBERNATE', () => {
+      console.log('🛡️ Orden de hibernación recibida. Bloqueando comandos...');
+      this.isHibernating = true;
+      if (this.saveStatusToEnv) this.saveStatusToEnv('HIBERNATING');
+      this.connectionService.sendAgentStatus('HIBERNATING');
+    });
+
+    this.connectionService.on('AGENT_WAKE', () => {
+      console.log('☀️ Orden de despertar recibida. Restaurando funciones...');
+      this.isHibernating = false;
+      if (this.saveStatusToEnv) this.saveStatusToEnv('ACTIVE');
+      this.connectionService.sendAgentStatus('ACTIVE');
+    });
+
     this.connectionService.on('delete_server', async (payload) => {
+      if (this.isHibernating) return;
       console.log(`Recibida orden de eliminar servidor: ${payload?.id}`);
       try {
         const managerDir = path.join(os.homedir(), '.minecraft-manager');
