@@ -41,7 +41,7 @@ export default function ServerOptionsPage({ params }) {
           whitelist: server.whitelist ?? false,
           onlineMode: server.onlineMode ?? true,
           compatibilityMode: server.compatibilityMode ?? false,
-          memory: server.memory ?? "2048"
+          memory: server.memory ?? "2G"
         });
       }
 
@@ -238,11 +238,11 @@ export default function ServerOptionsPage({ params }) {
                 onChange={(e) => setSettings({ ...settings, memory: e.target.value })}
                 className="bg-background border-2 border-surface-border rounded-blocky px-4 py-2 font-semibold text-foreground focus:outline-none focus:border-primary transition-colors appearance-none"
               >
-                <option value="1024">1 GB (Básico, Vanilla)</option>
-                <option value="2048">2 GB (Recomendado, pocos plugins)</option>
-                <option value="4096">4 GB (Avanzado, muchos plugins)</option>
-                <option value="6144">6 GB (Extremo, servidores grandes)</option>
-                <option value="8192">8 GB (Máximo rendimiento)</option>
+                <option value="1G">1 GB (Básico, Vanilla)</option>
+                <option value="2G">2 GB (Recomendado, pocos plugins)</option>
+                <option value="4G">4 GB (Avanzado, muchos plugins)</option>
+                <option value="6G">6 GB (Extremo, servidores grandes)</option>
+                <option value="8G">8 GB (Máximo rendimiento)</option>
               </select>
             </div>
 

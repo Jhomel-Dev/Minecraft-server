@@ -35,7 +35,6 @@ export function CreateServerWizard() {
   const [availableBuilds, setAvailableBuilds] = useState([]);
   const [loadingBuilds, setLoadingBuilds] = useState(false);
   const [build, setBuild] = useState("LATEST");
-  
   const [memoryGB, setMemoryGB] = useState(2);
   const [agentHardware, setAgentHardware] = useState(null);
 
