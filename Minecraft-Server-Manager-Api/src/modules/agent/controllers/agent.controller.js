@@ -1,5 +1,6 @@
 import prisma from '../../../core/database/prisma.client.js';
 import crypto from 'crypto';
+import { agentStateMap } from '../gateways/agent.gateway.js';
 
 const ALPHANUMERIC_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const PAIRING_CODE_VALIDITY_MINUTES = 15;
@@ -102,7 +103,12 @@ export const checkAgentStatus = async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: 'UserNotFound' });
     
-    return res.status(200).json({ isLinked: !!user.agentToken });
+    let status = 'OFFLINE';
+    if (user.agentToken) {
+      status = agentStateMap.get(userId) || 'ACTIVE';
+    }
+    
+    return res.status(200).json({ isLinked: !!user.agentToken, status });
   } catch (error) {
     return res.status(500).json({ error: 'InternalServerError' });
   }
@@ -125,6 +131,26 @@ export const unlinkAgent = async (req, res) => {
     });
     
     return res.status(200).json({ success: true, message: 'Agent unlinked successfully' });
+  } catch (error) {
+    return res.status(500).json({ error: 'InternalServerError' });
+  }
+};
+
+export const hibernateAgent = async (req, res) => {
+  try {
+    const io = req.app.get('io');
+    if (io) io.to(`agent-${req.user.id}`).emit('AGENT_HIBERNATE');
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: 'InternalServerError' });
+  }
+};
+
+export const wakeAgent = async (req, res) => {
+  try {
+    const io = req.app.get('io');
+    if (io) io.to(`agent-${req.user.id}`).emit('AGENT_WAKE');
+    return res.status(200).json({ success: true });
   } catch (error) {
     return res.status(500).json({ error: 'InternalServerError' });
   }
