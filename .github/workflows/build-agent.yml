@@ -38,10 +38,19 @@ jobs:
       - name: Configurar Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Compilar Motor CLI (Node.js pkg)
+      - name: Instalar Dependencias (Motor CLI)
         run: |
           cd Minecraft-Server-Manager-LocalAgent
           npm install
+
+      - name: Ejecutar Tests Unitarios (Validación Lógica)
+        run: |
+          cd Minecraft-Server-Manager-LocalAgent
+          npm test
+
+      - name: Compilar Motor CLI (Node.js pkg)
+        run: |
+          cd Minecraft-Server-Manager-LocalAgent
           npm run build
           npm run compile
 
