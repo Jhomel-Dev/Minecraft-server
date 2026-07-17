@@ -70,6 +70,15 @@ export default class LocalAgentController {
 
     this.connectionService.on('AGENT_UNLINK', async () => {
       console.log('❌ Recibida orden de desvinculación desde la web.');
+      console.log('[System] Deteniendo servidores activos para limpieza profunda...');
+      
+      for (const active of this.activeServers.values()) {
+        try {
+          if (active.tunnelService) active.tunnelService.stopTunnel();
+          if (active.nativeServerService) await active.nativeServerService.stopMinecraftServer();
+        } catch (e) {}
+      }
+
       const fs = await import('fs/promises');
       try {
         let envContent = await fs.readFile('.env', 'utf8');

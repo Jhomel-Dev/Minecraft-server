@@ -132,24 +132,35 @@ export function LinkPcModal({ onClose }) {
               Ejecuta este comando en la terminal de la máquina que alojará los servidores:
             </p>
             <div className="space-y-4">
-              <div className="relative group">
-                <label className="text-xs font-bold text-foreground/60 uppercase absolute -top-2 left-3 bg-surface px-1">Bash (Linux / Mac)</label>
-                <div className="relative font-mono text-sm bg-background p-4 rounded-blocky border-2 border-surface-border text-foreground/80 overflow-x-auto">
-                  {`curl -sL ${getBaseUrl()}/install.sh | bash`}
+              <a 
+                href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/release/v2.0.0/CraftControl-Agent_2.0.0_x64_en-US.msi" 
+                className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-primary rounded-blocky transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 text-primary rounded-blocky group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <Laptop className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-foreground">Descargar para Windows</p>
+                    <p className="text-xs text-foreground/50">Instalador Gráfico (.msi)</p>
+                  </div>
                 </div>
-                <button onClick={() => copyToClipboard(`curl -sL ${getBaseUrl()}/install.sh | bash`, 'linux')} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors">
-                  {copiedId === 'linux' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-              <div className="relative group">
-                <label className="text-xs font-bold text-foreground/60 uppercase absolute -top-2 left-3 bg-surface px-1">PowerShell (Windows)</label>
-                <div className="relative font-mono text-sm bg-background p-4 rounded-blocky border-2 border-surface-border text-foreground/80 overflow-x-auto">
-                  {`iwr -useb ${getBaseUrl()}/install.ps1 | iex`}
+              </a>
+
+              <a 
+                href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/release/v2.0.0/CraftControl-Agent_2.0.0_amd64.AppImage" 
+                className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-red-500 rounded-blocky transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-500/20 text-red-500 rounded-blocky group-hover:bg-red-500 group-hover:text-white transition-colors">
+                    <Laptop className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-foreground">Descargar para Linux</p>
+                    <p className="text-xs text-foreground/50">AppImage (Escritorio)</p>
+                  </div>
                 </div>
-                <button onClick={() => copyToClipboard(`iwr -useb ${getBaseUrl()}/install.ps1 | iex`, 'win')} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-surface border-2 border-surface-border rounded-blocky hover:bg-surface-border transition-colors">
-                  {copiedId === 'win' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
+              </a>
             </div>
           </div>
 
