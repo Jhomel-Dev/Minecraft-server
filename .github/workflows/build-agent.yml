@@ -5,45 +5,69 @@ on:
     branches:
       - main
     paths:
-      - 'Minecraft-Server-Manager-LocalAgent/**' # Solo correr si se editó el Agente
+      - 'Minecraft-Server-Manager-LocalAgent/**'
+      - 'Minecraft-Server-Manager-AgentGUI/**'
 
 permissions:
-  contents: write # Necesario para poder subir el zip a los Releases
+  contents: write
 
 jobs:
-  build-and-release:
-    name: Empaquetar y Actualizar Release
-    runs-on: ubuntu-latest
+  build-gui:
+    name: Construir GUI (${{ matrix.platform }})
+    strategy:
+      matrix:
+        platform: [ubuntu-22.04, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
 
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
 
+      - name: Instalar dependencias de Linux (Tauri)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
 
-      - name: Instalar Dependencias de Producción
+      - name: Configurar Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Compilar Motor CLI (Node.js pkg)
         run: |
           cd Minecraft-Server-Manager-LocalAgent
-          # Instalamos dependencias, ignorando las de desarrollo para que el zip pese menos
-          npm install --omit=dev
+          npm install
+          npm run build
+          npm run compile
 
-      - name: Esterilizar y Comprimir
+      - name: Preparar Sidecar
+        shell: bash
         run: |
-          cd Minecraft-Server-Manager-LocalAgent
-          # Borramos archivos de prueba o basura que no deben ir a producción
-          rm -f .env agent.log Dockerfile.test package-lock.json
-          # Comprimimos todo en el zip
-          zip -r ../craft-control-agent-full.zip .
+          mkdir -p Minecraft-Server-Manager-AgentGUI/src-tauri/bin
+          if [ "${{ matrix.platform }}" = "windows-latest" ]; then
+            cp Minecraft-Server-Manager-LocalAgent/bin/agent-win.exe Minecraft-Server-Manager-AgentGUI/src-tauri/bin/agentcore-x86_64-pc-windows-msvc.exe
+          else
+            cp Minecraft-Server-Manager-LocalAgent/bin/agent-linux Minecraft-Server-Manager-AgentGUI/src-tauri/bin/agentcore-x86_64-unknown-linux-gnu
+          fi
 
-      - name: Actualizar GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: release/v1.1.0 # Actualizamos el release estático
-          files: craft-control-agent-full.zip
-          # Esto sobreescribe el archivo zip anterior sin crear un release nuevo
-          fail_on_unmatched_files: true
+      - name: Instalar dependencias GUI
+        run: |
+          cd Minecraft-Server-Manager-AgentGUI
+          npm install
+
+      - name: Compilar Tauri App y Subir a GitHub Releases
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: "Minecraft-Server-Manager-AgentGUI"
+          tagName: release/v2.0.0
+          releaseName: "CraftControl Agent Release v2.0.0"
+          releaseBody: "Instaladores automáticos del Agente Gráfico"
+          releaseDraft: false
+          prerelease: false
