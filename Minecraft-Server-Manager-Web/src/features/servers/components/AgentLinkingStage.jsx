@@ -133,26 +133,38 @@ export function AgentLinkingStage({ onLinked }) {
             Abre la terminal en la PC que alojará los servidores y ejecuta el siguiente comando para instalar nuestro demonio nativo silencioso:
           </p>
           
-          <div className="space-y-6 mt-auto">
-            <div className="relative">
-              <label className="text-xs font-black text-foreground/60 uppercase absolute -top-3 left-4 bg-surface px-2">Linux / MacOS (Bash)</label>
-              <pre className="bg-background border-2 border-surface-border p-4 pt-6 rounded-blocky text-sm font-mono overflow-x-auto text-primary/90 font-semibold shadow-inner">
-                {`curl -sL ${getBaseUrl()}/install.sh | bash`}
-              </pre>
-              <button onClick={() => copyToClipboard(`curl -sL ${getBaseUrl()}/install.sh | bash`, 'linux')} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-surface hover:bg-primary/20 border-2 border-surface-border hover:border-primary text-foreground hover:text-primary rounded-blocky transition-all">
-                {copiedId === 'linux' ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-              </button>
-            </div>
-            
-            <div className="relative">
-              <label className="text-xs font-black text-foreground/60 uppercase absolute -top-3 left-4 bg-surface px-2">Windows (PowerShell)</label>
-              <pre className="bg-background border-2 border-surface-border p-4 pt-6 rounded-blocky text-sm font-mono overflow-x-auto text-primary/90 font-semibold shadow-inner">
-                {`iwr -useb ${getBaseUrl()}/install.ps1 | iex`}
-              </pre>
-              <button onClick={() => copyToClipboard(`iwr -useb ${getBaseUrl()}/install.ps1 | iex`, 'win')} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-surface hover:bg-primary/20 border-2 border-surface-border hover:border-primary text-foreground hover:text-primary rounded-blocky transition-all">
-                {copiedId === 'win' ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-              </button>
-            </div>
+          <div className="space-y-4 mt-auto">
+            <a 
+              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/release/v2.0.0/CraftControl-Agent_2.0.0_x64_en-US.msi" 
+              className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-primary rounded-blocky transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 text-primary rounded-blocky group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <Laptop className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-foreground">Descargar para Windows</p>
+                  <p className="text-xs text-foreground/50">Instalador Gráfico (.msi)</p>
+                </div>
+              </div>
+              <ArrowRight className="w-5 h-5 text-primary/50 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+            </a>
+
+            <a 
+              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/release/v2.0.0/CraftControl-Agent_2.0.0_amd64.AppImage" 
+              className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-red-500 rounded-blocky transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-500/20 text-red-500 rounded-blocky group-hover:bg-red-500 group-hover:text-white transition-colors">
+                  <Laptop className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-foreground">Descargar para Linux</p>
+                  <p className="text-xs text-foreground/50">AppImage (Escritorio)</p>
+                </div>
+              </div>
+              <ArrowRight className="w-5 h-5 text-red-500/50 group-hover:text-red-500 group-hover:translate-x-1 transition-all" />
+            </a>
           </div>
         </div>
 
