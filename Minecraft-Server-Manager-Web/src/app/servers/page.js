@@ -13,11 +13,20 @@ export default function DashboardHome() {
   const { servers, serverSizes, loading, formatSize } = useServers();
   const [isAgentLinked, setIsAgentLinked] = useState(null);
   const [agentStatus, setAgentStatus] = useState('OFFLINE');
+  const [showUnlinkedMessage, setShowUnlinkedMessage] = useState(false);
 
   const fetchStatus = () => {
     getAgentStatus()
       .then(res => {
-        setIsAgentLinked(res.isLinked);
+        setIsAgentLinked(prev => {
+          if (prev === true && res.isLinked === false) {
+            setShowUnlinkedMessage(true);
+            setTimeout(() => {
+              setShowUnlinkedMessage(false);
+            }, 3000);
+          }
+          return res.isLinked;
+        });
         if (res.status) setAgentStatus(res.status);
       })
       .catch(() => setIsAgentLinked(false));
@@ -25,6 +34,8 @@ export default function DashboardHome() {
 
   useEffect(() => {
     fetchStatus();
+    const interval = setInterval(fetchStatus, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading || isAgentLinked === null) {
@@ -32,6 +43,18 @@ export default function DashboardHome() {
       <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
         <Header hideLinkButton />
         <p className="text-center text-foreground/50 font-bold mt-10">Cargando datos...</p>
+      </div>
+    );
+  }
+
+  if (showUnlinkedMessage) {
+    return (
+      <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 items-center justify-center h-full animate-in fade-in zoom-in">
+        <div className="bg-surface p-10 rounded-blocky border-2 border-primary shadow-xl text-center">
+          <Unplug className="w-16 h-16 text-primary mx-auto mb-4 animate-bounce" />
+          <h2 className="text-2xl font-bold text-foreground">Agente Desvinculado</h2>
+          <p className="text-foreground/70 mt-2">El motor de sincronización ha sido desvinculado a través de la interfaz local.</p>
+        </div>
       </div>
     );
   }
