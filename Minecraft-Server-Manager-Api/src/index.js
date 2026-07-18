@@ -29,6 +29,10 @@ app.use('/api/versions', versionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/agent', agentRoutes);
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.use(globalErrorHandler);
 
 export default app;
