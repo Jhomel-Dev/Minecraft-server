@@ -135,7 +135,7 @@ export function AgentLinkingStage({ onLinked }) {
           
           <div className="space-y-4 mt-auto">
             <a 
-              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/release/v2.0.0/CraftControl-Agent_2.0.0_x64_en-US.msi" 
+              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.1.0/CraftControl-Agent_2.1.0_x64-setup.exe" 
               className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-primary rounded-blocky transition-all group"
             >
               <div className="flex items-center gap-3">
@@ -144,14 +144,14 @@ export function AgentLinkingStage({ onLinked }) {
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-foreground">Descargar para Windows</p>
-                  <p className="text-xs text-foreground/50">Instalador Gráfico (.msi)</p>
+                  <p className="text-xs text-foreground/50">Instalador Rápido (.exe)</p>
                 </div>
               </div>
               <ArrowRight className="w-5 h-5 text-primary/50 group-hover:text-primary group-hover:translate-x-1 transition-all" />
             </a>
 
             <a 
-              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/release/v2.0.0/CraftControl-Agent_2.0.0_amd64.AppImage" 
+              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.1.0/CraftControl-Agent_2.1.0_amd64.AppImage" 
               className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-red-500 rounded-blocky transition-all group"
             >
               <div className="flex items-center gap-3">
