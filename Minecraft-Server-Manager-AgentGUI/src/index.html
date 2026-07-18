@@ -4,141 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CraftControl Agent</title>
-  <style>
-    :root {
-      --background: #110B19;
-      --foreground: #F1F1F1;
-      --surface: #1E1628;
-      --surface-border: #3D2C54;
-      --primary: #B452FF;
-      --danger: #FF4444;
-      --success: #10B981;
-      --radius: 0.25rem;
-    }
-    body {
-      background-color: var(--background);
-      color: var(--foreground);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      overflow: hidden;
-    }
-    .container {
-      text-align: center;
-      background: var(--surface);
-      padding: 30px;
-      border-radius: var(--radius);
-      border: 2px solid var(--surface-border);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      width: 80%;
-      max-width: 400px;
-    }
-    h1 {
-      margin-top: 0;
-      color: var(--primary);
-      font-size: 24px;
-      font-weight: 900;
-    }
-    .status {
-      font-size: 14px;
-      color: #aaa;
-      margin-bottom: 20px;
-    }
-    .pin-box {
-      font-size: 40px;
-      font-weight: 900;
-      letter-spacing: 5px;
-      color: var(--primary);
-      background: var(--background);
-      padding: 15px;
-      border-radius: var(--radius);
-      border: 2px dashed var(--surface-border);
-      margin-bottom: 20px;
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 14px;
-      font-weight: bold;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn:hover {
-      filter: brightness(1.2);
-    }
-    .logs {
-      margin-top: 15px;
-      font-size: 11px;
-      color: #888;
-      font-family: monospace;
-      height: 40px;
-      overflow: hidden;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
     <h1>CraftControl</h1>
-    <div class="status" id="status-text">Iniciando motor de sincronización...</div>
-    <div class="pin-box" id="pin-display">------</div>
-    <button class="btn" id="copy-btn">Copiar PIN</button>
-    <div class="logs" id="logs-display">Conectando nodo...</div>
+    
+    <div id="view-loading">
+      <div class="spinner"></div>
+      <div class="status">Buscando motor de sincronización...</div>
+    </div>
+
+    <div id="view-pin">
+      <div class="status">Ingresa este PIN en la web para vincular:</div>
+      <div class="pin-box" id="pin-display">------</div>
+      <button class="btn" id="btn-copy">Copiar PIN</button>
+    </div>
+
+    <div id="view-active">
+      <div class="status" style="color: var(--success); font-weight: bold;">
+        Agente conectado y funcionando en segundo plano.
+      </div>
+      <button class="btn btn-secondary" id="btn-unlink">Desvincular Cuenta</button>
+      <button class="btn" id="btn-shutdown">Apagar Agente y Servidores</button>
+    </div>
+
+    <div id="view-shutdown">
+      <div class="spinner"></div>
+      <div class="status" style="color: var(--danger);">
+        Guardando mundos y apagando servidores...
+      </div>
+    </div>
   </div>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script type="module">
-    const { listen } = window.__TAURI__.event;
-    
-    const pinDisplay = document.getElementById('pin-display');
-    const statusText = document.getElementById('status-text');
-    const copyBtn = document.getElementById('copy-btn');
-    const logsDisplay = document.getElementById('logs-display');
-    
-    let currentPin = "";
-
-    listen('pin-generated', (event) => {
-      const pin = event.payload;
-      if (pin && pin.trim().length > 0) {
-        currentPin = pin.trim();
-        pinDisplay.innerText = currentPin;
-        statusText.innerText = "Ingresa este PIN en la web para vincular:";
-      }
-    });
-
-    listen('agent-log', (event) => {
-      const msg = event.payload.trim();
-      if(msg) {
-        logsDisplay.innerText = msg;
-        if(msg.includes("Local Agent conectado exitosamente") || msg.includes("Conectado exitosamente al Cloud API")) {
-          pinDisplay.innerText = "******";
-          statusText.innerText = "Agente vinculado y funcionando correctamente";
-          statusText.style.color = "var(--success)";
-        }
-      }
-    });
-
-    listen('agent-terminated', () => {
-      statusText.innerText = "Agente desconectado";
-      statusText.style.color = "var(--danger)";
-    });
-
-    copyBtn.addEventListener('click', () => {
-      if(currentPin) {
-        navigator.clipboard.writeText(currentPin);
-        copyBtn.innerText = "¡Copiado!";
-        setTimeout(() => copyBtn.innerText = "Copiar PIN", 2000);
-      }
-    });
-  </script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
