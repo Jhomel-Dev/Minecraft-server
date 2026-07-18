@@ -4,7 +4,15 @@ use tauri_plugin_shell::process::CommandEvent;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "linux")]
+    {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+        std::env::set_var("GDK_BACKEND", "x11");
+    }
+
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -20,22 +28,16 @@ pub fn run() {
 
                 while let Some(event) = rx.recv().await {
                     match event {
-                        CommandEvent::Stdout(line) => {
+                        CommandEvent::Stdout(line) | CommandEvent::Stderr(line) => {
                             let text = String::from_utf8_lossy(&line);
-                            if text.contains("Ingresa el siguiente PIN") {
-                                if let Some(pin_part) = text.split("seguridad: ").last() {
-                                    let pin = pin_part.trim();
-                                    app_handle.emit("pin-generated", pin).unwrap();
-                                }
-                            }
-                            app_handle.emit("agent-log", text.to_string()).unwrap();
-                        }
-                        CommandEvent::Stderr(line) => {
-                            let text = String::from_utf8_lossy(&line);
-                            if text.contains("Ingresa el siguiente PIN") {
-                                if let Some(pin_part) = text.split("seguridad: ").last() {
-                                    let pin = pin_part.trim();
-                                    app_handle.emit("pin-generated", pin).unwrap();
+                            if text.contains("--->") && text.contains("<---") {
+                                if let Some(pin_part) = text.split("--->").nth(1) {
+                                    if let Some(pin) = pin_part.split("<---").next() {
+                                        let clean_pin = pin.trim();
+                                        if !clean_pin.is_empty() {
+                                            app_handle.emit("pin-generated", clean_pin).unwrap();
+                                        }
+                                    }
                                 }
                             }
                             app_handle.emit("agent-log", text.to_string()).unwrap();

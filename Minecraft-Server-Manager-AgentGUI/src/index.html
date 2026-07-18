@@ -95,6 +95,7 @@
     <button class="btn" id="copy-btn">Copiar PIN</button>
     <div class="logs" id="logs-display">Conectando nodo...</div>
   </div>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script type="module">
     const { listen } = window.__TAURI__.event;
     
@@ -106,24 +107,28 @@
     let currentPin = "";
 
     listen('pin-generated', (event) => {
-      currentPin = event.payload;
-      pinDisplay.innerText = currentPin;
-      statusText.innerText = "Ingresa este PIN en la web para vincular:";
+      const pin = event.payload;
+      if (pin && pin.trim().length > 0) {
+        currentPin = pin.trim();
+        pinDisplay.innerText = currentPin;
+        statusText.innerText = "Ingresa este PIN en la web para vincular:";
+      }
     });
 
     listen('agent-log', (event) => {
       const msg = event.payload.trim();
       if(msg) {
         logsDisplay.innerText = msg;
-        if(msg.includes("Conexión exitosa a WebSocket")) {
-          statusText.innerText = "Agente vinculado y funcionando correctamente 🟢";
+        if(msg.includes("Local Agent conectado exitosamente") || msg.includes("Conectado exitosamente al Cloud API")) {
+          pinDisplay.innerText = "******";
+          statusText.innerText = "Agente vinculado y funcionando correctamente";
           statusText.style.color = "var(--success)";
         }
       }
     });
 
     listen('agent-terminated', () => {
-      statusText.innerText = "Agente desconectado 🔴";
+      statusText.innerText = "Agente desconectado";
       statusText.style.color = "var(--danger)";
     });
 

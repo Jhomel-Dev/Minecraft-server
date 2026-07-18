@@ -39,15 +39,19 @@ export default class LocalAgentController {
 
   setupConnectionListeners() {
     this.connectionService.on('connected', () => {
-      console.log('✅ Local Agent conectado exitosamente al Cloud API.');
+      console.log('[INFO] Local Agent conectado exitosamente al Cloud API.');
     });
 
     this.connectionService.on('disconnected', () => {
-      console.log('❌ Conexión perdida con el Cloud API. Reintentando...');
+      console.log('[WARN] Conexión perdida con el Cloud API. Reintentando...');
     });
 
     this.connectionService.on('error', (err) => {
-      console.error('⚠️ Error de conexión con el API:', err.message || err);
+      console.error('[ERROR] Error de conexión con el API:', err.message || err);
+      if (err.message && err.message.includes('Missing Token')) {
+        console.log('El token local ha sido invalidado por el servidor.');
+        this.connectionService.emit('AGENT_UNLINK');
+      }
     });
 
     this.connectionService.on('command_start', async (serverConfig) => {
@@ -69,7 +73,7 @@ export default class LocalAgentController {
     });
 
     this.connectionService.on('AGENT_UNLINK', async () => {
-      console.log('❌ Recibida orden de desvinculación desde la web.');
+      console.log('[WARN] Recibida orden de desvinculación desde la web.');
       console.log('[System] Deteniendo servidores activos para limpieza profunda...');
       
       for (const active of this.activeServers.values()) {
@@ -91,14 +95,14 @@ export default class LocalAgentController {
     });
 
     this.connectionService.on('AGENT_HIBERNATE', () => {
-      console.log('🛡️ Orden de hibernación recibida. Bloqueando comandos...');
+      console.log('[HIBERNATE] Orden de hibernación recibida. Bloqueando comandos...');
       this.isHibernating = true;
       if (this.saveStatusToEnv) this.saveStatusToEnv('HIBERNATING');
       this.connectionService.sendAgentStatus('HIBERNATING');
     });
 
     this.connectionService.on('AGENT_WAKE', () => {
-      console.log('☀️ Orden de despertar recibida. Restaurando funciones...');
+      console.log('[WAKE] Orden de despertar recibida. Restaurando funciones...');
       this.isHibernating = false;
       if (this.saveStatusToEnv) this.saveStatusToEnv('ACTIVE');
       this.connectionService.sendAgentStatus('ACTIVE');

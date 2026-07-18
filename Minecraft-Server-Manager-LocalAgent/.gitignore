@@ -10,3 +10,4 @@ vault/
 ServerNavidenoTest/
 dist/
 bin/
+*.backup
