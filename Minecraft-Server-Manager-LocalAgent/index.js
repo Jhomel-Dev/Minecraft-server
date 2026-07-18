@@ -1,8 +1,9 @@
 import 'dotenv/config';
-import { enforceSingleInstance } from './src/utils/SingleInstanceLock.js';
+import fs from 'fs/promises';
 import EnvManager from './src/config/EnvManager.js';
 import PairingService from './src/services/PairingService.js';
 import LocalAgentController from './src/controllers/LocalAgentController.js';
+import LocalDaemonController from './src/controllers/LocalDaemonController.js';
 
 const handleSetupModeExit = (message) => {
   console.log(`\n[SUCCESS] ${message}`);
@@ -12,12 +13,15 @@ const handleSetupModeExit = (message) => {
 
 const start = async () => {
   try {
-    await enforceSingleInstance();
+    const daemon = new LocalDaemonController();
+    await daemon.start();
+
     const apiUrl = EnvManager.getApiUrl();
     const isSetupMode = process.argv.includes('--setup');
     let agentToken = EnvManager.getAgentToken();
 
     if (!agentToken) {
+      daemon.setStatus('waiting_pin');
       agentToken = await PairingService.performDeviceFlow(apiUrl);
       EnvManager.saveTokenToEnv(agentToken);
       
@@ -27,6 +31,8 @@ const start = async () => {
     if (isSetupMode) {
       return handleSetupModeExit('El Agente ya se encontraba vinculado con la nube.');
     }
+
+    daemon.setStatus('paired');
 
     const agent = new LocalAgentController({ 
       apiUrl, 
@@ -38,11 +44,44 @@ const start = async () => {
     agent.start();
     console.log('\n[SUCCESS] Local Agent inicializado y conectado exitosamente.\n');
 
-    process.on('SIGINT', async () => {
-      console.log('\n[System] Deteniendo agente...');
-      if (agent.tunnelService) agent.tunnelService.stopTunnel();
-      if (agent.nativeServerService) await agent.nativeServerService.stopMinecraftServer();
+    const shutdownSafely = async () => {
+      console.log('\n[System] Iniciando apagado seguro (Graceful Shutdown)...');
+      daemon.setStatus('shutting_down');
+      
+      for (const [serverId, active] of agent.activeServers.entries()) {
+        console.log(`[System] Deteniendo servidor ${serverId}...`);
+        try {
+          if (active.tunnelService) active.tunnelService.stopTunnel();
+          if (active.nativeServerService) await active.nativeServerService.stopMinecraftServer();
+        } catch (e) {
+          console.error(`[Error] Fallo al detener servidor ${serverId}:`, e);
+        }
+      }
+      
+      console.log('[System] Apagado completado. Saliendo...');
       process.exit(0);
+    };
+
+    process.on('SIGINT', shutdownSafely);
+    process.on('SIGTERM', shutdownSafely);
+    daemon.onShutdown(shutdownSafely);
+
+    daemon.onUnlink(async () => {
+      console.log('\n[System] Desvinculación solicitada vía Local API.');
+      try {
+        await fetch(`${apiUrl}/api/agent/unlink-self`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${agentToken}` }
+        });
+      } catch (e) {
+        console.log('[System] Advertencia: No se pudo notificar a la nube de la desvinculación.');
+      }
+      try {
+        let envContent = await fs.readFile('.env', 'utf8');
+        envContent = envContent.replace(/AGENT_SECRET_TOKEN=.*/g, '');
+        await fs.writeFile('.env', envContent);
+      } catch(e) {}
+      await shutdownSafely();
     });
 
   } catch (error) {

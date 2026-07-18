@@ -12,16 +12,32 @@ export default class PairingService {
     console.error(`Paso 2: Ingresa el siguiente PIN de seguridad: ${pin}`);
     console.error(`Esperando confirmación en la nube...\n`);
 
+    global.currentPairingPin = pin;
+
     const finalToken = await this._waitForSocketPairing(apiUrl, pin);
     
+    global.currentPairingPin = null;
     console.error('¡Vinculación Exitosa! Guardando credenciales...');
     return finalToken;
   }
 
-  static async _requestPairingPin(apiUrl) {
-    const response = await fetch(`${apiUrl}/api/agent/pairing/request`, { method: 'POST' });
-    if (!response.ok) throw new Error('PairingRequestFailed');
-    return response.json();
+  static async _requestPairingPin(apiUrl, retries = 5, delayMs = 3000) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(`${apiUrl}/api/agent/pairing/request`, { method: 'POST' });
+        if (response.ok) {
+          return await response.json();
+        }
+      } catch (error) {}
+      
+      if (attempt === retries) {
+        throw new Error('PairingRequestFailed');
+      }
+      
+      console.error(`[WARN] Nube dormida o inaccesible. Reintentando en ${Math.round(delayMs / 1000)}s...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      delayMs *= 1.5;
+    }
   }
 
   static _waitForSocketPairing(apiUrl, pin) {
