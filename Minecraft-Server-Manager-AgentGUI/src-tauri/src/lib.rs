@@ -22,7 +22,6 @@ pub fn run() {
                     match event {
                         CommandEvent::Stdout(line) => {
                             let text = String::from_utf8_lossy(&line);
-                            // Detect if the agent outputs the PIN
                             if text.contains("Ingresa el siguiente PIN") {
                                 if let Some(pin_part) = text.split("seguridad: ").last() {
                                     let pin = pin_part.trim();
@@ -33,6 +32,12 @@ pub fn run() {
                         }
                         CommandEvent::Stderr(line) => {
                             let text = String::from_utf8_lossy(&line);
+                            if text.contains("Ingresa el siguiente PIN") {
+                                if let Some(pin_part) = text.split("seguridad: ").last() {
+                                    let pin = pin_part.trim();
+                                    app_handle.emit("pin-generated", pin).unwrap();
+                                }
+                            }
                             app_handle.emit("agent-log", text.to_string()).unwrap();
                         }
                         CommandEvent::Terminated(_) => {
