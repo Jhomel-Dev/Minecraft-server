@@ -8,12 +8,15 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "vitest run",
-    "build": "esbuild index.js --bundle --platform=node --format=cjs --outfile=dist/agent.cjs",
+    "build": "esbuild index.js --bundle --platform=node --format=cjs --external:prismarine-nbt --external:protodef --outfile=dist/agent.cjs",
     "compile": "pkg dist/agent.cjs -t node18-win-x64,node18-linux-x64 --out-path bin"
   },
   "pkg": {
     "scripts": "dist/**/*.js",
-    "assets": []
+    "assets": [
+      "node_modules/protodef/**/*.js",
+      "node_modules/prismarine-nbt/**/*.js"
+    ]
   },
   "keywords": [],
   "author": "",
