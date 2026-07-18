@@ -4,6 +4,7 @@ import app from "./index.js";
 import { handleSocketEvents } from "./modules/agent/gateways/agent.gateway.js";
 import dotenv from "dotenv"
 import rateLimit from "express-rate-limit";
+import prisma from "./core/database/prisma.client.js";
 
 dotenv.config();
 
@@ -32,9 +33,18 @@ handleSocketEvents(io);
 app.set('io', io);
 
 
-let port = parseInt(process.env.PORT) || 3000;
+let port = parseInt(process.env.PORT) || 4000;
 
-const startServer = (currentPort) => {
+const startServer = async (currentPort) => {
+    try {
+        await prisma.server.updateMany({
+            data: { status: 'OFFLINE', tunnelIp: null }
+        });
+        console.log('[System] Servidores reseteados a OFFLINE (Cold Start fix).');
+    } catch (e) {
+        console.error('Error reseteando estado de servidores:', e);
+    }
+
     httpServer.listen(currentPort, () => {
         console.log(`Server HTTP & Socket.io running on port: ${currentPort}`);
     });

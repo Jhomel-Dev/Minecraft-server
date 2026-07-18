@@ -7,7 +7,7 @@ export const enforceSingleInstance = () => {
     const server = net.createServer();
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        console.error('❌ Ya hay otra instancia del Agente corriendo. Cerrando...');
+        console.error('[ERROR] Ya hay otra instancia del Agente corriendo. Cerrando...');
         process.exit(1);
       }
     });

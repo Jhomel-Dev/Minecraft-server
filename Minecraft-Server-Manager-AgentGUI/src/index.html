@@ -98,7 +98,6 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script type="module">
     const { listen } = window.__TAURI__.event;
-    const { invoke } = window.__TAURI__.core;
     
     const pinDisplay = document.getElementById('pin-display');
     const statusText = document.getElementById('status-text');
@@ -106,68 +105,30 @@
     const logsDisplay = document.getElementById('logs-display');
     
     let currentPin = "";
-    const API_BASE = "https://minecraft-server-pl80.onrender.com";
 
-    async function startPairingFlow() {
-      try {
-        statusText.innerText = "Obteniendo PIN desde la nube...";
-        const pairResStr = await invoke('api_pair');
-        const pairData = JSON.parse(pairResStr);
-        
-        currentPin = pairData.pin;
+    listen('pin-generated', (event) => {
+      const pin = event.payload;
+      if (pin && pin.trim().length > 0) {
+        currentPin = pin.trim();
         pinDisplay.innerText = currentPin;
         statusText.innerText = "Ingresa este PIN en la web para vincular:";
-
-        const socket = io(API_BASE, {
-          auth: { pairingPin: currentPin },
-          transports: ['websocket', 'polling']
-        });
-
-        socket.on('paired', async (data) => {
-          if (!data || !data.token) return;
-          socket.disconnect();
-          
-          statusText.innerText = "¡Vinculado! Iniciando agente...";
-          await invoke('save_env', { token: data.token });
-          await invoke('start_agent');
-        });
-
-        socket.on('connect_error', (err) => {
-          console.error("Socket error:", err);
-          logsDisplay.innerText = "Reconectando con la nube...";
-        });
-
-      } catch (error) {
-        statusText.innerText = "Error de conexión con la nube 🔴";
-        statusText.style.color = "var(--danger)";
-        logsDisplay.innerText = error.toString();
       }
-    }
-
-    async function init() {
-      const envExists = await invoke('check_env');
-      if (envExists) {
-        pinDisplay.innerText = "******";
-        statusText.innerText = "Credenciales encontradas. Arrancando agente...";
-        await invoke('start_agent');
-      } else {
-        await startPairingFlow();
-      }
-    }
+    });
 
     listen('agent-log', (event) => {
       const msg = event.payload.trim();
       if(msg) {
         logsDisplay.innerText = msg;
-        if(msg.includes("Conexión exitosa a WebSocket")) {
-          statusText.innerText = "Agente vinculado y funcionando correctamente 🟢";
+        if(msg.includes("Local Agent conectado exitosamente") || msg.includes("Conectado exitosamente al Cloud API")) {
+          pinDisplay.innerText = "******";
+          statusText.innerText = "Agente vinculado y funcionando correctamente";
           statusText.style.color = "var(--success)";
         }
       }
     });
 
     listen('agent-terminated', () => {
-      statusText.innerText = "Agente desconectado 🔴";
+      statusText.innerText = "Agente desconectado";
       statusText.style.color = "var(--danger)";
     });
 
@@ -178,8 +139,6 @@
         setTimeout(() => copyBtn.innerText = "Copiar PIN", 2000);
       }
     });
-
-    init();
   </script>
 </body>
 </html>

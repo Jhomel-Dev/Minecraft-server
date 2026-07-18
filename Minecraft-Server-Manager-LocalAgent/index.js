@@ -5,7 +5,7 @@ import PairingService from './src/services/PairingService.js';
 import LocalAgentController from './src/controllers/LocalAgentController.js';
 
 const handleSetupModeExit = (message) => {
-  console.log(`\n✅ ${message}`);
+  console.log(`\n[SUCCESS] ${message}`);
   console.log('El instalador continuará con la configuración de segundo plano...\n');
   process.exit(0);
 };
@@ -36,7 +36,7 @@ const start = async () => {
     });
     
     agent.start();
-    console.log('\n✅ Local Agent inicializado y conectado exitosamente.\n');
+    console.log('\n[SUCCESS] Local Agent inicializado y conectado exitosamente.\n');
 
     process.on('SIGINT', async () => {
       console.log('\n[System] Deteniendo agente...');
@@ -46,7 +46,7 @@ const start = async () => {
     });
 
   } catch (error) {
-    console.error('\n❌ Failed to start Local Agent:', error.message);
+    console.error('\n[ERROR] Failed to start Local Agent:', error.message);
     process.exit(1);
   }
 };
