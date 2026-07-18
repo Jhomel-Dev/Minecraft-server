@@ -9,8 +9,7 @@ export default class PairingService {
     const { pin } = await this._requestPairingPin(apiUrl);
     
     console.log(`Paso 1: Ve a tu panel web en la sección "Vincular PC"`);
-    console.log(`Paso 2: Ingresa el siguiente PIN de seguridad:\n`);
-    console.log(`      --->  ${pin}  <--- \n`);
+    console.log(`Paso 2: Ingresa el siguiente PIN de seguridad: ${pin}`);
     console.log(`Esperando confirmación en la nube...\n`);
 
     const finalToken = await this._waitForSocketPairing(apiUrl, pin);
