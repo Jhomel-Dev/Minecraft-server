@@ -1,5 +1,9 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import TunnelService from '../src/services/TunnelService.js';
+import * as child_process from 'child_process';
+import os from 'os';
+
+vi.mock('child_process');
 
 describe('TunnelService', () => {
   let service;
@@ -8,34 +12,28 @@ describe('TunnelService', () => {
     service = new TunnelService();
   });
 
-  test('verifyNotRunning throws if already running', () => {
-    service.playitProcess = {};
-    expect(() => service.verifyNotRunning()).toThrow('Tunnel is already running');
+  test('isRunning returns false initially', () => {
+    expect(service.isRunning()).toBe(false);
   });
 
-  test('buildArgs includes secret if provided', () => {
-    const args = service.buildArgs('my-secret');
+  test('buildBoreArgs includes secret if provided', () => {
+    const args = service.buildBoreArgs('my-secret', 25565);
     expect(args).toContain('--secret');
     expect(args).toContain('my-secret');
+    expect(args).toContain('25565');
   });
 
-  test('checkForClaimLink emits claim_link event', () => {
-    return new Promise((resolve) => {
-      service.on('claim_link', (link) => {
-        expect(link).toBe('https://playit.gg/claim/1234abc');
-        resolve();
-      });
-      service.checkForClaimLink('Please visit https://playit.gg/claim/1234abc to claim');
-    });
+  test('buildBoreArgs excludes secret if null', () => {
+    const args = service.buildBoreArgs(null, 25565);
+    expect(args).not.toContain('--secret');
   });
 
-  test('checkForAssignedAddress emits address_assigned event', () => {
-    return new Promise((resolve) => {
-      service.on('address_assigned', (address) => {
-        expect(address).toBe('tunnel.playit.gg:12345');
-        resolve();
-      });
-      service.checkForAssignedAddress('Tunnel address: tunnel.playit.gg:12345');
-    });
+  test('handleBoreOutput parses connection address', () => {
+    let assignedAddress = null;
+    service.on('address_assigned', (address) => assignedAddress = address);
+    
+    service.handleBoreOutput('listening at bore.pub:45678');
+    
+    expect(assignedAddress).toBe('bore.pub:45678');
   });
 });
