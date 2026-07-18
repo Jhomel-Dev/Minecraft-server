@@ -35,8 +35,8 @@ describe('ConnectionService', () => {
     expect(mockSocket.on).toHaveBeenCalledWith('START_SERVER', expect.any(Function));
   });
 
-  test('sendTelemetry throws if not connected', () => {
-    expect(() => service.sendTelemetry({})).toThrow('Socket is not connected');
+  test('sendTelemetry does not throw if not connected', () => {
+    expect(() => service.sendTelemetry({})).not.toThrow();
   });
 
   test('sendTelemetry emits event when connected', () => {
