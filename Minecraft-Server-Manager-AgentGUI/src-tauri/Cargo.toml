@@ -1,6 +1,6 @@
 [package]
 name = "minecraft-server-manager-agentgui"
-version = "0.1.0"
+version = "2.2.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -26,4 +26,5 @@ serde_json = "1"
 dirs = "6.0.0"
 tauri-plugin-http = "2.5.9"
 reqwest = { version = "0.13.4", features = ["json"] }
+tokio = { version = "1.53.0", features = ["time"] }
 
