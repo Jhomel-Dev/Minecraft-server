@@ -118,19 +118,45 @@ export const unlinkAgent = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Notify the agent to unlink and self-destruct
     const io = req.app.get('io');
     if (io) {
       io.to(`agent-${userId}`).emit('AGENT_UNLINK');
     }
     
-    // Clear the agent token from the user profile
     await prisma.user.update({
       where: { id: userId },
       data: { agentToken: null }
     });
     
     return res.status(200).json({ success: true, message: 'Agent unlinked successfully' });
+  } catch (error) {
+    return res.status(500).json({ error: 'InternalServerError' });
+  }
+};
+
+export const unlinkSelfAgent = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'MissingToken' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'MissingToken' });
+
+    const user = await prisma.user.findUnique({ where: { agentToken: token } });
+    if (!user) return res.status(404).json({ error: 'UserNotFound' });
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { agentToken: null }
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(user.id).emit('AGENT_UNLINKED_EXPLICITLY');
+    }
+
+    return res.status(200).json({ success: true });
   } catch (error) {
     return res.status(500).json({ error: 'InternalServerError' });
   }
