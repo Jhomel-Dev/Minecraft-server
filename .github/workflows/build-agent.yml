@@ -2,11 +2,8 @@ name: CD Pipeline - Empaquetado del Agente
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'Minecraft-Server-Manager-LocalAgent/**'
-      - 'Minecraft-Server-Manager-AgentGUI/**'
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -75,8 +72,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: "Minecraft-Server-Manager-AgentGUI"
-          tagName: release/v2.0.0
-          releaseName: "CraftControl Agent Release v2.0.0"
+          tagName: ${{ github.ref_name }}
+          releaseName: "CraftControl Agent Release ${{ github.ref_name }}"
           releaseBody: "Instaladores automáticos del Agente Gráfico"
           releaseDraft: false
           prerelease: false
