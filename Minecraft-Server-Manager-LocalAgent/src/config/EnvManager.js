@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const DEFAULT_API_URL = 'https://minecraft-server-pl80.onrender.com';
+const DEFAULT_API_URL = 'https://craft-control-api-staging.onrender.com';
 const ENV_PATH = '.env';
 
 export default class EnvManager {
@@ -26,6 +26,10 @@ export default class EnvManager {
 
   static saveStatusToEnv(status) {
     this._updateEnvVar('AGENT_STATUS', status);
+  }
+
+  static updateApiUrl(url) {
+    this._updateEnvVar('API_URL', url);
   }
 
   static _updateEnvVar(key, value) {

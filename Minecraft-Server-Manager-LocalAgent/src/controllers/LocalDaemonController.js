@@ -1,4 +1,5 @@
 import http from 'http';
+import EnvManager from '../config/EnvManager.js';
 
 export default class LocalDaemonController {
   constructor(port = 45987) {
@@ -67,6 +68,23 @@ export default class LocalDaemonController {
       if (this.onShutdownCallback) this.onShutdownCallback();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: true, message: 'Graceful shutdown initiated' }));
+    }
+
+    if (req.url === '/set-api' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', () => {
+        try {
+          const { apiUrl } = JSON.parse(body);
+          if (apiUrl) EnvManager.updateApiUrl(apiUrl);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: e.message }));
+        }
+      });
+      return;
     }
 
     res.writeHead(404);
