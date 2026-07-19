@@ -135,7 +135,7 @@ export function AgentLinkingStage({ onLinked }) {
           
           <div className="space-y-4 mt-auto">
             <a 
-              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.1.0/CraftControl-Agent_2.1.0_x64-setup.exe" 
+              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.2.0/CraftControl-Agent_2.2.0_x64-setup.exe" 
               className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-primary rounded-blocky transition-all group"
             >
               <div className="flex items-center gap-3">
@@ -151,7 +151,7 @@ export function AgentLinkingStage({ onLinked }) {
             </a>
 
             <a 
-              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.1.0/CraftControl-Agent_2.1.0_amd64.AppImage" 
+              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.2.0/CraftControl-Agent_2.2.0_amd64.AppImage" 
               className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-red-500 rounded-blocky transition-all group"
             >
               <div className="flex items-center gap-3">
