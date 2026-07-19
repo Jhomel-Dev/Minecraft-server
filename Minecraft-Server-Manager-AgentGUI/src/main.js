@@ -85,3 +85,29 @@ btnShutdown.addEventListener('click', () => {
 });
 
 renderAgentState({ status: 'loading' });
+
+window.switchToStaging = async () => {
+  try {
+    await fetch('http://127.0.0.1:45987/set-api', {
+      method: 'POST',
+      body: JSON.stringify({ apiUrl: 'https://craft-control-api-staging.onrender.com' })
+    });
+    console.log('%c[Sistema] Cambiando al servidor de Staging. El agente se reiniciará...', 'color: #ff4a4a; font-size: 14px; font-weight: bold;');
+    await invoke('request_unlink');
+  } catch (e) {
+    console.error('Error al cambiar a Staging:', e);
+  }
+};
+
+window.switchToProduction = async () => {
+  try {
+    await fetch('http://127.0.0.1:45987/set-api', {
+      method: 'POST',
+      body: JSON.stringify({ apiUrl: 'https://minecraft-server-pl80.onrender.com' })
+    });
+    console.log('%c[Sistema] Cambiando al servidor de Producción. El agente se reiniciará...', 'color: #ff4a4a; font-size: 14px; font-weight: bold;');
+    await invoke('request_unlink');
+  } catch (e) {
+    console.error('Error al cambiar a Producción:', e);
+  }
+};
