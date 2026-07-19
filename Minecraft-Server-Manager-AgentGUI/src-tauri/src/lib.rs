@@ -73,6 +73,16 @@ fn spawn_detached_agent(app_handle: &AppHandle) {
         return;
     };
     
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(metadata) = std::fs::metadata(&path) {
+            let mut perms = metadata.permissions();
+            perms.set_mode(perms.mode() | 0o111);
+            let _ = std::fs::set_permissions(&path, perms);
+        }
+    }
+    
     let mut cmd = Command::new(path);
     
     #[cfg(target_os = "windows")]
