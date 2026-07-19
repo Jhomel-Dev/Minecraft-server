@@ -53,7 +53,8 @@ export default class LocalDaemonController {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({
         status: this.status,
-        pin: global.currentPairingPin || null
+        pin: global.currentPairingPin || null,
+        apiUrl: EnvManager.getApiUrl()
       }));
     }
 

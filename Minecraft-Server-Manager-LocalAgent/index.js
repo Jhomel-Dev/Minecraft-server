@@ -43,6 +43,7 @@ const start = async () => {
     daemon.onShutdown(shutdownSafely);
 
     const apiUrl = EnvManager.getApiUrl();
+    console.log(`\n[System] El agente está configurado para conectarse a: ${apiUrl}`);
     const isSetupMode = process.argv.includes('--setup');
     let agentToken = EnvManager.getAgentToken();
 

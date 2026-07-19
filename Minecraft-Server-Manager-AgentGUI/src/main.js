@@ -111,3 +111,14 @@ window.switchToProduction = async () => {
     console.error('Error al cambiar a Producción:', e);
   }
 };
+
+window.checkServer = async () => {
+  try {
+    const res = await fetch('http://127.0.0.1:45987/status');
+    const data = await res.json();
+    console.log(`%c[Sistema] El agente está conectado a: ${data.apiUrl || 'Desconocido'}`, 'color: #00ff00; font-size: 14px; font-weight: bold;');
+    return data.apiUrl;
+  } catch (e) {
+    console.error('El agente está apagado o no responde.');
+  }
+};
