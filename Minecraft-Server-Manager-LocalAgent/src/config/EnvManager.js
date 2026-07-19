@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const DEFAULT_API_URL = 'https://craft-control-api-staging.onrender.com';
+const DEFAULT_API_URL = 'https://minecraft-server-pl80.onrender.com';
 const ENV_PATH = '.env';
 
 export default class EnvManager {

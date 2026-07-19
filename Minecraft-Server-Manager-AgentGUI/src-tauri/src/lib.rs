@@ -70,6 +70,12 @@ fn spawn_detached_agent(app_handle: &AppHandle) {
     
     let mut cmd = Command::new(&path);
     
+    if cfg!(debug_assertions) {
+        cmd.arg("--api=https://craft-control-api-staging.onrender.com");
+    } else {
+        cmd.arg("--api=https://minecraft-server-pl80.onrender.com");
+    }
+    
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
