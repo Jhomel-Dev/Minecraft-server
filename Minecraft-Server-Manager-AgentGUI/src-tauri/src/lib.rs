@@ -35,43 +35,28 @@ async fn request_unlink() -> Result<(), String> {
     Ok(())
 }
 
-fn get_search_directories(app_handle: &AppHandle) -> Vec<PathBuf> {
-    let mut paths = Vec::new();
-    
-    if let Ok(res_dir) = app_handle.path().resource_dir() {
-        paths.push(res_dir.clone());
-        paths.push(res_dir.join("bin"));
-    }
-    
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(parent) = exe.parent() {
-            paths.push(parent.to_path_buf());
-        }
-    }
-    
-    paths
-}
+#[cfg(target_os = "linux")]
+const AGENT_BIN: &[u8] = include_bytes!("../bin/agentcore-x86_64-unknown-linux-gnu");
 
-fn find_agent_binary(dir: &PathBuf) -> Option<PathBuf> {
-    let entries = std::fs::read_dir(dir).ok()?;
-    
-    for entry in entries.flatten() {
-        let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with("agentcore") && !name.ends_with(".pdb") {
-            return Some(entry.path());
-        }
-    }
-    
-    None
-}
+#[cfg(target_os = "windows")]
+const AGENT_BIN: &[u8] = include_bytes!("../bin/agentcore-x86_64-pc-windows-msvc.exe");
+
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
+const AGENT_BIN: &[u8] = &[];
 
 fn spawn_detached_agent(app_handle: &AppHandle) {
-    let search_dirs = get_search_directories(app_handle);
-    let binary_path = search_dirs.iter().find_map(find_agent_binary);
-        
-    let Some(path) = binary_path else {
+    if AGENT_BIN.is_empty() {
         return;
-    };
+    }
+    
+    let Ok(app_data) = app_handle.path().app_data_dir() else { return; };
+    let _ = std::fs::create_dir_all(&app_data);
+    
+    let file_name = if cfg!(target_os = "windows") { "agentcore.exe" } else { "agentcore" };
+    let path = app_data.join(file_name);
+    
+    // Only write if it doesn't exist or if we want to overwrite with latest (overwrite to be safe)
+    let _ = std::fs::write(&path, AGENT_BIN);
     
     #[cfg(unix)]
     {
@@ -83,7 +68,7 @@ fn spawn_detached_agent(app_handle: &AppHandle) {
         }
     }
     
-    let mut cmd = Command::new(path);
+    let mut cmd = Command::new(&path);
     
     #[cfg(target_os = "windows")]
     {
