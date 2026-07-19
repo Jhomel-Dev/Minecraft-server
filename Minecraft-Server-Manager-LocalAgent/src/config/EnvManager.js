@@ -1,7 +1,11 @@
 import fs from 'fs';
 
+import path from 'path';
+
 const DEFAULT_API_URL = 'https://minecraft-server-pl80.onrender.com';
-const ENV_PATH = '.env';
+const ENV_PATH = process.pkg 
+  ? path.join(path.dirname(process.execPath), '.env')
+  : path.join(process.cwd(), '.env');
 
 export default class EnvManager {
   static getApiUrl() {
