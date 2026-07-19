@@ -63,6 +63,23 @@ btnUnlink.addEventListener('click', () => {
   invoke('request_unlink').catch(() => {});
 });
 
+const btnRefreshPin = document.getElementById('btnRefreshPin');
+if (btnRefreshPin) {
+  btnRefreshPin.addEventListener('click', () => {
+    btnRefreshPin.innerText = "Refrescando...";
+    btnRefreshPin.disabled = true;
+    invoke('request_refresh_pin').catch(() => {
+      btnRefreshPin.innerText = "Refrescar PIN";
+      btnRefreshPin.disabled = false;
+    });
+    // the UI will naturally reset when the daemon re-initializes and drops a new state event
+    setTimeout(() => {
+      btnRefreshPin.innerText = "Refrescar PIN";
+      btnRefreshPin.disabled = false;
+    }, 4000);
+  });
+}
+
 btnShutdown.addEventListener('click', () => {
   invoke('request_shutdown').catch(() => {});
 });

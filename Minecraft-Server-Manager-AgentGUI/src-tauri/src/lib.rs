@@ -16,6 +16,16 @@ async fn request_shutdown(app_handle: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn request_refresh_pin() -> Result<(), String> {
+    reqwest::Client::new()
+        .post("http://127.0.0.1:45987/shutdown")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
 async fn request_unlink() -> Result<(), String> {
     reqwest::Client::new()
         .post("http://127.0.0.1:45987/unlink")
@@ -115,7 +125,11 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![request_shutdown, request_unlink])
+        .invoke_handler(tauri::generate_handler![
+            request_shutdown,
+            request_refresh_pin,
+            request_unlink
+        ])
         .setup(|app| {
             start_agent_polling_loop(app.handle().clone());
             Ok(())
