@@ -76,14 +76,14 @@ const start = async () => {
       return handleSetupModeExit('El Agente ya se encontraba vinculado con la nube.');
     }
 
-    daemon.setStatus('paired');
-
     agent = new LocalAgentController({ 
       apiUrl, 
       agentToken, 
       agentStatus: EnvManager.getAgentStatus(), 
-      saveStatusToEnv: (status) => EnvManager.saveStatusToEnv(status) 
+      saveStatusToEnv: (status) => EnvManager.saveStatusToEnv(status),
+      daemon
     });
+
     
     agent.start();
     console.log('\n[SUCCESS] Local Agent inicializado y conectado exitosamente.\n');

@@ -6,6 +6,7 @@ import PlayerStatsService from '../services/PlayerStatsService.js';
 import BackupService from '../services/BackupService.js';
 import os from 'os';
 import path from 'path';
+import fs from 'fs/promises';
 
 export default class LocalAgentController {
   constructor(config) {
@@ -14,6 +15,7 @@ export default class LocalAgentController {
     this.nextPort = 25565;
     this.isHibernating = config.agentStatus === 'HIBERNATING';
     this.saveStatusToEnv = config.saveStatusToEnv;
+    this.daemon = config.daemon;
     
     this.connectionService = new ConnectionService(config.apiUrl, config.agentToken, this.isHibernating);
     this.fileService = new FileService();
@@ -40,6 +42,7 @@ export default class LocalAgentController {
   setupConnectionListeners() {
     this.connectionService.on('connected', () => {
       console.log('[INFO] Local Agent conectado exitosamente al Cloud API.');
+      if (this.daemon) this.daemon.setStatus('paired');
     });
 
     this.connectionService.on('disconnected', () => {
@@ -83,7 +86,6 @@ export default class LocalAgentController {
         } catch (e) {}
       }
 
-      const fs = await import('fs/promises');
       try {
         let envContent = await fs.readFile('.env', 'utf8');
         envContent = envContent.replace(/AGENT_SECRET_TOKEN=.*/g, '');
