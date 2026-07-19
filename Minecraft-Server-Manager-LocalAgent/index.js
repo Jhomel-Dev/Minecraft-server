@@ -15,46 +15,22 @@ const start = async () => {
   try {
     const daemon = new LocalDaemonController();
     await daemon.start();
-
-    const apiUrl = EnvManager.getApiUrl();
-    const isSetupMode = process.argv.includes('--setup');
-    let agentToken = EnvManager.getAgentToken();
-
-    if (!agentToken) {
-      daemon.setStatus('waiting_pin');
-      agentToken = await PairingService.performDeviceFlow(apiUrl);
-      EnvManager.saveTokenToEnv(agentToken);
-      
-      if (isSetupMode) return handleSetupModeExit('Vinculación completada exitosamente.');
-    }
-
-    if (isSetupMode) {
-      return handleSetupModeExit('El Agente ya se encontraba vinculado con la nube.');
-    }
-
-    daemon.setStatus('paired');
-
-    const agent = new LocalAgentController({ 
-      apiUrl, 
-      agentToken, 
-      agentStatus: EnvManager.getAgentStatus(), 
-      saveStatusToEnv: (status) => EnvManager.saveStatusToEnv(status) 
-    });
     
-    agent.start();
-    console.log('\n[SUCCESS] Local Agent inicializado y conectado exitosamente.\n');
+    let agent = null;
 
     const shutdownSafely = async () => {
       console.log('\n[System] Iniciando apagado seguro (Graceful Shutdown)...');
       daemon.setStatus('shutting_down');
       
-      for (const [serverId, active] of agent.activeServers.entries()) {
-        console.log(`[System] Deteniendo servidor ${serverId}...`);
-        try {
-          if (active.tunnelService) active.tunnelService.stopTunnel();
-          if (active.nativeServerService) await active.nativeServerService.stopMinecraftServer();
-        } catch (e) {
-          console.error(`[Error] Fallo al detener servidor ${serverId}:`, e);
+      if (agent && agent.activeServers) {
+        for (const [serverId, active] of agent.activeServers.entries()) {
+          console.log(`[System] Deteniendo servidor ${serverId}...`);
+          try {
+            if (active.tunnelService) active.tunnelService.stopTunnel();
+            if (active.nativeServerService) await active.nativeServerService.stopMinecraftServer();
+          } catch (e) {
+            console.error(`[Error] Fallo al detener servidor ${serverId}:`, e);
+          }
         }
       }
       
@@ -65,6 +41,10 @@ const start = async () => {
     process.on('SIGINT', shutdownSafely);
     process.on('SIGTERM', shutdownSafely);
     daemon.onShutdown(shutdownSafely);
+
+    const apiUrl = EnvManager.getApiUrl();
+    const isSetupMode = process.argv.includes('--setup');
+    let agentToken = EnvManager.getAgentToken();
 
     daemon.onUnlink(async () => {
       console.log('\n[System] Desvinculación solicitada vía Local API.');
@@ -83,6 +63,30 @@ const start = async () => {
       } catch(e) {}
       await shutdownSafely();
     });
+
+    if (!agentToken) {
+      daemon.setStatus('waiting_pin');
+      agentToken = await PairingService.performDeviceFlow(apiUrl);
+      EnvManager.saveTokenToEnv(agentToken);
+      
+      if (isSetupMode) return handleSetupModeExit('Vinculación completada exitosamente.');
+    }
+
+    if (isSetupMode) {
+      return handleSetupModeExit('El Agente ya se encontraba vinculado con la nube.');
+    }
+
+    daemon.setStatus('paired');
+
+    agent = new LocalAgentController({ 
+      apiUrl, 
+      agentToken, 
+      agentStatus: EnvManager.getAgentStatus(), 
+      saveStatusToEnv: (status) => EnvManager.saveStatusToEnv(status) 
+    });
+    
+    agent.start();
+    console.log('\n[SUCCESS] Local Agent inicializado y conectado exitosamente.\n');
 
   } catch (error) {
     console.error('\n[ERROR] Failed to start Local Agent:', error.message);
