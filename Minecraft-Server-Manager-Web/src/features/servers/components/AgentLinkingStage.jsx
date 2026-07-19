@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/shared/ui/Button";
 import { Laptop, Copy, Check, Loader2, ArrowRight } from "lucide-react";
 import { useToast } from "@/shared/ui/ToastProvider";
@@ -35,10 +35,30 @@ export function AgentLinkingStage({ onLinked }) {
   const [pin, setPin] = useState(["", "", "", "", "", ""]);
   const [isClaiming, setIsClaiming] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [downloadLinks, setDownloadLinks] = useState({
+    win: "https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.2.1/CraftControl-Agent_2.2.1_x64-setup.exe",
+    linux: "https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.2.1/CraftControl-Agent_2.2.1_amd64.AppImage"
+  });
   const inputRefs = useRef([]);
   const { toast } = useToast();
 
   const getBaseUrl = () => typeof window !== 'undefined' ? window.location.origin : '';
+
+  useEffect(() => {
+    fetch("https://api.github.com/repos/Jhomel-Dev/Minecraft-server/releases/latest")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.assets) {
+          let win = data.assets.find(a => a.name.endsWith("-setup.exe"));
+          let linux = data.assets.find(a => a.name.endsWith(".AppImage"));
+          setDownloadLinks(prev => ({
+            win: win ? win.browser_download_url : prev.win,
+            linux: linux ? linux.browser_download_url : prev.linux
+          }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const copyToClipboard = (textToCopy, id) => {
     navigator.clipboard.writeText(textToCopy);
@@ -135,7 +155,7 @@ export function AgentLinkingStage({ onLinked }) {
           
           <div className="space-y-4 mt-auto">
             <a 
-              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.2.0/CraftControl-Agent_2.2.0_x64-setup.exe" 
+              href={downloadLinks.win} 
               className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-primary rounded-blocky transition-all group"
             >
               <div className="flex items-center gap-3">
@@ -151,7 +171,7 @@ export function AgentLinkingStage({ onLinked }) {
             </a>
 
             <a 
-              href="https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.2.0/CraftControl-Agent_2.2.0_amd64.AppImage" 
+              href={downloadLinks.linux} 
               className="flex items-center justify-between w-full p-4 bg-surface border-2 border-surface-border hover:border-red-500 rounded-blocky transition-all group"
             >
               <div className="flex items-center gap-3">
