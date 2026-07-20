@@ -46,7 +46,7 @@ jobs:
 
       - name: Start CraftControl API
         working-directory: ./Minecraft-Server-Manager-Api
-        run: npm run dev &
+        run: npm run start &
         env:
           PORT: 4000
           DATABASE_URL: 'postgres://craftcontrol_test:craftcontrol_test@localhost:5432/craftcontrol_test'
