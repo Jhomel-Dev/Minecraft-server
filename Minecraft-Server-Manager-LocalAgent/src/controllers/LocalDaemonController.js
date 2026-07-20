@@ -2,7 +2,7 @@ import http from 'http';
 import EnvManager from '../config/EnvManager.js';
 
 export default class LocalDaemonController {
-  constructor(port = 45987) {
+  constructor(port = process.env.DAEMON_PORT || 45987) {
     this.port = port;
     this.status = 'initializing';
     this.server = null;
