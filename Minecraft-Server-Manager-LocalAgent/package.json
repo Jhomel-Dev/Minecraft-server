@@ -23,7 +23,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "adm-zip": "^0.5.18",
+    "adm-zip": "^0.6.0",
     "dotenv": "^17.4.2",
     "pidusage": "^4.0.1",
     "prismarine-nbt": "^2.8.0",

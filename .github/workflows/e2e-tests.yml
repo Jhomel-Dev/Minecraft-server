@@ -54,7 +54,9 @@ jobs:
 
       - name: Start CraftControl Web
         working-directory: ./Minecraft-Server-Manager-Web
-        run: npm run dev &
+        run: |
+          npm run build
+          npm run start &
         env:
           PORT: 3000
           NEXT_PUBLIC_API_URL: 'http://localhost:4000'
