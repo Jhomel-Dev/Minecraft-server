@@ -50,32 +50,24 @@ jobs:
         env:
           DATABASE_URL: 'postgres://craftcontrol_test:craftcontrol_test@localhost:5432/craftcontrol_test'
 
-      - name: Start CraftControl API
-        working-directory: ./Minecraft-Server-Manager-Api
-        run: npm run start &
-        env:
-          PORT: 4000
-          DATABASE_URL: 'postgres://craftcontrol_test:craftcontrol_test@localhost:5432/craftcontrol_test'
-          JWT_SECRET: 'test_secret_key'
-
-      - name: Start CraftControl Web
+      - name: Build CraftControl Web
         working-directory: ./Minecraft-Server-Manager-Web
-        run: |
-          npm run build
-          npm run start &
+        run: npm run build
         env:
-          PORT: 3000
           NEXT_PUBLIC_API_URL: 'http://localhost:4000'
 
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v6
         with:
           working-directory: ./Minecraft-Server-Manager-Web
+          start: npx concurrently "cd ../Minecraft-Server-Manager-Api && PORT=4000 node src/server.js" "PORT=3000 npm run start"
           wait-on: 'http://localhost:3000, http://localhost:4000/api/health'
           wait-on-timeout: 120
           record: false
         env:
           CYPRESS_BASE_URL: 'http://localhost:3000'
+          DATABASE_URL: 'postgres://craftcontrol_test:craftcontrol_test@localhost:5432/craftcontrol_test'
+          JWT_SECRET: 'test_secret_key'
 
       - name: Upload Cypress Artifacts
         uses: actions/upload-artifact@v4
