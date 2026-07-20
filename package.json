@@ -8,8 +8,8 @@
     "dev:web": "cd Minecraft-Server-Manager-Web && npm run dev",
     "dev:agent": "cd Minecraft-Server-Manager-LocalAgent && npm start",
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:agent\"",
-    "test:e2e": "concurrently -k -s first \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:agent\" \"wait-on http://localhost:3000 && cd Minecraft-Server-Manager-Web && npm run cypress:run\"",
-    "test:e2e:ui": "concurrently -k -s first \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:agent\" \"wait-on http://localhost:3000 && cd Minecraft-Server-Manager-Web && npm run cypress:open\""
+    "test:e2e": "concurrently -k -s first \"npm run dev:api\" \"npm run dev:web\" \"wait-on http://localhost:3000 && cd Minecraft-Server-Manager-Web && npm run cypress:run\"",
+    "test:e2e:ui": "concurrently -k -s first \"npm run dev:api\" \"npm run dev:web\" \"wait-on http://localhost:3000 && cd Minecraft-Server-Manager-Web && npm run cypress:open\""
   },
   "repository": {
     "type": "git",
