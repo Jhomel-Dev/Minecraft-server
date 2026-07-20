@@ -49,9 +49,10 @@ describe("Módulo 7: Gestión de Jugadores", () => {
     cy.contains("button", "Instalar y Arrancar").click();
     cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
     cy.contains("Jugadores").click();
-    cy.contains("Ops").click();
-    cy.contains("Whitelist").click();
-    cy.contains("Baneados (Jugadores)").click();
-    cy.contains("Baneados (IP)").click();
+    
+    // In the new UI, there are no tabs for Ops/Bans. We just check if the empty state is displayed
+    // and if the refresh button works.
+    cy.contains("No hay jugadores registrados", { timeout: 10000 }).should("be.visible");
+    cy.contains("Actualizar").should("be.visible").click();
   });
 });
