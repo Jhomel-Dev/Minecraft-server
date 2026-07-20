@@ -1,6 +1,6 @@
 describe("Módulo 7: Gestión de Jugadores", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `players_test_${uniqueSuffix}@neotokyo.com`;
+  const testEmail = `players_test_${uniqueSuffix}@craftcontrol.test`;
   const testUsername = `PlayersBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;

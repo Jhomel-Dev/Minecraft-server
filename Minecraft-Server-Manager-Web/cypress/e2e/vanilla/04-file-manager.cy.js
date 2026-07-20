@@ -1,6 +1,6 @@
 describe("Módulo 6: Gestor de Archivos", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `files_test_${uniqueSuffix}@neotokyo.com`;
+  const testEmail = `files_test_${uniqueSuffix}@craftcontrol.test`;
   const testUsername = `FilesBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;

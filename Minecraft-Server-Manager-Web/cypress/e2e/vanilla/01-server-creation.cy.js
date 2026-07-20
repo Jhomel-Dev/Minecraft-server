@@ -1,6 +1,6 @@
 describe("Módulo 3: Creación de Servidor", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `server_test_${uniqueSuffix}@neotokyo.com`;
+  const testEmail = `server_test_${uniqueSuffix}@craftcontrol.test`;
   const testUsername = `CreatorBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;

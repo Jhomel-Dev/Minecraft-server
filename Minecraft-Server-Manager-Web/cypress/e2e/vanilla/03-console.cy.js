@@ -1,6 +1,6 @@
 describe("Módulo 5: Consola Interactiva", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `console_test_${uniqueSuffix}@neotokyo.com`;
+  const testEmail = `console_test_${uniqueSuffix}@craftcontrol.test`;
   const testUsername = `ConsoleBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;
