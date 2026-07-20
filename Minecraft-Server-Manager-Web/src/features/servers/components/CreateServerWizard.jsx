@@ -41,9 +41,7 @@ export function CreateServerWizard() {
   useEffect(() => {
     getAgentHardware().then(hw => {
       setAgentHardware(hw);
-      const freeGB = Math.floor(hw.freeMem / (1024*1024*1024));
-      if (freeGB > 2) setMemoryGB(2);
-      else setMemoryGB(Math.max(1, freeGB - 1));
+      setMemoryGB(1);
     }).catch(() => {});
   }, []);
 
