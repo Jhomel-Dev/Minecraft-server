@@ -104,7 +104,7 @@ const registerClientEvents = (socket) => {
     try {
       const server = await prisma.server.findUnique({ where: { id: payload.serverId } });
       if (!server || server.userId !== socket.user.id) return;
-      socket.to(`agent-${server.userId}`).to('agent-global').emit('SEND_COMMAND', payload.command);
+      socket.to(`agent-${server.userId}`).to('agent-global').emit('SEND_COMMAND', payload);
     } catch (e) {
       console.error('[Agent Gateway] Error in SEND_COMMAND:', e);
     }
