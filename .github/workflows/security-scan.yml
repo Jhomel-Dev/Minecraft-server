@@ -21,12 +21,12 @@ jobs:
 
       - name: Scan API Dependencies
         working-directory: ./Minecraft-Server-Manager-Api
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
       - name: Scan Web Dependencies
         working-directory: ./Minecraft-Server-Manager-Web
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
       - name: Scan LocalAgent Dependencies
         working-directory: ./Minecraft-Server-Manager-LocalAgent
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
