@@ -1,6 +1,6 @@
 describe("Módulo 8: Opciones y Destrucción", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `options_test_${uniqueSuffix}@neotokyo.com`;
+  const testEmail = `options_test_${uniqueSuffix}@craftcontrol.test`;
   const testUsername = `OptionsBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;

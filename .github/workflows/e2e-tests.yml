@@ -1,0 +1,81 @@
+name: E2E Cypress Tests
+
+on:
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  e2e:
+    name: Cypress Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: craftcontrol_test
+          POSTGRES_PASSWORD: craftcontrol_test
+          POSTGRES_DB: craftcontrol_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U craftcontrol_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java (For Minecraft Server Testing)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install All Dependencies
+        run: |
+          cd Minecraft-Server-Manager-Api && (npm ci || npm install) && cd ..
+          cd Minecraft-Server-Manager-Web && (npm ci || npm install) && cd ..
+          cd Minecraft-Server-Manager-LocalAgent && (npm ci || npm install) && cd ..
+
+      - name: Initialize Database (Prisma)
+        working-directory: ./Minecraft-Server-Manager-Api
+        run: |
+          npx prisma db push
+          npx prisma generate
+        env:
+          DATABASE_URL: 'postgres://craftcontrol_test:craftcontrol_test@localhost:5432/craftcontrol_test'
+
+      - name: Build CraftControl Web
+        working-directory: ./Minecraft-Server-Manager-Web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: 'http://localhost:4000'
+
+      - name: Run Cypress Tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ./Minecraft-Server-Manager-Web
+          start: npx concurrently "cd ../Minecraft-Server-Manager-Api && PORT=4000 node src/server.js" "PORT=3000 npm run start"
+          wait-on: 'http://localhost:3000, http://localhost:4000/api/health'
+          wait-on-timeout: 120
+          record: false
+        env:
+          CYPRESS_BASE_URL: 'http://localhost:3000'
+          DATABASE_URL: 'postgres://craftcontrol_test:craftcontrol_test@localhost:5432/craftcontrol_test'
+          JWT_SECRET: 'test_secret_key'
+
+      - name: Upload Cypress Artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots-and-videos
+          path: |
+            Minecraft-Server-Manager-Web/cypress/screenshots
+            Minecraft-Server-Manager-Web/cypress/videos
