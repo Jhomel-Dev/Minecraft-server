@@ -92,6 +92,12 @@ async fn poll_agent_status(app_handle: &AppHandle, client: &reqwest::Client) {
         return;
     };
 
+    if !res.status().is_success() {
+        let _ = app_handle.emit("agent-state-changed", r#"{"status":"offline"}"#);
+        spawn_detached_agent(app_handle);
+        return;
+    }
+
     let Ok(json) = res.text().await else {
         return;
     };

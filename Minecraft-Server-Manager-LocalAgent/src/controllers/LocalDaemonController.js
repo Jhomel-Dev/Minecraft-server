@@ -1,5 +1,6 @@
 import http from 'http';
 import EnvManager from '../config/EnvManager.js';
+import SmartBootService from '../services/SmartBootService.js';
 
 export default class LocalDaemonController {
   constructor(port = process.env.DAEMON_PORT || 45987) {
@@ -10,13 +11,15 @@ export default class LocalDaemonController {
     this.onShutdownCallback = null;
   }
 
-  start() {
+  async start() {
+    await SmartBootService.checkPortAndKillIfImposter(this.port);
+
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => this.handleRequest(req, res));
       
-      this.server.on('error', (err) => {
+      this.server.on('error', async (err) => {
         if (err.code === 'EADDRINUSE') {
-          console.error('[ERROR] Ya hay una instancia corriendo en el puerto', this.port);
+          console.error(`[ERROR] No se pudo liberar el puerto ${this.port}. Forzando salida.`);
           process.exit(1);
         }
         reject(err);
@@ -47,6 +50,14 @@ export default class LocalDaemonController {
     if (req.method === 'OPTIONS') {
       res.writeHead(200);
       return res.end();
+    }
+
+    if (req.url === '/identity' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        app: 'craftcontrol-agent',
+        identity: 'CraftControlAgent'
+      }));
     }
 
     if (req.url === '/status' && req.method === 'GET') {

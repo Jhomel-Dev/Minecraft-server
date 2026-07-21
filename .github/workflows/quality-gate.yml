@@ -1,4 +1,4 @@
-name: Quality Gate (Lint & Format)
+name: Quality Gate (Lint, Format & Tests)
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   lint:
-    name: Lint & Format Check
+    name: Lint, Format & Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -29,8 +29,9 @@ jobs:
           npm ci || npm install
           npm run lint --if-present
         
-      - name: Install & Lint LocalAgent
+      - name: Install, Lint & Test LocalAgent
         working-directory: ./Minecraft-Server-Manager-LocalAgent
         run: |
           npm ci || npm install
           npm run lint --if-present
+          npm run test --if-present
