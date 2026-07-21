@@ -61,9 +61,15 @@ export default class ServerPropertiesEditor {
     }
 
     getMemoryString(memory) {
-        if (!memory) return '2G';
-        if (memory.endsWith('G') || memory.endsWith('M')) return memory;
-        return `${memory}M`;
+        if (!memory || typeof memory !== 'string') return '2G';
+        
+        const cleanMem = memory.trim().toUpperCase();
+        if (/^\d+[MG]$/.test(cleanMem)) return cleanMem;
+        
+        const numOnly = parseInt(memory);
+        if (!isNaN(numOnly) && numOnly > 0) return `${numOnly}M`;
+        
+        return '2G';
     }
 
     writeUserJvmArgs(xms, xmx) {
