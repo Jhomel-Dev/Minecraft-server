@@ -38,6 +38,7 @@ describe("Módulo 7: Gestión de Jugadores", () => {
     cy.contains("¡Máquina Vinculada!", { timeout: 10000 }).should("be.visible");
     cy.contains("Crear Servidor").click();
 
+    cy.wait(500);
     cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Players Server");
 
     cy.contains("Vanilla").click();

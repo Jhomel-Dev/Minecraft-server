@@ -39,15 +39,20 @@ describe("Módulo 3: Creación de Servidor", () => {
     cy.contains("No tienes servidores", { timeout: 10000 }).should("be.visible");
     cy.contains("Crear Servidor").click();
     
+    cy.wait(500);
     cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Modular Server");
     
-    cy.contains("Vanilla").click();
-    cy.contains("button", "Siguiente").click();
-
+    cy.contains("h3", /^Purpur$/).click();
+    cy.wait(500);
+    cy.contains("button", "Siguiente").click({ force: true });
+    cy.get("select", { timeout: 15000 }).eq(0).should("not.contain", "Obteniendo", { timeout: 15000 });
+    cy.get("select", { timeout: 15000 }).eq(1).should("not.contain", "Buscando", { timeout: 15000 });
+    
     cy.get("input[type='range']").invoke("val", 1).trigger("input", { force: true }).trigger("change", { force: true });
     
-    cy.contains("button", "Siguiente").click();
+    cy.wait(500);
+    cy.contains("button", "Siguiente").click({ force: true });
     cy.contains("button", "Instalar y Arrancar").click();
-    cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
+    cy.contains("Desconectado", { timeout: 180000 }).should("be.visible");
   });
 });

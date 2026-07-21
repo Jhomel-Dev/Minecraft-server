@@ -1,7 +1,7 @@
-describe("Módulo 5: Consola Interactiva", () => {
+describe("Módulo 4: Tablero General (Overview)", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `console_test_${uniqueSuffix}@craftcontrol.test`;
-  const testUsername = `ConsoleBot_${uniqueSuffix}`;
+  const testEmail = `overview_test_${uniqueSuffix}@craftcontrol.test`;
+  const testUsername = `OverviewBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;
 
@@ -18,7 +18,7 @@ describe("Módulo 5: Consola Interactiva", () => {
     cy.task("stopAgent");
   });
 
-  it("Debe interactuar con la consola de comandos bidireccional", () => {
+  it("Debe iniciar y detener el servidor correctamente desde la vista general", () => {
     cy.visit("/register");
     
     cy.get("input[type='text']").type(testUsername);
@@ -36,9 +36,11 @@ describe("Módulo 5: Consola Interactiva", () => {
     });
 
     cy.contains("¡Máquina Vinculada!", { timeout: 10000 }).should("be.visible");
+    cy.contains("No tienes servidores", { timeout: 10000 }).should("be.visible");
     cy.contains("Crear Servidor").click();
     
-    cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Console Server");
+    cy.wait(500);
+    cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Overview Server");
     
     cy.contains("Vanilla").click();
     cy.contains("button", "Siguiente").click();
@@ -49,15 +51,9 @@ describe("Módulo 5: Consola Interactiva", () => {
     cy.contains("button", "Instalar y Arrancar").click();
     cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
     cy.contains("button", "Iniciar").click();
-    cy.contains("Consola").click();
-    
-    cy.get(".whitespace-pre-wrap", { timeout: 45000 }).should("contain.text", "For help, type");
-    cy.get("input[placeholder='Ejecuta un comando (ej. /say Hola a todos)']").type("say Hola Cypress");
-    cy.get("button[type='submit']").click();
-    cy.get(".whitespace-pre-wrap", { timeout: 15000 }).should("contain.text", "Hola Cypress");
-    cy.get("button[title='Limpiar consola']").click();
-    
+    cy.contains("En Línea", { timeout: 45000 }).should("be.visible");
+    cy.contains("Apagado (Sin IP)").should("not.exist");
     cy.contains("button", "Detener").click();
-    cy.contains("Apagado", { timeout: 15000 }).should("be.visible");
+    cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
   });
 });
