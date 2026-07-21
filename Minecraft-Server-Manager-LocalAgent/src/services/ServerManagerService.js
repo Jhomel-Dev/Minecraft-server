@@ -59,6 +59,12 @@ export default class ServerManagerService {
 
   async startServer(serverConfig) {
     const serverId = serverConfig.id;
+    
+    if (!/^[a-zA-Z0-9-]+$/.test(serverId)) {
+      this.connectionService.sendLog({ serverId, logLine: '[System Error] ID de servidor inválido o malicioso.' });
+      return;
+    }
+
     if (this.activeServers.has(serverId)) {
       this.connectionService.sendLog({ serverId, logLine: '[System] Servidor ya esta en ejecucion.' });
       return;
@@ -91,7 +97,9 @@ export default class ServerManagerService {
   }
 
   async stopServer(requestedServerId) {
-    if (!requestedServerId) return;
+    if (!requestedServerId || !/^[a-zA-Z0-9-]+$/.test(requestedServerId)) {
+      return;
+    }
 
     const active = this.activeServers.get(requestedServerId);
     if (!active) return;

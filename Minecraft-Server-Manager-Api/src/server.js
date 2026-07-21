@@ -12,8 +12,8 @@ const httpServer = createServer(app);
 
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 300, 
-  message: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo en un minuto'
+  max: process.env.NODE_ENV === 'test' ? 10000 : 300, 
+  message: { error: 'Demasiadas peticiones. Has superado el límite de 300 por minuto. Por favor, espera.' }
 });
 
 app.use('/api/', apiLimiter);

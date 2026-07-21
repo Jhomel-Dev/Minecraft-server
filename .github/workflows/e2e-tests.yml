@@ -62,7 +62,7 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           working-directory: ./Minecraft-Server-Manager-Web
-          start: npx concurrently "cd ../Minecraft-Server-Manager-Api && PORT=4000 node src/server.js" "PORT=3000 npm run start"
+          start: npx concurrently "cd ../Minecraft-Server-Manager-Api && NODE_ENV=test PORT=4000 node src/server.js" "PORT=3000 npm run start"
           wait-on: 'http://localhost:3000, http://localhost:4000/api/health'
           wait-on-timeout: 120
           record: false
