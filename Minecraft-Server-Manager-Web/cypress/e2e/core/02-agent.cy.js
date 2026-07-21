@@ -1,6 +1,6 @@
 describe("Módulo 2: Agente Local", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `agent_test_${uniqueSuffix}@neotokyo.com`;
+  const testEmail = `agent_test_${uniqueSuffix}@craftcontrol.test`;
   const testUsername = `AgentBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;

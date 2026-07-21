@@ -1,6 +1,6 @@
 describe("Módulo 4: Tablero General (Overview)", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `overview_test_${uniqueSuffix}@neotokyo.com`;
+  const testEmail = `overview_test_${uniqueSuffix}@craftcontrol.test`;
   const testUsername = `OverviewBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;

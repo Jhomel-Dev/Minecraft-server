@@ -1,0 +1,32 @@
+name: Security Scan
+
+on:
+  pull_request:
+    branches: [ develop, main ]
+  schedule:
+    - cron: '0 2 * * 1' # Se ejecuta automáticamente todos los lunes a las 2 AM
+
+jobs:
+  vulnerability-scan:
+    name: NPM Audit & Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Scan API Dependencies
+        working-directory: ./Minecraft-Server-Manager-Api
+        run: npm audit --audit-level=high
+
+      - name: Scan Web Dependencies
+        working-directory: ./Minecraft-Server-Manager-Web
+        run: npm audit --audit-level=high
+
+      - name: Scan LocalAgent Dependencies
+        working-directory: ./Minecraft-Server-Manager-LocalAgent
+        run: npm audit --audit-level=high

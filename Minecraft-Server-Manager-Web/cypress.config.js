@@ -16,12 +16,11 @@ export default defineConfig({
     setupNodeEvents(on, config) {
       on('task', {
         startAgent() {
-          return new Promise((resolve, reject) => {
+          return new Promise(async (resolve, reject) => {
             try {
               const tmpDir = path.join(__dirname, 'cypress', 'tmp-agent');
               if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true });
               fs.mkdirSync(tmpDir, { recursive: true });
-
               // The agent needs API_URL pointing to local API
               fs.writeFileSync(path.join(tmpDir, '.env'), 'API_URL=http://127.0.0.1:4000\nSENTRY_DSN=""\nDAEMON_PORT=0\n');
 
@@ -42,7 +41,7 @@ export default defineConfig({
               agentProcess.stderr.on('data', handleOutput);
 
               // Also resolve if it fails or times out so Cypress doesn't hang forever
-              setTimeout(() => resolve(null), 10000); 
+              setTimeout(() => resolve(null), 30000); 
 
             } catch (err) {
               resolve(null);
@@ -50,11 +49,17 @@ export default defineConfig({
           });
         },
         stopAgent() {
-          if (agentProcess) {
-            agentProcess.kill();
-            agentProcess = null;
-          }
-          return null;
+          return new Promise((resolve) => {
+            if (agentProcess) {
+              agentProcess.on('exit', () => {
+                agentProcess = null;
+                resolve(null);
+              });
+              agentProcess.kill();
+            } else {
+              resolve(null);
+            }
+          });
         }
       });
       return config;

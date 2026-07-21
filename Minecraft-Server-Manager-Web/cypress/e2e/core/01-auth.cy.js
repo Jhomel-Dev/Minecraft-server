@@ -1,6 +1,6 @@
 describe("Módulo 1: Autenticación", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `auth_test_${uniqueSuffix}@neotokyo.com`;
+  const testEmail = `auth_test_${uniqueSuffix}@craftcontrol.test`;
   const testUsername = `AuthBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
 

@@ -1,0 +1,36 @@
+name: Quality Gate (Lint & Format)
+
+on:
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install & Lint API
+        working-directory: ./Minecraft-Server-Manager-Api
+        run: |
+          npm ci || npm install
+          npm run lint --if-present
+
+      - name: Install & Lint Web
+        working-directory: ./Minecraft-Server-Manager-Web
+        run: |
+          npm ci || npm install
+          npm run lint --if-present
+        
+      - name: Install & Lint LocalAgent
+        working-directory: ./Minecraft-Server-Manager-LocalAgent
+        run: |
+          npm ci || npm install
+          npm run lint --if-present
