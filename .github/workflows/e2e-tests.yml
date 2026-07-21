@@ -46,7 +46,9 @@ jobs:
 
       - name: Initialize Database (Prisma)
         working-directory: ./Minecraft-Server-Manager-Api
-        run: npx prisma db push
+        run: |
+          npx prisma db push
+          npx prisma generate
         env:
           DATABASE_URL: 'postgres://craftcontrol_test:craftcontrol_test@localhost:5432/craftcontrol_test'
 
