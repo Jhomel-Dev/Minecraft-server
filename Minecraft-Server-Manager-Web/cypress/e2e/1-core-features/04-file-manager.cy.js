@@ -1,7 +1,7 @@
-describe("Módulo 4: Tablero General (Overview)", () => {
+describe("Módulo 6: Gestor de Archivos", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `overview_test_${uniqueSuffix}@craftcontrol.test`;
-  const testUsername = `OverviewBot_${uniqueSuffix}`;
+  const testEmail = `files_test_${uniqueSuffix}@craftcontrol.test`;
+  const testUsername = `FilesBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;
 
@@ -18,7 +18,7 @@ describe("Módulo 4: Tablero General (Overview)", () => {
     cy.task("stopAgent");
   });
 
-  it("Debe iniciar y detener el servidor correctamente desde la vista general", () => {
+  it("Debe interactuar con el gestor de archivos", () => {
     cy.visit("/register");
     
     cy.get("input[type='text']").type(testUsername);
@@ -36,10 +36,10 @@ describe("Módulo 4: Tablero General (Overview)", () => {
     });
 
     cy.contains("¡Máquina Vinculada!", { timeout: 10000 }).should("be.visible");
-    cy.contains("No tienes servidores", { timeout: 10000 }).should("be.visible");
     cy.contains("Crear Servidor").click();
     
-    cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Overview Server");
+    cy.wait(500);
+    cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Files Server");
     
     cy.contains("Vanilla").click();
     cy.contains("button", "Siguiente").click();
@@ -51,8 +51,12 @@ describe("Módulo 4: Tablero General (Overview)", () => {
     cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
     cy.contains("button", "Iniciar").click();
     cy.contains("En Línea", { timeout: 45000 }).should("be.visible");
-    cy.contains("Apagado (Sin IP)").should("not.exist");
     cy.contains("button", "Detener").click();
     cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
+    cy.contains("Archivos").click();
+    cy.contains("server.properties", { timeout: 10000 }).should("be.visible");
+    cy.contains("tr", "server.properties").find("button[title='Editar']").click();
+    cy.contains("Leyendo archivo...", { timeout: 15000 }).should("not.exist");
+    cy.contains("button", "Guardar", { timeout: 15000 }).should("be.visible");
   });
 });

@@ -1,14 +1,13 @@
-describe("Módulo 7: Gestión de Jugadores", () => {
+describe("Módulo 8: Opciones y Destrucción", () => {
   const uniqueSuffix = Date.now();
-  const testEmail = `players_test_${uniqueSuffix}@craftcontrol.test`;
-  const testUsername = `PlayersBot_${uniqueSuffix}`;
+  const testEmail = `options_test_${uniqueSuffix}@craftcontrol.test`;
+  const testUsername = `OptionsBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;
 
   before(() => {
     cy.task("startAgent").then((pin) => {
       agentPin = pin;
-      
       expect(agentPin).to.be.a("string");
       expect(agentPin).to.have.length(6);
     });
@@ -18,7 +17,7 @@ describe("Módulo 7: Gestión de Jugadores", () => {
     cy.task("stopAgent");
   });
 
-  it("Debe navegar e interactuar con la gestión de jugadores", () => {
+  it("Debe navegar por opciones, modificarlas, guardar y destruir el servidor", () => {
     cy.visit("/register");
 
     cy.get("input[type='text']").type(testUsername);
@@ -38,7 +37,8 @@ describe("Módulo 7: Gestión de Jugadores", () => {
     cy.contains("¡Máquina Vinculada!", { timeout: 10000 }).should("be.visible");
     cy.contains("Crear Servidor").click();
 
-    cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Players Server");
+    cy.wait(500);
+    cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Options Server");
 
     cy.contains("Vanilla").click();
     cy.contains("button", "Siguiente").click();
@@ -48,11 +48,12 @@ describe("Módulo 7: Gestión de Jugadores", () => {
     cy.contains("button", "Siguiente").click();
     cy.contains("button", "Instalar y Arrancar").click();
     cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
-    cy.contains("Jugadores").click();
+    cy.contains("Opciones").click();
+    cy.contains("button", "Eliminar Servidor...").click();
+    cy.contains("button", "Sí, Eliminar").click();
     
-    // In the new UI, there are no tabs for Ops/Bans. We just check if the empty state is displayed
-    // and if the refresh button works.
-    cy.contains("No hay jugadores registrados", { timeout: 10000 }).should("be.visible");
-    cy.contains("Actualizar").should("be.visible").click();
+    cy.url({ timeout: 10000 }).should("match", /\/servers$/);
+    
+    cy.contains("No tienes servidores", { timeout: 10000 }).should("be.visible");
   });
 });
