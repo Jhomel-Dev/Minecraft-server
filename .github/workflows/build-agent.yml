@@ -1,9 +1,10 @@
 name: CD Pipeline - Empaquetado del Agente
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows: ["Semantic Release"]
+    types:
+      - completed
 
 permissions:
   contents: write
@@ -11,6 +12,7 @@ permissions:
 jobs:
   build-gui:
     name: Construir GUI (${{ matrix.platform }})
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         platform: [ubuntu-22.04, windows-latest]
@@ -66,6 +68,12 @@ jobs:
           cd Minecraft-Server-Manager-AgentGUI
           npm install
 
+      - name: Obtener Tag de la última versión
+        shell: bash
+        run: |
+          LATEST_TAG=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)
+          echo "TAG_NAME=$LATEST_TAG" >> $GITHUB_ENV
+
       - name: Compilar Tauri App y Subir a GitHub Releases
         uses: tauri-apps/tauri-action@v0
         env:
@@ -74,8 +82,8 @@ jobs:
           STRIP: "echo"
         with:
           projectPath: "Minecraft-Server-Manager-AgentGUI"
-          tagName: ${{ github.ref_name }}
-          releaseName: "CraftControl Agent Release ${{ github.ref_name }}"
+          tagName: ${{ env.TAG_NAME }}
+          releaseName: "CraftControl Agent Release ${{ env.TAG_NAME }}"
           releaseBody: "Instaladores automáticos del Agente Gráfico"
           releaseDraft: false
           prerelease: false
