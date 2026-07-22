@@ -38,8 +38,8 @@ export function AgentLinkingStage({ onLinked }) {
   const [isClaiming, setIsClaiming] = useState(false);
   const [success, setSuccess] = useState(false);
   const [downloadLinks, setDownloadLinks] = useState({
-    win: "https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.2.1/CraftControl-Agent_2.2.1_x64-setup.exe",
-    linux: "https://github.com/Jhomel-Dev/Minecraft-server/releases/download/v2.2.1/CraftControl-Agent_2.2.1_amd64.AppImage"
+    win: "https://github.com/Jhomel-Dev/Minecraft-server/releases/latest",
+    linux: "https://github.com/Jhomel-Dev/Minecraft-server/releases/latest"
   });
   const inputRefs = useRef([]);
   const { toast } = useToast();
