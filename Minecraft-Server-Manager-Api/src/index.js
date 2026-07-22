@@ -39,8 +39,8 @@ app.use(morgan('dev'));
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'test' ? 1000 : 5,
-  message: { error: 'Demasiados intentos. Por favor, espera 15 minutos antes de volver a intentar.' },
+  max: process.env.NODE_ENV === 'production' ? 5 : 1000,
+  message: { error: 'Too many attempts. Please wait 15 minutes before trying again.' },
   standardHeaders: true,
   legacyHeaders: false,
 });

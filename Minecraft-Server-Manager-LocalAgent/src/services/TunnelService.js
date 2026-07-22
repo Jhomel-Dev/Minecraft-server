@@ -16,7 +16,7 @@ export default class TunnelService extends EventEmitter {
 
     async startTunnel(port, secret = null) {
         if (this.isRunning()) {
-            this.emit('log', '[Tunnel] El tunel ya esta en ejecucion, ignorando orden.');
+            this.emit('log', '[Tunnel] Tunnel is already running, ignoring command.');
             return;
         }
 
@@ -26,14 +26,14 @@ export default class TunnelService extends EventEmitter {
             await this.ensureBoreIsInstalled(borePath);
             this.launchBoreProcess(borePath, secret, port);
         } catch (error) {
-            this.emit('log', `[Tunnel] Excepcion al lanzar el tunel: ${error.message}`);
+            this.emit('log', `[Tunnel] Exception launching tunnel: ${error.message}`);
         }
     }
 
     async ensureBoreIsInstalled(borePath) {
         if (fs.existsSync(borePath)) return;
 
-        this.emit('log', `[Tunnel] Instalando motor de red sin friccion (bore)...`);
+        this.emit('log', `[Tunnel] Installing frictionless network engine (bore)...`);
         
         const archiveExt = isWindows ? '.zip' : '.tar.gz';
         const archivePath = path.join(this.managerDir, `bore${archiveExt}`);
@@ -70,7 +70,7 @@ export default class TunnelService extends EventEmitter {
     }
 
     launchBoreProcess(borePath, secret, port) {
-        this.emit('log', `[Tunnel] Iniciando tunel TCP dinamico en puerto ${port}...`);
+        this.emit('log', `[Tunnel] Starting dynamic TCP tunnel on port ${port}...`);
         const args = this.buildBoreArgs(secret, port);
         
         this.process = spawn(borePath, args);
@@ -82,20 +82,20 @@ export default class TunnelService extends EventEmitter {
         if (!secret) return args;
         
         args.push('--secret', secret);
-        this.emit('log', `[Tunnel] Usando token secreto de autenticacion.`);
+        this.emit('log', `[Tunnel] Using secret authentication token.`);
         return args;
     }
 
     attachProcessListeners() {
         this.process.on('error', (err) => {
-            this.emit('log', `[Tunnel] Error: fallo al iniciar. (Detalle: ${err.message})`);
+            this.emit('log', `[Tunnel] Error: failed to start. (Detail: ${err.message})`);
         });
 
         this.process.stdout.on('data', (data) => this.handleBoreOutput(data));
         this.process.stderr.on('data', (data) => this.handleBoreOutput(data));
 
         this.process.on('close', (code) => {
-            this.emit('log', `[Tunnel] Proceso detenido con codigo ${code}`);
+            this.emit('log', `[Tunnel] Process stopped with code ${code}`);
             this.process = null;
         });
     }
@@ -106,7 +106,7 @@ export default class TunnelService extends EventEmitter {
         if (!match) return;
 
         const address = match[1];
-        this.emit('log', `[Tunnel] Tunel establecido exitosamente en ${address}!`);
+        this.emit('log', `[Tunnel] Tunnel successfully established at ${address}!`);
         this.emit('address_assigned', address);
     }
 

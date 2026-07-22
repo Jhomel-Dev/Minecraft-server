@@ -104,7 +104,7 @@ export default class ServerService {
 
     
     if (server.status !== 'OFFLINE') {
-      throw new Error('Debes detener el servidor antes de eliminarlo');
+      throw new Error('You must stop the server before deleting it');
     }
 
     
