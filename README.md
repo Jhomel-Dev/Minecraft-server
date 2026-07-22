@@ -8,6 +8,7 @@
     <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
     <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
     <img src="https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white" alt="Socket.io" />
+    <img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
   </div>
 </div>
 
@@ -25,7 +26,8 @@ CraftControl is a modern, modular Minecraft server management system. It abstrac
 - **Advanced File Management**: Bulk upload plugins and mods, manage server worlds, and edit configuration files with built-in syntax highlighting.
 - **Backup System**: One-click full server backups and seamless restoration.
 - **Performance & Player Management**: Live CPU/RAM metrics, interactive whitelist configuration, and comprehensive player administration (Ban, Kick, OP).
-
+- **Internationalization (i18n)**: Fully translated Web Dashboard supporting both English and Spanish out-of-the-box.
+- **Interactive API Docs (Swagger)**: Built-in OpenAPI documentation available at `/api-docs` on the central API.
 ## Architecture
 
 The project is structured into three highly decoupled modules to ensure scalability and ease of deployment:
@@ -33,6 +35,16 @@ The project is structured into three highly decoupled modules to ensure scalabil
 1. **`Minecraft-Server-Manager-Web`**: The frontend control panel, built with React and Next.js.
 2. **`Minecraft-Server-Manager-Api`**: The centralized backend (Express + Prisma SQLite). It handles JWT authentication and orchestrates data between the dashboard and local agents.
 3. **`Minecraft-Server-Manager-LocalAgent`**: A lightweight Node.js daemon running on the host machine. It handles heavy lifting such as downloading JARs, spawning processes, bridging WebSocket logs, and managing local I/O.
+
+## Documentation
+
+For a deeper dive into the technical details and operations, please refer to our comprehensive documentation:
+
+- **[System Architecture & Data Flow](docs/ARCHITECTURE.md)** (includes Mermaid diagrams)
+- **[WebSockets API Reference](docs/api/WEBSOCKETS.md)**
+- **[Local Agent Pairing Guide](docs/guides/AGENT_SETUP.md)**
+- **[Security Measures (Zero-Trust)](docs/guides/SECURITY.md)**
+- **[Mods and Plugins Management](docs/guides/MODS_PLUGINS.md)**
 
 ## Getting Started
 
@@ -78,7 +90,10 @@ Navigate to `http://localhost:3000` (or `3001` depending on your Next.js setup) 
 
 ## Contributing
 
-Contributions, issues, and feature requests are always welcome. Please refer to the [Issues page](https://github.com/Jhomel-Dev/Minecraft-server/issues) for planned features and bug tracking.
+Contributions, issues, and feature requests are always welcome! 
+Please carefully read our **[Contributing Guidelines](CONTRIBUTING.md)** before opening a Pull Request to understand our Git Flow, Clean Code rules, and CI/CD checks.
+
+You can also refer to the [Issues page](https://github.com/Jhomel-Dev/Minecraft-server/issues) for planned features and bug tracking.
 
 ## License
 
