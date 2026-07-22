@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { Pickaxe } from "lucide-react";
 
 export function LoginForm() {
+  const t = useTranslations("LoginForm");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,7 +31,7 @@ export function LoginForm() {
       }
       router.push("/servers");
     } catch (err) {
-      setError("Credenciales inválidas. Verifica tu correo y contraseña.");
+      setError(t("invalidCredentials"));
     } finally {
       setLoading(false);
     }
@@ -48,11 +50,11 @@ export function LoginForm() {
         }
         router.push("/servers");
       } catch (err) {
-        setError("Error autenticando con Google. Inténtalo más tarde.");
+        setError(t("googleAuthError"));
         setLoading(false);
       }
     },
-    onError: () => setError("Error conectando con Google")
+    onError: () => setError(t("googleConnectError"))
   });
 
   return (
@@ -63,8 +65,8 @@ export function LoginForm() {
           <div className="p-3 bg-background rounded-blocky border-2 border-surface-border mb-2">
             <Pickaxe className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-black text-foreground">Bienvenido de vuelta</h1>
-          <p className="text-foreground/70 text-sm">Inicia sesión para controlar tus servidores</p>
+          <h1 className="text-3xl font-black text-foreground">{t("welcomeBack")}</h1>
+          <p className="text-foreground/70 text-sm">{t("subtitle")}</p>
         </div>
 
         {error && (
@@ -75,27 +77,29 @@ export function LoginForm() {
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <Input 
+            data-cy="login-email-input"
             type="email" 
-            placeholder="Correo electrónico" 
+            placeholder={t("emailPlaceholder")} 
             value={email} onChange={e => setEmail(e.target.value)}
             required
             disabled={loading}
           />
           <Input 
+            data-cy="login-password-input"
             type="password" 
-            placeholder="Contraseña" 
+            placeholder={t("passwordPlaceholder")} 
             value={password} onChange={e => setPassword(e.target.value)}
             required
             disabled={loading}
           />
-          <Button type="submit" variant="primary" className="mt-2 h-12 text-lg" disabled={loading}>
-            {loading ? "Iniciando..." : "Entrar a CraftControl"}
+          <Button data-cy="login-submit-button" type="submit" variant="primary" className="mt-2 h-12 text-lg" disabled={loading}>
+            {loading ? t("loggingIn") : t("loginButton")}
           </Button>
         </form>
 
         <div className="flex items-center gap-4">
           <div className="h-0.5 bg-surface-border flex-1" />
-          <span className="text-surface-border font-bold text-sm">O ENTRA CON</span>
+          <span className="text-surface-border font-bold text-sm">{t("orLoginWith")}</span>
           <div className="h-0.5 bg-surface-border flex-1" />
         </div>
 
@@ -114,14 +118,14 @@ export function LoginForm() {
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               <path d="M1 1h22v22H1z" fill="none"/>
             </svg>
-            {loading ? "Autenticando..." : "Entrar con Google"}
+            {loading ? t("authenticating") : t("googleLoginButton")}
           </Button>
         </div>
 
         <p className="text-center text-sm text-foreground/70 mt-2">
-          ¿No tienes una cuenta aún?{" "}
+          {t("noAccountText")}{" "}
           <Link href="/register" className="text-primary font-bold hover:underline">
-            Regístrate aquí
+            {t("registerLink")}
           </Link>
         </p>
       </div>

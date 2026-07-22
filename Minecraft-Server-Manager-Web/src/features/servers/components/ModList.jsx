@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/shared/ui/Button";
 import { Download, Trash2, Loader2, PackageOpen, Search, Check, AlertTriangle, Upload } from "lucide-react";
 import { fsOperation, getMyServers } from "@/features/servers/services/serverApi";
@@ -9,6 +10,7 @@ import { useToast } from "@/shared/ui/ToastProvider";
 const CHUNK_SIZE = 1024 * 1024 * 5; 
 
 export function ModList({ serverId, mode = "mods" }) {
+  const t = useTranslations("ModList");
   const [mods, setMods] = useState([]);
   const [loading, setLoading] = useState(true);
   const defaultFolder = mode === "plugins" ? "/plugins" : "/mods";
@@ -118,7 +120,7 @@ export function ModList({ serverId, mode = "mods" }) {
     const validFiles = files.filter(f => f.name.endsWith('.jar') || f.name.endsWith('.zip'));
     
     if (validFiles.length === 0) {
-      toast("Por favor, sube archivos válidos con extensión .jar o .zip", "warning");
+      toast(t("invalidFileExtension"), "warning");
       return;
     }
 
@@ -129,7 +131,7 @@ export function ModList({ serverId, mode = "mods" }) {
     try {
       for (let f = 0; f < validFiles.length; f++) {
         const file = validFiles[f];
-        setUploadingText(`Subiendo ${f + 1} de ${validFiles.length}...`);
+        setUploadingText(t("uploadingProgress", { current: f + 1, total: validFiles.length }));
         
         const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
         const filePath = isModpack ? `/${file.name}` : `${targetFolder}/${file.name}`;
@@ -161,7 +163,7 @@ export function ModList({ serverId, mode = "mods" }) {
         }
 
         if (isModpack) {
-          setUploadingText("Descomprimiendo...");
+          setUploadingText(t("unzipping"));
           await fsOperation(serverId, {
             action: "unzip",
             filePath: filePath,
@@ -179,9 +181,9 @@ export function ModList({ serverId, mode = "mods" }) {
 
       if (successCount > 0) {
         if (isModpack) {
-          toast("Modpack(s) instalado(s) correctamente.", "success");
+          toast(t("modpackInstalledSuccess"), "success");
         } else {
-          toast(`${successCount} archivo(s) subido(s) correctamente.`, "success");
+          toast(t("filesUploadedSuccess", { count: successCount }), "success");
         }
         if (serverInfo && (serverInfo.status === "ONLINE" || serverInfo.status === "STARTING")) {
           setNeedsRestart(true);
@@ -190,7 +192,7 @@ export function ModList({ serverId, mode = "mods" }) {
       }
     } catch (err) {
       console.error("Error subiendo archivos:", err);
-      toast(`Fallo al subir: ${err.message}`, "error");
+      toast(t("uploadFailed") + err.message, "error");
     } finally {
       setUploading(false);
       setUploadingText("");
@@ -346,38 +348,40 @@ export function ModList({ serverId, mode = "mods" }) {
           onDragOver={handleDragOver}
         >
           <Upload className="w-16 h-16 text-primary mb-4 animate-bounce" />
-          <h2 className="text-3xl font-black text-primary mb-2">Suelta el archivo aquí</h2>
-          <p className="text-foreground/70 font-bold">Sube tus .jar o .zip directamente</p>
+          <h2 className="text-3xl font-black text-primary mb-2">{t("dropFileHere")}</h2>
+          <p className="text-foreground/70 font-bold">{t("uploadJarZipDirectly")}</p>
         </div>
       )}
 
       {needsRestart && (
         <div className="bg-amber-500/10 border-2 border-amber-500/50 p-4 rounded-blocky flex items-center gap-3 text-amber-500 animate-in fade-in slide-in-from-top-4">
           <AlertTriangle className="w-6 h-6 flex-shrink-0" />
-          <p className="font-bold">Hay cambios pendientes. Reinicia el servidor para que los mods se apliquen correctamente.</p>
+          <p className="font-bold">{t("pendingChangesRestart")}</p>
         </div>
       )}
 
       <div className="flex gap-4 border-b-2 border-surface-border pb-4 items-center justify-between">
         <div className="flex gap-4">
           <button 
+            data-cy="modlist-installed-tab"
             onClick={() => setActiveTab("installed")}
             className={`font-bold px-4 py-2 rounded-blocky transition-colors ${activeTab === "installed" ? "bg-primary text-white" : "hover:bg-surface"}`}
           >
-            Instalados ({mods.length})
+            {t("installedTab", { count: mods.length })}
           </button>
           <button 
+            data-cy="modlist-store-tab"
             onClick={() => setActiveTab("store")}
             className={`font-bold px-4 py-2 rounded-blocky transition-colors flex items-center gap-2 ${activeTab === "store" ? "bg-primary text-white" : "hover:bg-surface"}`}
           >
-            Explorar Store
+            {t("exploreStoreTab")}
           </button>
           {mode === "mods" && (
             <button 
               onClick={() => setActiveTab("modpacks")}
               className={`font-bold px-4 py-2 rounded-blocky transition-colors flex items-center gap-2 ${activeTab === "modpacks" ? "bg-primary text-white" : "hover:bg-surface"}`}
             >
-              <PackageOpen className="w-5 h-5" /> Modpacks
+              <PackageOpen className="w-5 h-5" /> {t("modpacksTab")}
             </button>
           )}
         </div>
@@ -399,9 +403,9 @@ export function ModList({ serverId, mode = "mods" }) {
             onClick={() => fileInputRef.current?.click()}
           >
             {uploading ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {uploadingText || "Subiendo..."}</>
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {uploadingText || t("uploading")}</>
             ) : (
-              <><Upload className="w-4 h-4 mr-2" /> Subir {activeTab === "modpacks" ? "Modpack (.zip)" : (mode === "plugins" ? "Plugin(s)" : "Mod(s)")} {activeTab !== "modpacks" && "(.jar)"}</>
+              <><Upload className="w-4 h-4 mr-2" /> {activeTab === "modpacks" ? t("uploadModpackZip") : (mode === "plugins" ? t("uploadPluginsJar") : t("uploadModsJar"))}</>
             )}
           </Button>
         </div>
@@ -416,8 +420,8 @@ export function ModList({ serverId, mode = "mods" }) {
           ) : mods.length === 0 ? (
             <div className="text-center p-12 bg-surface border-2 border-surface-border rounded-blocky border-dashed">
               <PackageOpen className="w-12 h-12 mx-auto text-foreground/30 mb-4" />
-              <h3 className="font-bold text-xl text-foreground/70">No hay {mode === "plugins" ? "plugins" : "mods"} instalados</h3>
-              <p className="text-foreground/50 mt-2">Ve a la Store para descargar o sube tus propios archivos .jar</p>
+              <h3 data-cy="modlist-empty-installed" className="font-bold text-xl text-foreground/70">{mode === "plugins" ? t("noInstalledPluginsTitle") : t("noInstalledModsTitle")}</h3>
+              <p className="text-foreground/50 mt-2">{t("noInstalledDesc")}</p>
             </div>
           ) : (
             mods.map((mod) => {
@@ -428,18 +432,18 @@ export function ModList({ serverId, mode = "mods" }) {
                 return (
                   <div key={mod.name} className="bg-danger/10 border-2 border-danger p-4 rounded-blocky flex items-center justify-between shadow-sm animate-in fade-in">
                     <div>
-                      <p className="font-bold text-danger text-lg">¿Eliminar {meta?.title || mod.name}?</p>
-                      <p className="text-sm text-danger/80 font-semibold">Esta acción no se puede deshacer.</p>
+                      <p data-cy="modlist-delete-confirm-msg" className="font-bold text-danger text-lg">{t("deleteConfirmTitle", { name: meta?.title || mod.name })}</p>
+                      <p className="text-sm text-danger/80 font-semibold">{t("cannotBeUndone")}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" className="border-danger/20 hover:bg-danger/10 bg-transparent text-danger" onClick={() => setDeletingMod(null)}>
-                        Cancelar
+                        {t("cancel")}
                       </Button>
-                      <Button className="bg-danger hover:bg-danger/80 text-white" onClick={() => {
+                      <Button data-cy="modlist-delete-confirm-btn" className="bg-danger hover:bg-danger/80 text-white" onClick={() => {
                         setDeletingMod(null);
                         handleDelete(mod.name);
                       }}>
-                        Sí, eliminar
+                        {t("confirmDelete")}
                       </Button>
                     </div>
                   </div>
@@ -457,7 +461,7 @@ export function ModList({ serverId, mode = "mods" }) {
                       </div>
                     )}
                     <div>
-                      <h3 className="font-bold text-lg text-foreground truncate max-w-[300px] md:max-w-[500px]" title={mod.name}>
+                      <h3 data-cy={`modlist-item-${(meta?.title || mod.name).replace(/\s+/g, '-').toLowerCase()}`} className="font-bold text-lg text-foreground truncate max-w-[300px] md:max-w-[500px]" title={mod.name}>
                         {meta?.title || mod.name}
                       </h3>
                       <p className="text-sm text-foreground/70 font-mono">
@@ -466,7 +470,7 @@ export function ModList({ serverId, mode = "mods" }) {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" className="p-3 text-red-500 hover:bg-red-500 hover:text-white" onClick={() => setDeletingMod(mod.name)}>
+                    <Button data-cy="modlist-delete-btn" variant="outline" className="p-3 text-red-500 hover:bg-red-500 hover:text-white" onClick={() => setDeletingMod(mod.name)}>
                       <Trash2 className="w-5 h-5" />
                     </Button>
                   </div>
@@ -481,18 +485,19 @@ export function ModList({ serverId, mode = "mods" }) {
         <div className="flex flex-col gap-4 animate-in fade-in">
           <form onSubmit={handleSearch} className="flex gap-2">
             <Input 
-              placeholder="Buscar mods o plugins..." 
+              data-cy="modlist-search-input"
+              placeholder={t("searchPlaceholder")} 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1"
             />
-            <Button type="submit" disabled={searching || !serverInfo}>
+            <Button data-cy="modlist-search-btn" type="submit" disabled={searching || !serverInfo}>
               {searching ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
             </Button>
           </form>
 
           {!serverInfo && (
-            <p className="text-yellow-500 font-bold text-sm">Cargando compatibilidad del servidor...</p>
+            <p className="text-yellow-500 font-bold text-sm">{t("loadingServerCompatibility")}</p>
           )}
 
           <div className="flex flex-col gap-4 mt-4">
@@ -506,28 +511,29 @@ export function ModList({ serverId, mode = "mods" }) {
                   </div>
                 )}
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg">{project.title}</h3>
+                  <h3 data-cy={`store-item-${project.title.replace(/\s+/g, '-').toLowerCase()}`} className="font-bold text-lg">{project.title}</h3>
                   <p className="text-sm text-foreground/70 line-clamp-2">{project.description}</p>
                   <div className="flex gap-2 mt-2">
-                    <span className="text-xs bg-surface-border px-2 py-1 rounded-full font-mono">Descargas: {project.downloads}</span>
+                    <span className="text-xs bg-surface-border px-2 py-1 rounded-full font-mono">{t("downloadsCount", { count: project.downloads })}</span>
                     <span className="text-xs bg-surface-border px-2 py-1 rounded-full font-mono">{project.author}</span>
                   </div>
                 </div>
                 
                 {installedProjects.has(project.project_id) ? (
-                  <Button disabled variant="outline" className="w-32 border-green-500 text-green-500 bg-green-500/10">
-                    <Check className="w-4 h-4 mr-2" /> Instalado
+                  <Button data-cy="modlist-installed-badge" disabled variant="outline" className="w-32 border-green-500 text-green-500 bg-green-500/10">
+                    <Check className="w-4 h-4 mr-2" /> {t("installedBadge")}
                   </Button>
                 ) : (
                   <Button 
+                    data-cy="modlist-install-btn"
                     onClick={() => handleInstall(project)}
                     disabled={downloadingId === project.project_id}
                     className="w-32"
                   >
                     {downloadingId === project.project_id ? (
-                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Instalando...</>
+                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {t("installing")}</>
                     ) : (
-                      <><Download className="w-4 h-4 mr-2" /> Instalar</>
+                      <><Download className="w-4 h-4 mr-2" /> {t("install")}</>
                     )}
                   </Button>
                 )}
@@ -536,7 +542,7 @@ export function ModList({ serverId, mode = "mods" }) {
             
             {storeResults.length === 0 && !searching && searchQuery && (
               <div className="text-center p-8 text-foreground/50 font-bold">
-                No se encontraron resultados para &quot;{searchQuery}&quot;
+                {t("noSearchResults", { query: searchQuery })}
               </div>
             )}
           </div>
@@ -548,12 +554,11 @@ export function ModList({ serverId, mode = "mods" }) {
           <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
             <PackageOpen className="w-10 h-10" />
           </div>
-          <h2 className="text-2xl font-black mb-4">Instalación de Modpacks</h2>
+          <h2 className="text-2xl font-black mb-4">{t("modpacksInstallationTitle")}</h2>
           <p className="text-foreground/70 font-semibold max-w-2xl mb-8 leading-relaxed">
-            Sube un archivo <strong>.zip</strong> de un modpack (por ejemplo, exportado desde CurseForge o Modrinth). 
-            Se descomprimirá directamente en la raíz de tu servidor. 
+            {t("modpacksDescIntro")}
             <br/><br/>
-            <strong className="text-warning">Precaución:</strong> Esto sobrescribirá carpetas críticas como <code className="bg-background px-1 rounded">/mods</code> y <code className="bg-background px-1 rounded">/config</code>. Si ya tienes mods instalados, te recomendamos borrarlos o crear un backup primero.
+            <strong className="text-warning">{t("modpacksDescCautionLabel")}</strong>{t("modpacksDescCautionText")}
           </p>
           
           <Button 
@@ -562,9 +567,9 @@ export function ModList({ serverId, mode = "mods" }) {
             disabled={uploading}
           >
             {uploading ? (
-              <><Loader2 className="w-6 h-6 mr-3 animate-spin" /> {uploadingText || "Instalando Modpack..."}</>
+              <><Loader2 className="w-6 h-6 mr-3 animate-spin" /> {uploadingText || t("installingModpack")}</>
             ) : (
-              <><Upload className="w-6 h-6 mr-3" /> Subir archivo(s) .zip</>
+              <><Upload className="w-6 h-6 mr-3" /> {t("uploadZipFiles")}</>
             )}
           </Button>
         </div>

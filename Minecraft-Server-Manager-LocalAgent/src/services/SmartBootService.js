@@ -10,20 +10,20 @@ export default class SmartBootService {
       
       const data = await res.json();
       if (data && data.identity === 'CraftControlAgent') {
-        console.log(`\n[System] El agente de CraftControl ya está corriendo en el puerto ${port}.`);
-        console.log('[System] Reconectando de manera transparente (Smart Boot).');
+        console.log(`\n[System] The CraftControl agent is already running on port ${port}.`);
+        console.log('[System] Reconnecting seamlessly (Smart Boot).');
         process.exit(0);
       } else {
-        console.log(`\n[Warning] El puerto ${port} está ocupado por un proceso desconocido.`);
-        console.log('[System] Procediendo a exterminar el proceso usurpador...');
+        console.log(`\n[Warning] Port ${port} is occupied by an unknown process.`);
+        console.log('[System] Proceeding to exterminate the usurping process...');
         await killPort(port);
         await new Promise(resolve => setTimeout(resolve, 1500));
       }
     } catch (e) {
       if (e.code === 'ECONNREFUSED' || e.name === 'AbortError' || e.cause?.code === 'ECONNREFUSED') {
       } else {
-        console.log(`\n[Warning] El puerto ${port} está ocupado y no responde correctamente.`);
-        console.log('[System] Procediendo a exterminar el proceso usurpador...');
+        console.log(`\n[Warning] Port ${port} is occupied and not responding correctly.`);
+        console.log('[System] Proceeding to exterminate the usurping process...');
         try { 
           await killPort(port); 
           await new Promise(resolve => setTimeout(resolve, 1500));

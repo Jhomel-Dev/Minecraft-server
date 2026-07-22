@@ -10,7 +10,7 @@ const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({ connectionString });
 
 pool.on('error', (err) => {
-  console.error(' [DB] Error inesperado en la conexión a PostgreSQL:', err);
+  console.error(' [DB] Unexpected error in PostgreSQL connection:', err);
 });
 
 const adapter = new PrismaPg(pool);

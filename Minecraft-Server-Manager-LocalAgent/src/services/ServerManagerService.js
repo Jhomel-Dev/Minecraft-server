@@ -61,12 +61,12 @@ export default class ServerManagerService {
     const serverId = serverConfig.id;
     
     if (!/^[a-zA-Z0-9-]+$/.test(serverId)) {
-      this.connectionService.sendLog({ serverId, logLine: '[System Error] ID de servidor inválido o malicioso.' });
+      this.connectionService.sendLog({ serverId, logLine: '[System Error] Invalid or malicious server ID.' });
       return;
     }
 
     if (this.activeServers.has(serverId)) {
-      this.connectionService.sendLog({ serverId, logLine: '[System] Servidor ya esta en ejecucion.' });
+      this.connectionService.sendLog({ serverId, logLine: '[System] Server is already running.' });
       return;
     }
 
@@ -107,9 +107,9 @@ export default class ServerManagerService {
     try {
       active.tunnelService.stopTunnel();
       await active.nativeServerService.stopMinecraftServer();
-      this.connectionService.sendLog({ serverId: requestedServerId, logLine: '[System] Servidor y Túnel detenidos localmente.' });
+      this.connectionService.sendLog({ serverId: requestedServerId, logLine: '[System] Server and Tunnel stopped locally.' });
     } catch (error) {
-      this.connectionService.sendLog({ serverId: requestedServerId, logLine: `[System] Error al detener servidor: ${error.message}` });
+      this.connectionService.sendLog({ serverId: requestedServerId, logLine: `[System] Error stopping server: ${error.message}` });
     } finally {
       this.connectionService.sendStateUpdate({ serverId: requestedServerId, status: 'OFFLINE' });
       this.activeServers.delete(requestedServerId);

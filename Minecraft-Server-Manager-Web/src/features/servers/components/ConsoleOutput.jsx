@@ -15,6 +15,7 @@ export function ConsoleOutput({ logs, onClear }) {
     <div className="relative group">
       {logs.length > 0 && (
         <button 
+          data-cy="console-clear-btn"
           onClick={onClear}
           className="absolute top-4 right-4 p-2 bg-surface border-2 border-surface-border rounded-blocky text-foreground/50 hover:text-danger hover:border-danger opacity-0 group-hover:opacity-100 transition-all z-10 shadow-lg"
           title="Limpiar consola"

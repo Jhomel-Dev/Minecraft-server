@@ -149,8 +149,8 @@ export default class FileService {
       await execFilePromise('unzip', ['-o', zipPath, '-d', destPath]);
       return { success: true };
     } catch (err) {
-      console.error('Error al descomprimir:', err);
-      throw new Error(`Fallo al descomprimir: ${err.message}`);
+      console.error('Error unzipping:', err);
+      throw new Error(`Failed to unzip: ${err.message}`);
     }
   }
 

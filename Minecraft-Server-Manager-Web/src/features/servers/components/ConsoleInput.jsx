@@ -20,6 +20,7 @@ export function ConsoleInput({ onSend, disabled }) {
     >
       <Terminal className="w-5 h-5 text-[#abb2bf]/50 ml-2 shrink-0" />
       <input
+        data-cy="console-input"
         type="text"
         value={command}
         onChange={(e) => setCommand(e.target.value)}
@@ -30,6 +31,7 @@ export function ConsoleInput({ onSend, disabled }) {
         spellCheck="false"
       />
       <button 
+        data-cy="console-send-btn"
         type="submit" 
         disabled={disabled || !command.trim()}
         className="p-2 text-primary hover:bg-primary/10 rounded-blocky transition-colors disabled:opacity-50"

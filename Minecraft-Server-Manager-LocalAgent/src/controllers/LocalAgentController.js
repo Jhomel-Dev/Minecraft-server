@@ -41,43 +41,43 @@ export default class LocalAgentController {
 
   setupConnectionListeners() {
     this.connectionService.on('connected', () => {
-      console.log('[INFO] Local Agent conectado exitosamente al Cloud API.');
+      console.log('[INFO] Local Agent connected successfully to Cloud API.');
       if (this.daemon) this.daemon.setStatus('paired');
     });
 
     this.connectionService.on('disconnected', () => {
-      console.log('[WARN] Conexión perdida con el Cloud API. Reintentando...');
+      console.log('[WARN] Connection lost with Cloud API. Retrying...');
     });
 
     this.connectionService.on('error', (err) => {
-      console.error('[ERROR] Error de conexión con el API:', err.message || err);
+      console.error('[ERROR] API connection error:', err.message || err);
       if (err.message && err.message.includes('Missing Token')) {
-        console.log('El token local ha sido invalidado por el servidor.');
+        console.log('The local token has been invalidated by the server.');
         this.connectionService.emit('AGENT_UNLINK');
       }
     });
 
     this.connectionService.on('command_start', async (serverConfig) => {
       if (this.isHibernating) {
-        console.log(`[Hibernación] Orden de inicio bloqueada para el servidor: ${serverConfig.id}`);
+        console.log(`[Hibernate] Start command blocked for server: ${serverConfig.id}`);
         return;
       }
-      console.log(`Recibida orden de inicio para el servidor: ${serverConfig.id}`);
+      console.log(`Received start command for server: ${serverConfig.id}`);
       await this.serverManager.startServer(serverConfig);
     });
 
     this.connectionService.on('command_stop', (payload) => {
       if (this.isHibernating) {
-        console.log(`[Hibernación] Orden de apagado bloqueada para el servidor: ${payload?.id}`);
+        console.log(`[Hibernate] Stop command blocked for server: ${payload?.id}`);
         return;
       }
-      console.log(`Recibida orden de apagado para servidor: ${payload?.id}`);
+      console.log(`Received stop command for server: ${payload?.id}`);
       this.serverManager.stopServer(payload?.id);
     });
 
     this.connectionService.on('AGENT_UNLINK', async () => {
-      console.log('[WARN] Recibida orden de desvinculación desde la web.');
-      console.log('[System] Deteniendo servidores activos para limpieza profunda...');
+      console.log('[WARN] Received unlink command from web.');
+      console.log('[System] Stopping active servers for deep cleanup...');
       
       await this.serverManager.stopAllServers();
 
@@ -85,21 +85,21 @@ export default class LocalAgentController {
         let envContent = await fs.readFile('.env', 'utf8');
         envContent = envContent.replace(/AGENT_SECRET_TOKEN=.*/g, '');
         await fs.writeFile('.env', envContent);
-        console.log('Credenciales locales borradas.');
+        console.log('Local credentials cleared.');
       } catch(e) {}
-      console.log('Agente desconectado. Apagando proceso en 3s...');
+      console.log('Agent disconnected. Shutting down process in 3s...');
       setTimeout(() => process.exit(0), 3000);
     });
 
     this.connectionService.on('AGENT_HIBERNATE', () => {
-      console.log('[HIBERNATE] Orden de hibernación recibida. Bloqueando comandos...');
+      console.log('[HIBERNATE] Hibernate command received. Blocking commands...');
       this.isHibernating = true;
       if (this.saveStatusToEnv) this.saveStatusToEnv('HIBERNATING');
       this.connectionService.sendAgentStatus('HIBERNATING');
     });
 
     this.connectionService.on('AGENT_WAKE', () => {
-      console.log('[WAKE] Orden de despertar recibida. Restaurando funciones...');
+      console.log('[WAKE] Wake command received. Restoring functions...');
       this.isHibernating = false;
       if (this.saveStatusToEnv) this.saveStatusToEnv('ACTIVE');
       this.connectionService.sendAgentStatus('ACTIVE');
@@ -107,14 +107,14 @@ export default class LocalAgentController {
 
     this.connectionService.on('delete_server', async (payload) => {
       if (this.isHibernating) return;
-      console.log(`Recibida orden de eliminar servidor: ${payload?.id}`);
+      console.log(`Received delete command for server: ${payload?.id}`);
       try {
         const managerDir = path.join(os.homedir(), '.minecraft-manager');
         const targetDir = path.join(managerDir, 'servers', payload.id);
         await fs.rm(targetDir, { recursive: true, force: true });
-        console.log(`Directorio ${targetDir} eliminado.`);
+        console.log(`Directory ${targetDir} deleted.`);
       } catch (err) {
-        console.error('Error eliminando directorio de servidor:', err);
+        console.error('Error deleting server directory:', err);
       }
     });
 
@@ -125,7 +125,7 @@ export default class LocalAgentController {
             await active.nativeServerService.sendCommand(payload.command || payload);
         }
       } catch (err) {
-        console.error('Error enviando comando:', err);
+        console.error('Error sending command:', err);
       }
     });
 

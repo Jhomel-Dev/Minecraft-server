@@ -7,10 +7,10 @@ import prisma from '../../../core/database/prisma.client.js';
 import { agentHardwareMap } from '../../agent/gateways/agent.gateway.js';
 
 const createServerSchema = z.object({
-  name: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_\- ]+$/, 'Nombre inválido'),
+  name: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_\- ]+$/, 'Invalid name'),
   type: z.string(),
   version: z.string(),
-  memory: z.string().regex(/^\d{1,4}[MG]$/, 'Formato de RAM inválido (ej. 4G o 4096M)'),
+  memory: z.string().regex(/^\d{1,4}[MG]$/, 'Invalid RAM format (e.g. 4G or 4096M)'),
   compatibilityMode: z.boolean().optional().default(false)
 });
 
@@ -25,7 +25,7 @@ export default class ServerController {
       
       const serverCount = await prisma.server.count({ where: { userId } });
       if (serverCount >= 3) {
-        return res.status(403).json({ error: 'Has alcanzado el límite de 3 servidores' });
+        return res.status(403).json({ error: 'You have reached the limit of 3 servers' });
       }
 
       const { name, type, version, memory, compatibilityMode } = parsedBody;
@@ -259,12 +259,12 @@ export default class ServerController {
       const server = await serverService.findServerById(serverId);
       if (server.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
 
-      if (!fileName.endsWith('.zip') || fileName.includes('/')) return res.status(400).json({ error: 'Archivo inválido' });
+      if (!fileName.endsWith('.zip') || fileName.includes('/')) return res.status(400).json({ error: 'Invalid file' });
 
       const backupPath = path.join(os.homedir(), '.minecraft-manager', 'servers', serverId, 'backups', fileName);
       
       if (!fs.existsSync(backupPath)) {
-        return res.status(404).json({ error: 'Backup no encontrado' });
+        return res.status(404).json({ error: 'Backup not found' });
       }
 
       res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
@@ -273,7 +273,7 @@ export default class ServerController {
       const fileStream = fs.createReadStream(backupPath);
       fileStream.on('error', (err) => {
         console.error('Error streaming file:', err);
-        if (!res.headersSent) res.status(500).json({ error: 'Error leyendo archivo' });
+        if (!res.headersSent) res.status(500).json({ error: 'Error reading file' });
       });
       
       return fileStream.pipe(res);
@@ -294,7 +294,7 @@ export default class ServerController {
         error.message.includes('not found') ||
         error.message.includes('already running') ||
         error.message.includes('must be ONLINE') ||
-        error.message.includes('detener')) {
+        error.message.includes('stop')) {
       return res.status(400).json({ error: error.message });
     }
     
