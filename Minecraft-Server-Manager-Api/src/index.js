@@ -11,7 +11,8 @@ import versionRoutes from './modules/versions/routes/version.routes.js';
 import userRoutes from './modules/users/routes/user.routes.js';
 import agentRoutes from './modules/agent/routes/agent.routes.js';
 import { globalErrorHandler } from './middlewares/errorHandler.middleware.js';
-
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './core/docs/swagger.js';
 const app = express();
 
 app.use(helmet());
@@ -56,6 +57,8 @@ app.use('/api/agent', agentRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(globalErrorHandler);
 
