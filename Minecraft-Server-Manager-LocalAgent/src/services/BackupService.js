@@ -87,7 +87,7 @@ export default class BackupService {
         const zipPath = path.join(backupsDir, zipName);
         
         const validPaths = await this.getValidBackupPaths(serverDir, profile);
-        if (validPaths.length === 0) throw new Error("No hay archivos validos para respaldar");
+        if (validPaths.length === 0) throw new Error("No valid files to backup");
 
         const isOnline = this.isServerOnline(serverId);
         
@@ -96,7 +96,7 @@ export default class BackupService {
             await this.compressFiles(serverDir, validPaths, zipPath);
             return { success: true, file: zipName };
         } catch (err) {
-            throw new Error("Fallo al crear el backup en zip.");
+            throw new Error("Failed to create zip backup.");
         } finally {
             await this.resumeServerAfterBackup(serverId, isOnline);
         }
@@ -185,7 +185,7 @@ export default class BackupService {
     }
 
     async deleteBackup(serverId, fileName) {
-        if (!fileName.endsWith('.zip') || fileName.includes('/')) throw new Error("Archivo invalido");
+        if (!fileName.endsWith('.zip') || fileName.includes('/')) throw new Error("Invalid file");
         
         const dir = await this.getBackupsDir(serverId);
         const filePath = path.join(dir, fileName);

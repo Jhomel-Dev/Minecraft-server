@@ -1,3 +1,5 @@
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, getLocale } from 'next-intl/server';
 import { ThemeProvider } from "@/shared/theme/ThemeProvider";
 import { GoogleAuthProvider } from "@/shared/providers/GoogleAuthProvider";
 import { ToastProvider } from "@/shared/ui/ToastProvider";
@@ -8,17 +10,22 @@ export const metadata = {
   description: "Advanced, modern and blocky Minecraft server manager panel",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const messages = await getMessages();
+  const locale = await getLocale();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className="antialiased min-h-screen">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <GoogleAuthProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-          </GoogleAuthProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider messages={messages}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <GoogleAuthProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </GoogleAuthProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

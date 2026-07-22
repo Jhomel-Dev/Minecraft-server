@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Pickaxe, Server, Settings, ArrowRight, Check, Loader2 } from "lucide-react";
@@ -20,6 +21,7 @@ const SOFTWARE_TYPES = [
 ];
 
 export function CreateServerWizard() {
+  const t = useTranslations("CreateServerWizard");
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -80,11 +82,11 @@ export function CreateServerWizard() {
         memory: `${memoryGB}G`
       });
       if (res.id) {
-        toast("¡Servidor creado exitosamente!", "success");
+        toast(t("serverCreatedSuccess"), "success");
         router.push(`/server/${res.id}`);
       }
     } catch (err) {
-      toast(err.message || "Error al crear el servidor", "error");
+      toast(err.message || t("serverCreateError"), "error");
     } finally {
       setLoading(false);
     }
@@ -97,8 +99,8 @@ export function CreateServerWizard() {
           <Server className="w-8 h-8" />
         </div>
         <div>
-          <h1 className="text-3xl font-black">Crea tu Servidor</h1>
-          <p className="text-foreground/70">Paso {step} de 3</p>
+          <h1 className="text-3xl font-black">{t("title")}</h1>
+          <p className="text-foreground/70">{t("stepCount", { step, total: 3 })}</p>
         </div>
       </div>
 
@@ -106,19 +108,21 @@ export function CreateServerWizard() {
       {step === 1 && (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
           <div>
-            <label className="font-bold block mb-2">Nombre del Servidor</label>
+            <label className="font-bold block mb-2">{t("serverNameLabel")}</label>
             <Input 
-              placeholder="Ej. Mi Servidor Extremo" 
+              data-cy="wizard-server-name-input"
+              placeholder={t("serverNamePlaceholder")} 
               value={serverName}
               onChange={(e) => setServerName(e.target.value)}
             />
           </div>
           <div>
-            <label className="font-bold block mb-2">Software (Motor)</label>
+            <label className="font-bold block mb-2">{t("softwareLabel")}</label>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {SOFTWARE_TYPES.map((type) => (
                 <div 
                   key={type.id}
+                  data-cy={`wizard-software-${type.id}`}
                   onClick={() => setSoftware(type.id)}
                   className={`border-2 p-4 rounded-blocky cursor-pointer transition-all ${
                     software === type.id 
@@ -130,17 +134,18 @@ export function CreateServerWizard() {
                     {type.name}
                     {software === type.id && <Check className="w-4 h-4 text-primary" />}
                   </h3>
-                  <p className="text-xs text-foreground/70 mt-1">{type.desc}</p>
+                  <p className="text-xs text-foreground/70 mt-1">{t(`softwareDesc.${type.id}`)}</p>
                 </div>
               ))}
             </div>
           </div>
           <div className="flex justify-end mt-4">
             <Button 
+              data-cy="wizard-step1-next"
               onClick={() => setStep(2)} 
               disabled={!serverName || serverName.length < 3}
             >
-              Siguiente <ArrowRight className="w-4 h-4" />
+              {t("next")} <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -151,7 +156,7 @@ export function CreateServerWizard() {
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
           <div>
             <label className="font-bold block mb-2 flex items-center gap-2">
-              <Pickaxe className="w-5 h-5 text-secondary" /> Versión de Minecraft
+              <Pickaxe className="w-5 h-5 text-secondary" /> {t("minecraftVersion")}
             </label>
             <div className="relative mb-4">
               <select 
@@ -161,13 +166,13 @@ export function CreateServerWizard() {
                 className="w-full bg-surface border-2 border-surface-border text-foreground rounded-blocky px-4 py-3 outline-none focus:border-primary transition-colors appearance-none"
               >
                 {loadingVersions ? (
-                  <option>Obteniendo versiones desde {SOFTWARE_TYPES.find(s=>s.id===software)?.name}...</option>
+                  <option>{t("loadingVersions", { softwareName: SOFTWARE_TYPES.find(s=>s.id===software)?.name })}</option>
                 ) : availableVersions.length > 0 ? (
                   availableVersions.map(v => (
                     <option key={v} value={v}>{v}</option>
                   ))
                 ) : (
-                  <option>Error al cargar versiones</option>
+                  <option>{t("loadVersionsError")}</option>
                 )}
               </select>
               {loadingVersions && (
@@ -178,7 +183,7 @@ export function CreateServerWizard() {
             {software !== "vanilla" && (
               <div className="mb-4">
                 <label className="font-bold block mb-2 flex items-center gap-2">
-                  <Server className="w-5 h-5 text-secondary" /> Versión del Software (Build/Loader)
+                  <Server className="w-5 h-5 text-secondary" /> {t("softwareVersion")}
                 </label>
                 <div className="relative">
                   <select 
@@ -188,13 +193,13 @@ export function CreateServerWizard() {
                     className="w-full bg-surface border-2 border-surface-border text-foreground rounded-blocky px-4 py-3 outline-none focus:border-primary transition-colors appearance-none"
                   >
                     {loadingBuilds ? (
-                      <option>Buscando builds compatibles...</option>
+                      <option>{t("loadingBuilds")}</option>
                     ) : availableBuilds.length > 0 ? (
                       availableBuilds.map(b => (
-                        <option key={b} value={b}>{b === "LATEST" ? "Última Versión (Recomendada)" : b}</option>
+                        <option key={b} value={b}>{b === "LATEST" ? t("latestVersionRecommended") : b}</option>
                       ))
                     ) : (
-                      <option value="LATEST">Última Versión (Recomendada)</option>
+                      <option value="LATEST">{t("latestVersionRecommended")}</option>
                     )}
                   </select>
                   {loadingBuilds && (
@@ -206,17 +211,18 @@ export function CreateServerWizard() {
           </div>
           <div>
             <label className="font-bold block mb-2 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-secondary" /> Memoria RAM Asignada
+              <Settings className="w-5 h-5 text-secondary" /> {t("assignedRam")}
             </label>
             {agentHardware ? (
               <div className="w-full bg-surface border-2 border-surface-border p-4 rounded-blocky">
                 <div className="flex justify-between mb-4">
                   <span className="text-foreground/70 text-sm">
-                    Host: {(agentHardware.freeMem / (1024*1024*1024)).toFixed(1)} GB libres de {(agentHardware.totalMem / (1024*1024*1024)).toFixed(1)} GB
+                    {t("hostMemory", { free: (agentHardware.freeMem / (1024*1024*1024)).toFixed(1), total: (agentHardware.totalMem / (1024*1024*1024)).toFixed(1) })}
                   </span>
                   <span className="font-bold text-primary text-lg">{memoryGB} GB</span>
                 </div>
                 <input 
+                  data-cy="wizard-ram-input"
                   type="range" 
                   min="1" 
                   max={Math.max(1, Math.floor(agentHardware.freeMem / (1024*1024*1024)))} 
@@ -228,8 +234,9 @@ export function CreateServerWizard() {
               </div>
             ) : (
               <Input 
+                data-cy="wizard-ram-input-fallback"
                 type="number" 
-                placeholder="Ej. 4 (Gigabytes)" 
+                placeholder={t("ramPlaceholder")} 
                 value={memoryGB}
                 onChange={(e) => {
                   const val = parseInt(e.target.value);
@@ -239,11 +246,11 @@ export function CreateServerWizard() {
                 min="1"
               />
             )}
-            <p className="text-xs text-foreground/60 mt-2">La memoria será asignada nativamente al motor de Java (-Xmx y -Xms).</p>
+            <p className="text-xs text-foreground/60 mt-2">{t("ramHelpText")}</p>
           </div>
           <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={() => setStep(1)}>Atrás</Button>
-            <Button onClick={() => setStep(3)} disabled={loadingVersions || !version}>Siguiente <ArrowRight className="w-4 h-4" /></Button>
+            <Button variant="outline" onClick={() => setStep(1)}>{t("back")}</Button>
+            <Button data-cy="wizard-step2-next" onClick={() => setStep(3)} disabled={loadingVersions || !version}>{t("next")} <ArrowRight className="w-4 h-4" /></Button>
           </div>
         </div>
       )}
@@ -252,26 +259,27 @@ export function CreateServerWizard() {
       {step === 3 && (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
           <div className="bg-background border-2 border-surface-border rounded-blocky p-6">
-            <h3 className="font-bold text-lg mb-4 text-primary">Resumen de Instalación</h3>
+            <h3 className="font-bold text-lg mb-4 text-primary">{t("summaryTitle")}</h3>
             <ul className="space-y-3 font-mono text-sm">
-              <li className="flex justify-between"><span className="text-foreground/70">Nombre:</span> <span>{serverName}</span></li>
-              <li className="flex justify-between"><span className="text-foreground/70">Software:</span> <span className="uppercase">{software}</span></li>
-              <li className="flex justify-between"><span className="text-foreground/70">Versión:</span> <span>{version}</span></li>
-              <li className="flex justify-between"><span className="text-foreground/70">RAM:</span> <span>{memoryGB} GB</span></li>
+              <li className="flex justify-between"><span className="text-foreground/70">{t("summaryName")}</span> <span>{serverName}</span></li>
+              <li className="flex justify-between"><span className="text-foreground/70">{t("summarySoftware")}</span> <span className="uppercase">{software}</span></li>
+              <li className="flex justify-between"><span className="text-foreground/70">{t("summaryVersion")}</span> <span>{version}</span></li>
+              <li className="flex justify-between"><span className="text-foreground/70">{t("summaryRam")}</span> <span>{memoryGB} GB</span></li>
             </ul>
           </div>
           <p className="text-sm text-foreground/80 text-center">
-            El servidor se instalará de forma nativa usando nuestra arquitectura Zero-Copy para máxima velocidad.
+            {t("summaryDescription")}
           </p>
           <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={() => setStep(2)}>Atrás</Button>
+            <Button variant="outline" onClick={() => setStep(2)}>{t("back")}</Button>
             <Button 
+              data-cy="wizard-install-button"
               variant="primary" 
               onClick={handleCreate}
               disabled={loading}
               className={loading ? "animate-pulse" : ""}
             >
-              {loading ? "Creando servidor..." : "Instalar y Arrancar"}
+              {loading ? t("creatingServer") : t("installAndStart")}
             </Button>
           </div>
         </div>

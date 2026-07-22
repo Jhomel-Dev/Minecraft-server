@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { File, Folder, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/Button";
 
@@ -21,10 +22,12 @@ function isEditable(filename) {
 }
 
 export function FileList({ files, onNavigate, onEdit, onDeleteRequest, deletingFile, onConfirmDelete, onCancelDelete, isDeleting }) {
+  const t = useTranslations("FileList");
+
   if (files.length === 0) {
     return (
       <div className="text-center p-8 bg-surface border-2 border-surface-border rounded-blocky shadow-sm">
-        <p className="text-foreground/60 font-semibold">Carpeta vacía.</p>
+        <p className="text-foreground/60 font-semibold">{t('emptyFolder')}</p>
       </div>
     );
   }
@@ -35,9 +38,9 @@ export function FileList({ files, onNavigate, onEdit, onDeleteRequest, deletingF
         <thead>
           <tr className="bg-surface-border/30 text-foreground">
             <th className="p-4 font-bold border-b-2 border-surface-border w-12"></th>
-            <th className="p-4 font-bold border-b-2 border-surface-border">Nombre</th>
-            <th className="p-4 font-bold border-b-2 border-surface-border">Tamaño</th>
-            <th className="p-4 font-bold border-b-2 border-surface-border text-right">Acciones</th>
+            <th className="p-4 font-bold border-b-2 border-surface-border">{t('nameHeader')}</th>
+            <th className="p-4 font-bold border-b-2 border-surface-border">{t('sizeHeader')}</th>
+            <th className="p-4 font-bold border-b-2 border-surface-border text-right">{t('actionsHeader')}</th>
           </tr>
         </thead>
         <tbody>
@@ -50,15 +53,15 @@ export function FileList({ files, onNavigate, onEdit, onDeleteRequest, deletingF
                   <td colSpan={4} className="p-4">
                     <div className="flex items-center justify-between text-danger">
                       <div>
-                        <p className="font-bold text-lg">¿Eliminar {file.name}?</p>
-                        <p className="text-sm font-semibold opacity-80">Esta acción no se puede deshacer.</p>
+                        <p className="font-bold text-lg">{t('deleteConfirmTitle', { name: file.name })}</p>
+                        <p className="text-sm font-semibold opacity-80">{t('cannotBeUndone')}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" className="border-danger/20 hover:bg-danger/10 bg-transparent text-danger" onClick={onCancelDelete} disabled={isDeleting}>
-                          Cancelar
+                          {t('cancel')}
                         </Button>
                         <Button className="bg-danger hover:bg-danger/80 text-white" onClick={() => onConfirmDelete(file.name)} disabled={isDeleting}>
-                          {isDeleting ? "Eliminando..." : "Sí, eliminar"}
+                          {isDeleting ? t('deleting') : t('confirmDelete')}
                         </Button>
                       </div>
                     </div>
@@ -68,7 +71,7 @@ export function FileList({ files, onNavigate, onEdit, onDeleteRequest, deletingF
             }
 
             return (
-              <tr key={file.name} className="hover:bg-surface-hover/50 transition-colors">
+              <tr data-cy={`file-row-${file.name}`} key={file.name} className="hover:bg-surface-hover/50 transition-colors">
                 <td className="p-4 border-b border-surface-border/50 text-center">
                   {file.isDir ? (
                     <Folder className="w-5 h-5 text-secondary inline-block fill-secondary" />
@@ -93,11 +96,11 @@ export function FileList({ files, onNavigate, onEdit, onDeleteRequest, deletingF
                 </td>
                 <td className="p-4 border-b border-surface-border/50 flex justify-end gap-2">
                   {!file.isDir && isEditable(file.name) && (
-                    <Button variant="outline" className="p-2 h-10" title="Editar" onClick={() => onEdit(file)}>
+                    <Button data-cy={`file-edit-btn-${file.name}`} variant="outline" className="p-2 h-10" title={t('edit')} onClick={() => onEdit(file)}>
                       <Edit className="w-4 h-4" />
                     </Button>
                   )}
-                  <Button variant="outline" className="p-2 h-10 hover:bg-danger/10" title="Eliminar" onClick={() => onDeleteRequest(file.name)}>
+                  <Button variant="outline" className="p-2 h-10 hover:bg-danger/10" title={t('delete')} onClick={() => onDeleteRequest(file.name)}>
                     <Trash2 className="w-4 h-4 text-danger" />
                   </Button>
                 </td>

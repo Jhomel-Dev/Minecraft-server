@@ -1,11 +1,13 @@
 "use client";
 import { use, useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { generateOfflineUUID } from "./offlineUuid";
 import { Users, Ban, Shield, ShieldOff, Heart, Activity, RefreshCw, UserX, Skull, PlusSquare, MapPin, Navigation, Clock, ChevronLeft, X, ShieldCheck } from "lucide-react";
 import { Button } from "@/shared/ui/Button";
 import { getPlayers, fsOperation, sendCommand } from "@/features/servers/services/serverApi";
 
 export default function PlayersPage({ params }) {
+  const t = useTranslations("ServerPlayers");
   const unwrappedParams = use(params);
   const serverId = unwrappedParams.id;
   
@@ -86,7 +88,7 @@ export default function PlayersPage({ params }) {
         
         if (isOnlineMode) {
           const res = await fetch(`https://api.ashcon.app/mojang/v2/user/${playerName}`);
-          if (!res.ok) throw new Error(`Jugador premium '${playerName}' no encontrado.`);
+          if (!res.ok) throw new Error(t("premiumPlayerNotFound", { name: playerName }));
           const profile = await res.json();
           whitelist.push({ uuid: profile.uuid, name: profile.username });
         } else {
@@ -101,7 +103,7 @@ export default function PlayersPage({ params }) {
       
       setTimeout(fetchPlayers, 500); 
     } catch (err) {
-      setCommandError(err.message || "Error al modificar la whitelist estando offline.");
+      setCommandError(err.message || t("offlineWhitelistError"));
       setTimeout(() => setCommandError(null), 5000);
     }
   };
@@ -119,7 +121,7 @@ export default function PlayersPage({ params }) {
           if (!uuid) {
             if (isOnlineMode) {
               const req = await fetch(`https://api.ashcon.app/mojang/v2/user/${playerName}`);
-              if (!req.ok) throw new Error(`Jugador premium '${playerName}' no encontrado.`);
+              if (!req.ok) throw new Error(t("premiumPlayerNotFound", { name: playerName }));
               uuid = (await req.json()).uuid;
             } else {
               uuid = await generateOfflineUUID(playerName);
@@ -148,7 +150,7 @@ export default function PlayersPage({ params }) {
           if (!uuid) {
             if (isOnlineMode) {
               const req = await fetch(`https://api.ashcon.app/mojang/v2/user/${playerName}`);
-              if (!req.ok) throw new Error(`Jugador premium '${playerName}' no encontrado.`);
+              if (!req.ok) throw new Error(t("premiumPlayerNotFound", { name: playerName }));
               uuid = (await req.json()).uuid;
             } else {
               uuid = await generateOfflineUUID(playerName);
@@ -204,12 +206,12 @@ export default function PlayersPage({ params }) {
           return;
         }
       } catch (offlineErr) {
-        setCommandError(offlineErr.message || "Error al modificar archivos offline.");
+        setCommandError(offlineErr.message || t("offlineFilesError"));
         setTimeout(() => setCommandError(null), 5000); 
         return;
       }
       
-      setCommandError(err.message || "Error al ejecutar el comando. Asegúrate de que el servidor esté ONLINE.");
+      setCommandError(err.message || t("commandExecuteError"));
       setTimeout(() => setCommandError(null), 5000); 
     }
   };
@@ -254,7 +256,7 @@ export default function PlayersPage({ params }) {
     return () => clearInterval(interval);
   }, [serverId]);
 
-  if (loading && players.length === 0) return <div className="p-8 text-center animate-pulse">Cargando datos de mundo...</div>;
+  if (loading && players.length === 0) return <div className="p-8 text-center animate-pulse">{t("loadingWorldData")}</div>;
 
   return (
     <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
@@ -265,9 +267,9 @@ export default function PlayersPage({ params }) {
             {isWhitelistView ? <ShieldCheck className="w-10 h-10" /> : <Users className="w-10 h-10" />}
           </div>
           <div>
-            <h1 className="text-3xl font-black">{isWhitelistView ? "Lista Blanca" : "Jugadores"}</h1>
+            <h1 className="text-3xl font-black">{isWhitelistView ? t("whitelistTitle") : t("title")}</h1>
             <p className="text-foreground/70 font-semibold">
-              {isWhitelistView ? "Gestiona el acceso exclusivo al servidor" : selectedPlayer ? `Inspeccionando a ${selectedPlayer.name}` : "Gestiona las conexiones y el progreso del servidor"}
+              {isWhitelistView ? t("whitelistSubtitle") : selectedPlayer ? t("inspectingPlayer", { name: selectedPlayer.name }) : t("subtitle")}
             </p>
           </div>
         </div>
@@ -277,23 +279,23 @@ export default function PlayersPage({ params }) {
             <>
               {isWhitelistEnabled && (
                 <Button variant="outline" onClick={() => { setIsWhitelistView(true); fetchWhitelistFile(); }} className="h-full border-2 border-surface-border text-primary hover:bg-primary/10 hover:border-primary/50">
-                  <ShieldCheck className="w-4 h-4 mr-2" /> Gestor de Whitelist
+                  <ShieldCheck className="w-4 h-4 mr-2" /> {t("whitelistManager")}
                 </Button>
               )}
-              <Button variant="outline" onClick={fetchPlayers} disabled={loading} className="h-full border-2 border-surface-border">
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Actualizar
+              <Button data-cy="players-refresh-btn" variant="outline" onClick={fetchPlayers} disabled={loading} className="h-full border-2 border-surface-border">
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> {t("refresh")}
               </Button>
               <div className="h-full flex items-center justify-center gap-2 px-4 border-2 border-surface-border rounded-blocky text-sm font-bold text-foreground">
                 <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_5px_rgba(34,197,94,0.5)]"></div>
                 <span>
-                  {players.length} Registrados
+                  {t("registeredCount", { count: players.length })}
                 </span>
               </div>
             </>
           )}
           {(selectedPlayer || isWhitelistView) && (
             <Button variant="outline" onClick={() => { setSelectedPlayer(null); setIsWhitelistView(false); }} className="h-full border-2 border-surface-border">
-              <ChevronLeft className="w-4 h-4 mr-2" /> Volver a la Lista
+              <ChevronLeft className="w-4 h-4 mr-2" /> {t("backToList")}
             </Button>
           )}
         </div>
@@ -323,21 +325,21 @@ export default function PlayersPage({ params }) {
             <div>
               <h2 className="text-2xl font-black text-foreground flex items-center gap-2">
                 <ShieldCheck className="w-6 h-6 text-primary" /> 
-                Gestor de Whitelist
+                {t("whitelistManager")}
               </h2>
-              <p className="text-foreground/60 text-sm mt-1 font-semibold">Jugadores autorizados para entrar al servidor.</p>
+              <p className="text-foreground/60 text-sm mt-1 font-semibold">{t("whitelistedUsersDesc")}</p>
             </div>
             
             <form onSubmit={handleAddWhitelist} className="flex gap-2 w-full md:w-auto h-11">
               <input 
                 type="text" 
-                placeholder="Nombre del jugador..." 
+                placeholder={t("playerNamePlaceholder")}
                 value={addWhitelistName}
                 onChange={e => setAddWhitelistName(e.target.value)}
                 className="h-full bg-background border-2 border-surface-border rounded-blocky px-4 outline-none focus:border-primary flex-1 md:w-64 font-bold text-foreground"
               />
               <Button type="submit" disabled={!addWhitelistName.trim()} className="h-full px-6 font-bold shrink-0">
-                Añadir
+                {t("add")}
               </Button>
             </form>
           </div>
@@ -345,8 +347,8 @@ export default function PlayersPage({ params }) {
           {whitelistUsers.length === 0 ? (
             <div className="text-center py-12 bg-background border-2 border-surface-border rounded-blocky border-dashed">
               <ShieldOff className="w-12 h-12 mx-auto text-foreground/30 mb-4" />
-              <h3 className="font-bold text-xl text-foreground/70">La Lista Blanca está vacía</h3>
-              <p className="text-foreground/50 mt-2">Nadie está en la whitelist. Añade un jugador usando el campo de arriba.</p>
+              <h3 className="font-bold text-xl text-foreground/70">{t("emptyWhitelistTitle")}</h3>
+              <p className="text-foreground/50 mt-2">{t("emptyWhitelistDesc")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -369,7 +371,7 @@ export default function PlayersPage({ params }) {
                     onClick={() => handleCommand(`whitelist remove ${user.name}`)} 
                     className="border-2 border-danger text-danger hover:bg-danger hover:text-white h-10 px-4 shrink-0 ml-2"
                   >
-                    Eliminar
+                    {t("remove")}
                   </Button>
                 </div>
               ))}
@@ -388,8 +390,8 @@ export default function PlayersPage({ params }) {
       ) : players.length === 0 ? (
         <div className="text-center p-12 bg-surface border-2 border-surface-border rounded-blocky border-dashed">
           <UserX className="w-12 h-12 mx-auto text-foreground/30 mb-4" />
-          <h3 className="font-bold text-xl text-foreground/70">No hay jugadores registrados</h3>
-          <p className="text-foreground/50 mt-2">Los jugadores aparecerán aquí cuando entren al servidor y el mundo se guarde.</p>
+          <h3 data-cy="players-empty-title" className="font-bold text-xl text-foreground/70">{t("emptyPlayersTitle")}</h3>
+          <p className="text-foreground/50 mt-2">{t("emptyPlayersDesc")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -411,14 +413,14 @@ export default function PlayersPage({ params }) {
                   <div className="flex items-center justify-between w-full">
                     <h3 className="font-bold text-lg truncate pr-2 group-hover:text-primary transition-colors">{player.name}</h3>
                     {player.isOnline ? (
-                      <div className="w-3 h-3 rounded-full bg-green-500 border border-green-700 animate-pulse-slow shrink-0" title="Conectado Ahora"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500 border border-green-700 animate-pulse-slow shrink-0" title={t("connectedNow")}></div>
                     ) : (
-                      <div className="w-3 h-3 rounded-full bg-foreground/20 border border-surface-border shrink-0" title="Desconectado"></div>
+                      <div className="w-3 h-3 rounded-full bg-foreground/20 border border-surface-border shrink-0" title={t("offline")}></div>
                     )}
                   </div>
                   <div className="flex gap-2 mt-1">
-                    {player.isOp && <Shield className="w-3 h-3 text-warning fill-warning/20" title="Operador" />}
-                    {player.isBanned && <Ban className="w-3 h-3 text-danger" title="Baneado" />}
+                    {player.isOp && <Shield className="w-3 h-3 text-warning fill-warning/20" title={t("operator")} />}
+                    {player.isBanned && <Ban className="w-3 h-3 text-danger" title={t("banned")} />}
                   </div>
                 </div>
               </div>
@@ -427,7 +429,7 @@ export default function PlayersPage({ params }) {
                   <span className="flex items-center gap-1 text-red-500"><Heart className="w-3 h-3 fill-current"/> {Math.round(player.health)}</span>
                   <span className="flex items-center gap-1 text-amber-500"><Activity className="w-3 h-3"/> {Math.round(player.food)}</span>
                 </div>
-                <span className="text-[10px] uppercase font-bold text-foreground/50 tracking-wider">Ver Panel →</span>
+                <span className="text-[10px] uppercase font-bold text-foreground/50 tracking-wider">{t("viewPanel")}</span>
               </div>
             </div>
           ))}
@@ -438,6 +440,7 @@ export default function PlayersPage({ params }) {
 }
 
 function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handleWhitelistToggle, handleCommand }) {
+  const t = useTranslations("ServerPlayers");
   const [tpCoords, setTpCoords] = useState({ x: "", y: "", z: "" });
   const [tpDimension, setTpDimension] = useState(player.dimension || "minecraft:overworld");
   const [isTpModalOpen, setIsTpModalOpen] = useState(false);
@@ -498,12 +501,12 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-xl">{player.name}</h3>
               {player.isOnline ? (
-                <div className="w-3 h-3 rounded-full bg-green-500 border border-green-700 animate-pulse-slow" title="Conectado Ahora"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500 border border-green-700 animate-pulse-slow" title={t("connectedNow")}></div>
               ) : (
-                <div className="w-3 h-3 rounded-full bg-foreground/20 border border-surface-border" title="Desconectado"></div>
+                <div className="w-3 h-3 rounded-full bg-foreground/20 border border-surface-border" title={t("offline")}></div>
               )}
-              {player.isOp && <Shield className="w-4 h-4 text-warning fill-warning/20" title="Operador" />}
-              {player.isBanned && <Ban className="w-4 h-4 text-danger" title="Baneado" />}
+              {player.isOp && <Shield className="w-4 h-4 text-warning fill-warning/20" title={t("operator")} />}
+              {player.isBanned && <Ban className="w-4 h-4 text-danger" title={t("banned")} />}
             </div>
             <span className="text-xs text-foreground/50 font-mono">{player.uuid}</span>
           </div>
@@ -511,16 +514,16 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
 
         {}
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="text-secondary border-secondary hover:bg-secondary hover:text-white h-8 text-xs" onClick={() => handleKick(player.name)} title="Expulsar (Kick)">
+          <Button variant="outline" className="text-secondary border-secondary hover:bg-secondary hover:text-white h-8 text-xs" onClick={() => handleKick(player.name)} title={t("kickTitle")}>
             Kick
           </Button>
-          <Button variant="outline" className="text-primary border-primary hover:bg-primary hover:text-white h-8 text-xs" onClick={() => handleWhitelistToggle(player)} title={player.isWhitelisted ? "Quitar de Whitelist" : "Añadir a Whitelist"}>
+          <Button variant="outline" className="text-primary border-primary hover:bg-primary hover:text-white h-8 text-xs" onClick={() => handleWhitelistToggle(player)} title={player.isWhitelisted ? t("removeFromWhitelist") : t("addToWhitelist")}>
             {player.isWhitelisted ? "W-ON" : "W-OFF"}
           </Button>
-          <Button variant="outline" className="text-warning border-warning hover:bg-warning hover:text-white h-8 text-xs px-2" onClick={() => handleOpToggle(player)} title={player.isOp ? "Quitar OP" : "Dar OP"}>
+          <Button variant="outline" className="text-warning border-warning hover:bg-warning hover:text-white h-8 text-xs px-2" onClick={() => handleOpToggle(player)} title={player.isOp ? t("removeOp") : t("giveOp")}>
             {player.isOp ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
           </Button>
-          <Button variant="outline" className="text-danger border-danger hover:bg-danger hover:text-white h-8 text-xs px-2" onClick={() => handleBanToggle(player)} title={player.isBanned ? "Desbanear" : "Banear"}>
+          <Button variant="outline" className="text-danger border-danger hover:bg-danger hover:text-white h-8 text-xs px-2" onClick={() => handleBanToggle(player)} title={player.isBanned ? t("unban") : t("ban")}>
             <Ban className="w-4 h-4" />
           </Button>
         </div>
@@ -531,7 +534,7 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
         {}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center mb-2">
-            <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wider text-primary">Inventario Táctico</h4>
+            <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wider text-primary">{t("tacticalInventory")}</h4>
             <div className="flex gap-2">
               <span className="text-xs font-bold text-red-500 flex items-center gap-1"><Heart className="w-3 h-3 fill-current"/> {Math.round(player.health)}</span>
               <span className="text-xs font-bold text-amber-500 flex items-center gap-1"><Activity className="w-3 h-3"/> {Math.round(player.food)}</span>
@@ -689,38 +692,38 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
           
           {/* Quick Actions */}
           <div>
-            <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2">Acciones Rápidas</h4>
+            <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2">{t("quickActions")}</h4>
             <div className="grid grid-cols-2 gap-2">
               <Button onClick={handleHeal} className="bg-red-500/10 text-red-500 border-2 border-red-500 hover:bg-red-500 hover:text-white h-9 text-xs">
-                <PlusSquare className="w-4 h-4 mr-1" /> Curar
+                <PlusSquare className="w-4 h-4 mr-1" /> {t("heal")}
               </Button>
               <Button onClick={handleKill} className="bg-foreground/10 text-foreground border-2 border-foreground hover:bg-foreground hover:text-background h-9 text-xs">
-                <Skull className="w-4 h-4 mr-1" /> Matar
+                <Skull className="w-4 h-4 mr-1" /> {t("kill")}
               </Button>
               <Button onClick={() => setIsTpModalOpen(true)} className="col-span-2 bg-primary/10 text-primary border-2 border-primary hover:bg-primary hover:text-primary-foreground h-9 text-xs">
-                <Navigation className="w-4 h-4 mr-1" /> Teletransportar (TP)
+                <Navigation className="w-4 h-4 mr-1" /> {t("teleport")}
               </Button>
             </div>
           </div>
 
           {/* Player Stats Details */}
           <div>
-            <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2">Estadísticas y Ubicación</h4>
+            <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2">{t("statsAndLocation")}</h4>
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center text-sm p-2 bg-surface rounded-blocky border-2 border-surface-border">
-                <span className="text-foreground/70 flex items-center gap-2"><MapPin className="w-4 h-4" /> Dimensión</span>
+                <span className="text-foreground/70 flex items-center gap-2"><MapPin className="w-4 h-4" /> {t("dimension")}</span>
                 <span className="font-bold capitalize truncate max-w-[150px]">{player.dimension?.replace('minecraft:', '').replace(/_/g, ' ') || 'overworld'}</span>
               </div>
               <div className="flex justify-between items-center text-sm p-2 bg-surface rounded-blocky border-2 border-surface-border">
-                <span className="text-foreground/70 flex items-center gap-2"><Navigation className="w-4 h-4" /> Coordenadas</span>
+                <span className="text-foreground/70 flex items-center gap-2"><Navigation className="w-4 h-4" /> {t("coordinates")}</span>
                 <span className="font-bold font-mono text-primary">{player.pos ? `${player.pos[0]}, ${player.pos[1]}, ${player.pos[2]}` : '0, 0, 0'}</span>
               </div>
               <div className="flex justify-between items-center text-sm p-2 bg-surface rounded-blocky border-2 border-surface-border">
-                <span className="text-foreground/70 flex items-center gap-2"><Clock className="w-4 h-4" /> Tiempo Jugado</span>
+                <span className="text-foreground/70 flex items-center gap-2"><Clock className="w-4 h-4" /> {t("playTime")}</span>
                 <span className="font-bold">{formatTicksToTime(player.stats?.playTime || 0)}</span>
               </div>
               <div className="flex justify-between items-center text-sm p-2 bg-surface rounded-blocky border-2 border-surface-border">
-                <span className="text-foreground/70 flex items-center gap-2"><Skull className="w-4 h-4 text-red-500" /> Muertes</span>
+                <span className="text-foreground/70 flex items-center gap-2"><Skull className="w-4 h-4 text-red-500" /> {t("deaths")}</span>
                 <span className="font-bold text-red-500">{player.stats?.deaths || 0}</span>
               </div>
             </div>
@@ -735,7 +738,7 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
             <div className="p-4 border-b-2 border-surface-border flex justify-between items-center bg-background/50">
               <h3 className="font-black text-lg text-primary flex items-center gap-2">
                 <Navigation className="w-5 h-5" />
-                Coordenadas Tácticas
+                {t("tacticalCoordinates")}
               </h3>
               <button onClick={() => setIsTpModalOpen(false)} className="text-foreground/50 hover:text-danger transition-colors">
                 <X className="w-5 h-5" />
@@ -744,20 +747,20 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
             
             <div className="p-5 flex flex-col gap-4">
               <div>
-                <label className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2 block">Dimensión Destino</label>
+                <label className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2 block">{t("targetDimension")}</label>
                 <select 
                   value={tpDimension} 
                   onChange={e => setTpDimension(e.target.value)}
                   className="w-full bg-background border-2 border-surface-border rounded-blocky px-3 py-2 font-bold outline-none focus:border-primary appearance-none"
                 >
-                  <option value="minecraft:overworld">Overworld (Mundo Normal)</option>
-                  <option value="minecraft:the_nether">The Nether (Inframundo)</option>
-                  <option value="minecraft:the_end">The End (El Fin)</option>
+                  <option value="minecraft:overworld">{t("overworld")}</option>
+                  <option value="minecraft:the_nether">{t("nether")}</option>
+                  <option value="minecraft:the_end">{t("end")}</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2 block">Vectores XYZ</label>
+                <label className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2 block">{t("xyzVectors")}</label>
                 <div className="grid grid-cols-3 gap-2">
                   <input type="number" placeholder="X" value={tpCoords.x} onChange={e => setTpCoords({...tpCoords, x: e.target.value})} className="bg-background border-2 border-surface-border rounded-blocky px-3 py-2 font-bold outline-none focus:border-primary text-center w-full" />
                   <input type="number" placeholder="Y" value={tpCoords.y} onChange={e => setTpCoords({...tpCoords, y: e.target.value})} className="bg-background border-2 border-surface-border rounded-blocky px-3 py-2 font-bold outline-none focus:border-primary text-center w-full" />
@@ -766,7 +769,7 @@ function PlayerCard({ player, handleKick, handleOpToggle, handleBanToggle, handl
               </div>
 
               <Button onClick={handleTp} disabled={!tpCoords.x || !tpCoords.y || !tpCoords.z} className="w-full mt-2 h-10">
-                Iniciar Secuencia de Salto
+                {t("startJumpSequence")}
               </Button>
             </div>
           </div>

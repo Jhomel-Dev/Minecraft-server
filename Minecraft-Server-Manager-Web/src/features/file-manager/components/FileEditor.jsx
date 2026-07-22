@@ -95,6 +95,7 @@ function EditorHeader({ filePath, content, originalContent, saving, errorMsg, on
       </div>
       
       <Button 
+        data-cy="file-editor-save-btn"
         onClick={onSave} 
         disabled={saving || errorMsg !== null || content === originalContent} 
         className="font-bold w-full md:w-auto shrink-0"
@@ -167,7 +168,7 @@ function LoadingState() {
   return (
     <div className="flex flex-col items-center justify-center p-8 sm:p-12 h-48 sm:h-64 bg-surface border-2 border-surface-border rounded-blocky shadow-sm w-full">
       <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 animate-spin text-primary mb-4" />
-      <p className="text-foreground/70 font-bold text-sm sm:text-base">Leyendo archivo...</p>
+      <p data-cy="file-editor-loading-text" className="text-foreground/70 font-bold text-sm sm:text-base">Leyendo archivo...</p>
     </div>
   );
 }

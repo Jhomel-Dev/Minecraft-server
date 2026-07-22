@@ -14,7 +14,7 @@ export function SidebarItem({ href, icon, label, exact = false, onClick }) {
     : "text-foreground hover:bg-surface-hover border-2 border-transparent";
 
   return (
-    <Link href={href} className={`${baseClasses} ${activeClasses}`} onClick={onClick}>
+    <Link data-cy={`sidebar-${label.toLowerCase().replace(/\s+/g, '-')}`} href={href} className={`${baseClasses} ${activeClasses}`} onClick={onClick}>
       {icon}
       <span>{label}</span>
     </Link>
