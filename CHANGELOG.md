@@ -1,3 +1,10 @@
+## [2.7.2](https://github.com/Jhomel-Dev/Minecraft-server/compare/v2.7.1...v2.7.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* **ci:** trigger agent build on semantic-release completion and dynamically fetch tag ([dc4790b](https://github.com/Jhomel-Dev/Minecraft-server/commit/dc4790b905e8d74d96bd0a8606d19a8ea50111d7))
+
 ## [2.7.1](https://github.com/Jhomel-Dev/Minecraft-server/compare/v2.7.0...v2.7.1) (2026-07-22)
 
 
