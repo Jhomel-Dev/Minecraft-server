@@ -1,6 +1,6 @@
 {
   "name": "minecraft-server",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "<div align=\"center\">   <h1>CraftControl</h1>   <p>A highly automated, zero-friction web control panel and local agent for deploying and managing Minecraft servers.</p>",
   "main": "index.js",
   "scripts": {
