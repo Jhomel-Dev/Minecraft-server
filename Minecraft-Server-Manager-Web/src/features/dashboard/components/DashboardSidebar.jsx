@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getMyServers } from "@/features/servers/services/serverApi";
 import { useUIStore } from "@/core/store/uiStore";
+import { useTranslations } from "next-intl";
 
 export function DashboardSidebar() {
   const params = useParams();
@@ -13,6 +14,7 @@ export function DashboardSidebar() {
   const [serverType, setServerType] = useState(null);
   const isSidebarOpen = useUIStore(state => state.isSidebarOpen);
   const closeSidebar = useUIStore(state => state.closeSidebar);
+  const t = useTranslations("Sidebar");
 
   useEffect(() => {
     if (serverId === "unknown") return;
@@ -46,7 +48,7 @@ export function DashboardSidebar() {
       >
         <div className="p-4 border-b-2 border-surface-border flex justify-between items-center">
           <Link href="/servers" className="flex items-center gap-2 text-foreground/70 hover:text-primary transition-colors font-bold text-sm">
-            <ArrowLeft className="w-4 h-4" /> Volver
+            <ArrowLeft className="w-4 h-4" /> {t('back')}
           </Link>
           <button 
             onClick={handleClose}
@@ -60,26 +62,26 @@ export function DashboardSidebar() {
           <SidebarItem 
             href={`/server/${serverId}`} 
             icon={<Server className="w-5 h-5" />} 
-            label="Servidor" 
+            label={t('server')} 
             exact={true}
             onClick={handleClose}
           />
           <SidebarItem 
             href={`/server/${serverId}/options`} 
             icon={<Settings className="w-5 h-5" />} 
-            label="Opciones" 
+            label={t('options')} 
             onClick={handleClose}
           />
           <SidebarItem 
             href={`/server/${serverId}/console`} 
             icon={<Server className="w-5 h-5" />} 
-            label="Consola" 
+            label={t('console')} 
             onClick={handleClose}
           />
           <SidebarItem 
             href={`/server/${serverId}/players`} 
             icon={<Users className="w-5 h-5" />} 
-            label="Jugadores" 
+            label={t('players')} 
             onClick={handleClose}
           />
           
@@ -88,13 +90,13 @@ export function DashboardSidebar() {
               <SidebarItem 
                 href={`/server/${serverId}/plugins`} 
                 icon={<Package className="w-5 h-5" />} 
-                label="Plugins" 
+                label={t('plugins')} 
                 onClick={handleClose}
               />
               <SidebarItem 
                 href={`/server/${serverId}/mods`} 
                 icon={<Package className="w-5 h-5" />} 
-                label="Mods" 
+                label={t('mods')} 
                 onClick={handleClose}
               />
             </>
@@ -103,22 +105,23 @@ export function DashboardSidebar() {
           <SidebarItem 
             href={`/server/${serverId}/files`} 
             icon={<FolderOpen className="w-5 h-5" />} 
-            label="Archivos" 
+            label={t('files')} 
             onClick={handleClose}
           />
           <SidebarItem 
             href={`/server/${serverId}/backups`} 
             icon={<Save className="w-5 h-5" />} 
-            label="Respaldos" 
+            label={t('backups')} 
             onClick={handleClose}
           />
           <SidebarItem 
             href={`/server/${serverId}/network`} 
             icon={<Globe className="w-5 h-5" />} 
-            label="Red y Dominios" 
+            label={t('network')} 
             onClick={handleClose}
           />
         </nav>
+
       </aside>
     </>
   );

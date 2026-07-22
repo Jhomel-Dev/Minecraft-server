@@ -1,9 +1,13 @@
 import { Button } from "@/shared/ui/Button";
 import { ThemeToggle } from "@/shared/theme/ThemeToggle";
+import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
 import { Pickaxe, Server, Settings, Shield } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function LandingPage() {
+  const t = useTranslations("Landing");
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 relative overflow-hidden">
       {}
@@ -16,12 +20,13 @@ export default function LandingPage() {
           <span>CraftControl</span>
         </div>
         <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           <ThemeToggle />
           <Link href="/login">
-            <Button variant="outline">Sign In</Button>
+            <Button variant="outline">{t('signIn')}</Button>
           </Link>
           <Link href="/register">
-            <Button variant="primary">Get Started</Button>
+            <Button variant="primary">{t('getStarted')}</Button>
           </Link>
         </div>
       </header>
@@ -30,26 +35,26 @@ export default function LandingPage() {
       <div className="text-center max-w-3xl flex flex-col gap-6 items-center z-10 mt-20">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-border text-sm font-semibold mb-4">
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          V2.0 is now live with Zero-Copy Linux Architecture
+          {t('versionLive')}
         </div>
         
         <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-balance">
-          Manage your Minecraft Servers <span className="text-primary">like a Pro.</span>
+          {t('titleMain')} <span className="text-primary">{t('titleHighlight')}</span>
         </h1>
         
         <p className="text-lg md:text-xl text-foreground/80 text-balance max-w-2xl">
-          Deploy, monitor, and configure your Paper, Fabric or Vanilla servers in seconds. All wrapped in a gorgeous blocky interface.
+          {t('subtitle')}
         </p>
 
         <div className="flex flex-wrap gap-4 mt-4 justify-center">
           <Link href="/register">
             <Button variant="primary" className="h-12 px-8 text-lg">
-              Start your Adventure
+              {t('startAdventure')}
             </Button>
           </Link>
           <Link href="/login">
             <Button variant="secondary" className="h-12 px-8 text-lg">
-              Open Dashboard
+              {t('openDashboard')}
             </Button>
           </Link>
         </div>
@@ -59,18 +64,18 @@ export default function LandingPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mt-24 z-10">
         <FeatureCard 
           icon={<Server className="w-8 h-8 text-primary" />}
-          title="Zero-Copy Deployments"
-          description="Save gigabytes of storage by sharing a single JAR across all your network servers instantly."
+          title={t('feature1Title')}
+          description={t('feature1Desc')}
         />
         <FeatureCard 
           icon={<Settings className="w-8 h-8 text-secondary" />}
-          title="Live Console & File Manager"
-          description="Interact with your server console in real-time and edit configuration files directly from your browser."
+          title={t('feature2Title')}
+          description={t('feature2Desc')}
         />
         <FeatureCard 
           icon={<Shield className="w-8 h-8 text-danger" />}
-          title="Secure by Design"
-          description="Integrated Google OAuth, JWT sessions, and strict path traversal prevention out of the box."
+          title={t('feature3Title')}
+          description={t('feature3Desc')}
         />
       </div>
     </main>

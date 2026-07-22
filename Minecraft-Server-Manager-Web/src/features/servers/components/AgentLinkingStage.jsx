@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/shared/ui/Button";
 import { Laptop, Copy, Check, Loader2, ArrowRight } from "lucide-react";
 import { useToast } from "@/shared/ui/ToastProvider";
@@ -31,6 +32,7 @@ const claimPinApi = async (pin) => {
 };
 
 export function AgentLinkingStage({ onLinked }) {
+  const t = useTranslations("AgentLinkingStage");
   const [copiedId, setCopiedId] = useState(null);
   const [pin, setPin] = useState(["", "", "", "", "", ""]);
   const [isClaiming, setIsClaiming] = useState(false);
@@ -63,7 +65,7 @@ export function AgentLinkingStage({ onLinked }) {
   const copyToClipboard = (textToCopy, id) => {
     navigator.clipboard.writeText(textToCopy);
     setCopiedId(id);
-    toast("¡Comando copiado!", "success");
+    toast(t("commandCopied"), "success");
     setTimeout(() => setCopiedId(null), 3000);
   };
 
@@ -73,7 +75,7 @@ export function AgentLinkingStage({ onLinked }) {
     try {
       await claimPinApi(fullPin);
       setSuccess(true);
-      toast("¡Máquina vinculada exitosamente!", "success");
+      toast(t("machineLinkedSuccess"), "success");
       setTimeout(() => onLinked(), 2000);
     } catch (error) {
       toast(error.message, "error");
@@ -132,11 +134,11 @@ export function AgentLinkingStage({ onLinked }) {
         <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/20 text-primary rounded-full mb-6 border-4 border-primary/30 shadow-[0_0_40px_rgba(var(--primary-rgb),0.3)]">
           <Laptop className="w-10 h-10" />
         </div>
-        <h1 className="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-primary to-red-400 bg-clip-text text-transparent">
-          Prepara tu Máquina
+        <h1 data-cy="agent-prepare-title" className="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-primary to-red-400 bg-clip-text text-transparent">
+          {t("title")}
         </h1>
         <p className="text-foreground/70 text-lg max-w-2xl mx-auto">
-          Para poder crear servidores de Minecraft, primero necesitamos conectar tu computadora a la red de CraftControl de forma segura.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -147,10 +149,10 @@ export function AgentLinkingStage({ onLinked }) {
           
           <h3 className="font-bold text-xl mb-6 flex items-center gap-3">
             <span className="bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center text-sm font-black shadow-lg">1</span> 
-            Instala el Agente Inteligente
+            {t("step1Title")}
           </h3>
           <p className="text-sm text-foreground/70 mb-6">
-            Abre la terminal en la PC que alojará los servidores y ejecuta el siguiente comando para instalar nuestro demonio nativo silencioso:
+            {t("step1Desc")}
           </p>
           
           <div className="space-y-4 mt-auto">
@@ -163,8 +165,8 @@ export function AgentLinkingStage({ onLinked }) {
                   <Laptop className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-foreground">Descargar para Windows</p>
-                  <p className="text-xs text-foreground/50">Instalador Rápido (.exe)</p>
+                  <p className="font-bold text-foreground">{t("downloadWinTitle")}</p>
+                  <p className="text-xs text-foreground/50">{t("downloadWinSub")}</p>
                 </div>
               </div>
               <ArrowRight className="w-5 h-5 text-primary/50 group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -179,8 +181,8 @@ export function AgentLinkingStage({ onLinked }) {
                   <Laptop className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-foreground">Descargar para Linux</p>
-                  <p className="text-xs text-foreground/50">AppImage (Escritorio)</p>
+                  <p className="font-bold text-foreground">{t("downloadLinuxTitle")}</p>
+                  <p className="text-xs text-foreground/50">{t("downloadLinuxSub")}</p>
                 </div>
               </div>
               <ArrowRight className="w-5 h-5 text-red-500/50 group-hover:text-red-500 group-hover:translate-x-1 transition-all" />
@@ -194,10 +196,10 @@ export function AgentLinkingStage({ onLinked }) {
           
           <h3 className="font-bold text-xl mb-6 flex items-center gap-3">
             <span className="bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center text-sm font-black shadow-lg">2</span> 
-            Sincroniza el Nódulo
+            {t("step2Title")}
           </h3>
           <p className="text-sm text-foreground/70 mb-8">
-            Al ejecutarse el comando, la terminal te mostrará un código de 6 dígitos para verificar tu identidad. Escríbelo aquí para enlazar la máquina a tu cuenta:
+            {t("step2Desc")}
           </p>
           
           <div className="flex-1 flex flex-col items-center justify-center mt-auto bg-background/50 rounded-blocky border-2 border-dashed border-surface-border p-8 relative">
@@ -206,9 +208,9 @@ export function AgentLinkingStage({ onLinked }) {
                 <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
                   <Check className="w-10 h-10" />
                 </div>
-                <h3 className="font-black text-2xl">¡Máquina Vinculada!</h3>
+                <h3 data-cy="agent-linked-success-msg" className="font-black text-2xl">{t("machineLinkedTitle")}</h3>
                 <p className="text-sm text-green-500/70 mt-2 font-bold flex items-center gap-2">
-                  Redirigiendo <Loader2 className="w-4 h-4 animate-spin" />
+                  {t("redirecting")} <Loader2 className="w-4 h-4 animate-spin" />
                 </p>
               </div>
             ) : (
@@ -216,6 +218,7 @@ export function AgentLinkingStage({ onLinked }) {
                 {pin.map((digit, i) => (
                   <input
                     key={i}
+                    data-cy={`agent-pin-input-${i}`}
                     ref={el => inputRefs.current[i] = el}
                     type="text"
                     maxLength={1}
@@ -232,7 +235,7 @@ export function AgentLinkingStage({ onLinked }) {
             {isClaiming && !success && (
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 text-primary whitespace-nowrap">
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="font-bold text-sm">Estableciendo conexión segura...</span>
+                <span className="font-bold text-sm">{t("connectingSecurely")}</span>
               </div>
             )}
           </div>

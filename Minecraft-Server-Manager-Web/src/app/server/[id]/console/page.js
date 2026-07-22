@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, use } from "react";
+import { useTranslations } from "next-intl";
 import { useServerConsole } from "@/features/servers/hooks/useServerConsole";
 import { useServerControl } from "@/features/servers/hooks/useServerControl";
 import { ConsoleOutput } from "@/features/servers/components/ConsoleOutput";
@@ -41,6 +42,7 @@ export default function ServerConsolePage({ params }) {
 }
 
 function ConsoleHeader({ server, serverId, onStart, onStop, onRestart }) {
+  const t = useTranslations("ServerConsole");
   const isOnline = server?.status === 'ONLINE';
   const isOffline = server?.status === 'OFFLINE' || !server;
   const isTransitioning = server?.status === 'STARTING' || server?.status === 'STOPPING';
@@ -52,9 +54,9 @@ function ConsoleHeader({ server, serverId, onStart, onStop, onRestart }) {
           <Server className="w-6 h-6 sm:w-8 sm:h-8" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-3xl font-black truncate">{server ? server.name : 'Cargando...'}</h1>
+          <h1 className="text-xl sm:text-3xl font-black truncate">{server ? server.name : t('loading')}</h1>
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-            <span className="text-foreground/70 font-semibold text-xs sm:text-sm">Panel de Control Principal</span>
+            <span className="text-foreground/70 font-semibold text-xs sm:text-sm">{t('mainControlPanel')}</span>
             <span className="text-foreground/30 font-mono text-xs sm:text-sm hidden sm:inline">•</span>
             <span className="text-foreground/30 font-mono text-xs truncate max-w-[150px] sm:max-w-none">{serverId}</span>
           </div>
@@ -62,14 +64,14 @@ function ConsoleHeader({ server, serverId, onStart, onStop, onRestart }) {
       </div>
       
       <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-        <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 flex-1 sm:flex-none" onClick={onStart} disabled={isOnline || isTransitioning}>
-          <Play className="w-4 h-4 mr-1 sm:mr-2 inline-block" /> <span className="hidden sm:inline">Iniciar</span>
+        <Button data-cy="console-start-btn" variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 flex-1 sm:flex-none" onClick={onStart} disabled={isOnline || isTransitioning}>
+          <Play className="w-4 h-4 mr-1 sm:mr-2 inline-block" /> <span className="hidden sm:inline">{t('start')}</span>
         </Button>
-        <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 flex-1 sm:flex-none" onClick={onStop} disabled={isOffline || isTransitioning}>
-          <Square className="w-4 h-4 mr-1 sm:mr-2 inline-block" /> <span className="hidden sm:inline">Detener</span>
+        <Button data-cy="console-stop-btn" variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 flex-1 sm:flex-none" onClick={onStop} disabled={isOffline || isTransitioning}>
+          <Square className="w-4 h-4 mr-1 sm:mr-2 inline-block" /> <span className="hidden sm:inline">{t('stop')}</span>
         </Button>
         <Button variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 flex-1 sm:flex-none" onClick={onRestart} disabled={isOffline || isTransitioning}>
-          <RotateCw className="w-4 h-4 mr-1 sm:mr-2 inline-block" /> <span className="hidden sm:inline">Reiniciar</span>
+          <RotateCw className="w-4 h-4 mr-1 sm:mr-2 inline-block" /> <span className="hidden sm:inline">{t('restart')}</span>
         </Button>
 
         <StatusBadge status={server?.status} />
@@ -79,15 +81,16 @@ function ConsoleHeader({ server, serverId, onStart, onStop, onRestart }) {
 }
 
 function StatusBadge({ status }) {
+  const t = useTranslations("ServerConsole");
   const isOnline = status === 'ONLINE';
-  const label = isOnline ? 'Encendido' : 
-                status === 'STARTING' ? 'Iniciando...' :
-                status === 'STOPPING' ? 'Deteniendo...' : 'Apagado';
+  const label = isOnline ? t('statusOnline') : 
+                status === 'STARTING' ? t('statusStarting') :
+                status === 'STOPPING' ? t('statusStopping') : t('statusOffline');
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-background rounded-blocky border-2 border-surface-border w-full sm:w-auto justify-center mt-2 sm:mt-0">
       <Activity className={`w-4 h-4 sm:w-5 sm:h-5 ${isOnline ? "text-primary animate-pulse" : "text-danger"}`} />
-      <span className="font-bold text-xs sm:text-sm">{label}</span>
+      <span data-cy="console-server-status" className="font-bold text-xs sm:text-sm">{label}</span>
     </div>
   );
 }
