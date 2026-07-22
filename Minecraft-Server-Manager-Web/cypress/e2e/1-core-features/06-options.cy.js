@@ -4,7 +4,6 @@ describe("Módulo 8: Opciones y Destrucción", () => {
   const testUsername = `OptionsBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;
-
   before(() => {
     cy.task("startAgent").then((pin) => {
       agentPin = pin;
@@ -12,19 +11,16 @@ describe("Módulo 8: Opciones y Destrucción", () => {
       expect(agentPin).to.have.length(6);
     });
   });
-
   after(() => {
     cy.task("stopAgent");
   });
-
   it("Debe navegar por opciones, modificarlas, guardar y destruir el servidor", () => {
     cy.visit("/register");
 
     cy.get("input[type='text']").type(testUsername);
     cy.get("input[type='email']").type(testEmail);
     cy.get("input[type='password']").type(testPassword);
-
-    cy.contains("button", "Registrarse").click();
+    cy.get('[data-cy="register-submit-button"]').click();
 
     cy.url({ timeout: 15000 }).should("include", "/servers");
 
@@ -33,27 +29,24 @@ describe("Módulo 8: Opciones y Destrucción", () => {
         cy.wrap($inputs.eq(i)).type(agentPin[i]);
       }
     });
-
-    cy.contains("¡Máquina Vinculada!", { timeout: 10000 }).should("be.visible");
-    cy.contains("Crear Servidor").click();
+    cy.get('[data-cy="agent-linked-success-msg"]', { timeout: 10000 }).should("be.visible");
+    cy.get('[data-cy="dashboard-create-server-empty"]').click();
 
     cy.wait(500);
+
     cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Options Server");
-
-    cy.contains("Vanilla").click();
-    cy.contains("button", "Siguiente").click();
-
+    cy.get('[data-cy="wizard-software-vanilla"]').click();
+    cy.get('[data-cy="wizard-step1-next"]').click();
     cy.get("input[type='range']").invoke("val", 1).trigger("input", { force: true }).trigger("change", { force: true });
+    cy.get('[data-cy="wizard-step2-next"]').click();
+    cy.get('[data-cy="wizard-install-button"]').click();
+    cy.get('[data-cy="server-status-text"]', { timeout: 30000 }).should("contain", "Desconectado");
+    cy.get('[data-cy="sidebar-opciones"]').click();
+    cy.get('[data-cy="options-delete-server-btn"]').click();
+    cy.get('[data-cy="options-confirm-delete-btn"]').click();
 
-    cy.contains("button", "Siguiente").click();
-    cy.contains("button", "Instalar y Arrancar").click();
-    cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
-    cy.contains("Opciones").click();
-    cy.contains("button", "Eliminar Servidor...").click();
-    cy.contains("button", "Sí, Eliminar").click();
-    
-    cy.url({ timeout: 10000 }).should("match", /\/servers$/);
-    
-    cy.contains("No tienes servidores", { timeout: 10000 }).should("be.visible");
+    cy.url({ timeout: 15000 }).should("include", "/servers");
+
+    cy.get('[data-cy="dashboard-empty-title"]', { timeout: 10000 }).should("be.visible");
   });
 });

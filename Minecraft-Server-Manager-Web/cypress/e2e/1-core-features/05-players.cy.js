@@ -4,28 +4,23 @@ describe("Módulo 7: Gestión de Jugadores", () => {
   const testUsername = `PlayersBot_${uniqueSuffix}`;
   const testPassword = "StrongPassword123!";
   let agentPin;
-
   before(() => {
     cy.task("startAgent").then((pin) => {
       agentPin = pin;
-      
       expect(agentPin).to.be.a("string");
       expect(agentPin).to.have.length(6);
     });
   });
-
   after(() => {
     cy.task("stopAgent");
   });
-
   it("Debe navegar e interactuar con la gestión de jugadores", () => {
     cy.visit("/register");
 
     cy.get("input[type='text']").type(testUsername);
     cy.get("input[type='email']").type(testEmail);
     cy.get("input[type='password']").type(testPassword);
-
-    cy.contains("button", "Registrarse").click();
+    cy.get('[data-cy="register-submit-button"]').click();
 
     cy.url({ timeout: 15000 }).should("include", "/servers");
 
@@ -34,26 +29,20 @@ describe("Módulo 7: Gestión de Jugadores", () => {
         cy.wrap($inputs.eq(i)).type(agentPin[i]);
       }
     });
-
-    cy.contains("¡Máquina Vinculada!", { timeout: 10000 }).should("be.visible");
-    cy.contains("Crear Servidor").click();
+    cy.get('[data-cy="agent-linked-success-msg"]', { timeout: 10000 }).should("be.visible");
+    cy.get('[data-cy="dashboard-create-server-empty"]').click();
 
     cy.wait(500);
+
     cy.get("input[placeholder*='Ej. Mi Servidor Extremo']").type("Cypress Players Server");
-
-    cy.contains("Vanilla").click();
-    cy.contains("button", "Siguiente").click();
-
+    cy.get('[data-cy="wizard-software-vanilla"]').click();
+    cy.get('[data-cy="wizard-step1-next"]').click();
     cy.get("input[type='range']").invoke("val", 1).trigger("input", { force: true }).trigger("change", { force: true });
-
-    cy.contains("button", "Siguiente").click();
-    cy.contains("button", "Instalar y Arrancar").click();
-    cy.contains("Desconectado", { timeout: 15000 }).should("be.visible");
-    cy.contains("Jugadores").click();
-    
-    // In the new UI, there are no tabs for Ops/Bans. We just check if the empty state is displayed
-    // and if the refresh button works.
-    cy.contains("No hay jugadores registrados", { timeout: 10000 }).should("be.visible");
-    cy.contains("Actualizar").should("be.visible").click();
+    cy.get('[data-cy="wizard-step2-next"]').click();
+    cy.get('[data-cy="wizard-install-button"]').click();
+    cy.get('[data-cy="server-status-text"]', { timeout: 15000 }).should("contain", "Desconectado");
+    cy.get('[data-cy="sidebar-jugadores"]').click();
+    cy.get('[data-cy="players-empty-title"]', { timeout: 10000 }).should("be.visible");
+    cy.get('[data-cy="players-refresh-btn"]').should("be.visible").click();
   });
 });
