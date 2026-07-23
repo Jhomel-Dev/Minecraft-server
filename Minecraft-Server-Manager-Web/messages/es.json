@@ -56,6 +56,7 @@
     "subtitle": "Administra tu red de Minecraft",
     "linkPc": "Vincular PC",
     "agentConnected": "Agente Conectado",
+    "agentDisconnected": "Agente Desconectado",
     "wakeUp": "Despertar",
     "hibernate": "Hibernar",
     "unlink": "Desvincular",
