@@ -1,3 +1,11 @@
+## [2.7.3](https://github.com/Jhomel-Dev/Minecraft-server/compare/v2.7.2...v2.7.3) (2026-07-23)
+
+
+### Bug Fixes
+
+* **core:** sync agent socket disconnection state and patch legacy vbs encoding ([f2253ba](https://github.com/Jhomel-Dev/Minecraft-server/commit/f2253ba29b6cce3649f68d788f7c2d8f55f16072))
+* corregir salto de linea en className ([e0376bf](https://github.com/Jhomel-Dev/Minecraft-server/commit/e0376bf01734782427a1b43ff46638e78d9c9fd9))
+
 ## [2.7.2](https://github.com/Jhomel-Dev/Minecraft-server/compare/v2.7.1...v2.7.2) (2026-07-22)
 
 
