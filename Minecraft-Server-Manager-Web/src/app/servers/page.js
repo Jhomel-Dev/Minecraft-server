@@ -138,8 +138,12 @@ function Header({ hideLinkButton, isLinked, agentStatus, onStatusChange, onUnlin
           )}
           {!hideLinkButton && isLinked && (
             <div className="relative">
-              <Button variant="outline" className="w-full sm:w-auto border-green-500 text-green-500 hover:bg-green-500/10" onClick={() => setShowDropdown(!showDropdown)}>
-                <HardDrive className="w-5 h-5 mr-2 inline-block" /> Agente Conectado
+              <Button 
+                variant="outline" 
+                className={`w-full sm:w-auto transition-colors ${agentStatus === 'OFFLINE' ? 'border-red-500 text-red-500 hover:bg-red-500/10' : 'border-green-500 text-green-500 hover:bg-green-500/10'}`} 
+                onClick={() => setShowDropdown(!showDropdown)}
+              >
+                <HardDrive className="w-5 h-5 mr-2 inline-block" /> {agentStatus === 'OFFLINE' ? 'Agente Desconectado' : 'Agente Conectado'}
               </Button>
               {showDropdown && (
                 <>
