@@ -10,13 +10,13 @@ export const globalErrorHandler = (err, req, res, next) => {
     }
 
     if (err.code === 'P2002') {
-        return res.status(409).json({ success: false, error: 'Registro duplicado' });
+        return res.status(409).json({ success: false, error: 'Duplicate record' });
     }
 
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
-        return res.status(401).json({ success: false, error: 'Token inválido o expirado' });
+        return res.status(401).json({ success: false, error: 'Invalid or expired token' });
     }
 
     console.error(err);
-    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    return res.status(500).json({ success: false, error: 'Internal server error' });
 };

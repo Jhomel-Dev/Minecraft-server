@@ -8,8 +8,10 @@ import { LinkPcModal } from "@/features/servers/components/LinkPcModal";
 import { AgentLinkingStage } from "@/features/servers/components/AgentLinkingStage";
 import { getAgentStatus, unlinkAgentReq, hibernateAgentReq, wakeAgentReq } from "@/features/auth/services/api";
 import { useToast } from "@/shared/ui/ToastProvider";
+import { useTranslations } from "next-intl";
 
 export default function DashboardHome() {
+  const t = useTranslations("ServersPage");
   const { servers, serverSizes, loading, formatSize } = useServers();
   const [isAgentLinked, setIsAgentLinked] = useState(null);
   const [agentStatus, setAgentStatus] = useState('OFFLINE');
@@ -42,7 +44,7 @@ export default function DashboardHome() {
     return (
       <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in h-full">
         <Header hideLinkButton />
-        <p className="text-center text-foreground/50 font-bold mt-10">Cargando datos...</p>
+        <p className="text-center text-foreground/50 font-bold mt-10">{t("loadingData")}</p>
       </div>
     );
   }
@@ -52,8 +54,8 @@ export default function DashboardHome() {
       <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col gap-6 items-center justify-center h-full animate-in fade-in zoom-in">
         <div className="bg-surface p-10 rounded-blocky border-2 border-primary shadow-xl text-center">
           <Unplug className="w-16 h-16 text-primary mx-auto mb-4 animate-bounce" />
-          <h2 className="text-2xl font-bold text-foreground">Agente Desvinculado</h2>
-          <p className="text-foreground/70 mt-2">El motor de sincronización ha sido desvinculado a través de la interfaz local.</p>
+          <h2 className="text-2xl font-bold text-foreground">{t("agentUnlinkedTitle")}</h2>
+          <p className="text-foreground/70 mt-2">{t("agentUnlinkedMessage")}</p>
         </div>
       </div>
     );
@@ -88,6 +90,7 @@ export default function DashboardHome() {
 }
 
 function Header({ hideLinkButton, isLinked, agentStatus, onStatusChange, onUnlinked }) {
+  const t = useTranslations("ServersPage");
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const { toast } = useToast();
@@ -100,10 +103,10 @@ function Header({ hideLinkButton, isLinked, agentStatus, onStatusChange, onUnlin
     try {
       setShowDropdown(false);
       await unlinkAgentReq();
-      toast("Agente desvinculado con éxito", "success");
+      toast(t("agentUnlinkedSuccess"), "success");
       if (onUnlinked) onUnlinked();
     } catch (e) {
-      toast("Error al desvincular el agente", "error");
+      toast(t("agentUnlinkError"), "error");
     }
   };
 
@@ -112,14 +115,14 @@ function Header({ hideLinkButton, isLinked, agentStatus, onStatusChange, onUnlin
       setShowDropdown(false);
       if (agentStatus === 'HIBERNATING') {
         await wakeAgentReq();
-        toast("Agente despertando...", "success");
+        toast(t("agentWaking"), "success");
       } else {
         await hibernateAgentReq();
-        toast("Agente hibernando...", "success");
+        toast(t("agentHibernating"), "success");
       }
       if (onStatusChange) setTimeout(onStatusChange, 1000);
     } catch (e) {
-      toast("Error al cambiar estado", "error");
+      toast(t("statusChangeError"), "error");
     }
   };
 
@@ -127,43 +130,49 @@ function Header({ hideLinkButton, isLinked, agentStatus, onStatusChange, onUnlin
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-surface p-6 rounded-blocky border-2 border-surface-border shadow-sm gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black">Mis Servidores</h1>
-          <p className="text-foreground/70 font-semibold text-sm sm:text-base">Administra tu red de Minecraft</p>
+          <h1 className="text-2xl sm:text-3xl font-black">{t("title")}</h1>
+          <p className="text-foreground/70 font-semibold text-sm sm:text-base">{t("subtitle")}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           {!hideLinkButton && !isLinked && (
-            <Button variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10" onClick={handleLinkPc}>
-              <HardDrive className="w-5 h-5 mr-2 inline-block" /> Vincular PC
+            <Button data-cy="dashboard-link-pc-button" variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10" onClick={handleLinkPc}>
+              <HardDrive className="w-5 h-5 mr-2 inline-block" /> {t("linkPc")}
             </Button>
           )}
           {!hideLinkButton && isLinked && (
             <div className="relative">
-              <Button 
-                variant="outline" 
-                className={`w-full sm:w-auto transition-colors ${agentStatus === 'OFFLINE' ? 'border-red-500 text-red-500 hover:bg-red-500/10' : 'border-green-500 text-green-500 hover:bg-green-500/10'}`} 
-                onClick={() => setShowDropdown(!showDropdown)}
-              >
-                <HardDrive className="w-5 h-5 mr-2 inline-block" /> {agentStatus === 'OFFLINE' ? 'Agente Desconectado' : 'Agente Conectado'}
-              </Button>
+
+                  <Button 
+                    data-cy={agentStatus === 'OFFLINE' ? 'agent-disconnected-btn' : 'agent-connected-btn'}
+                    variant="outline" 
+                    className={`w-full sm:w-auto transition-colors ${agentStatus === 'OFFLINE' ? 'border-red-500 text-red-500 hover:bg-red-500/10' : 'border-green-500 text-green-500 hover:bg-green-
+  500/10'}`} 
+                    onClick={() => setShowDropdown(!showDropdown)}
+    		 >
+                    <HardDrive className="w-5 h-5 mr-2 inline-block" /> 
+                    {agentStatus === 'OFFLINE' ? t("agentDisconnected") : t("agentConnected")}
+    		 </Button>
               {showDropdown && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)}></div>
                   <div className="absolute right-0 mt-2 w-48 bg-surface border-2 border-surface-border rounded-blocky shadow-lg z-50 overflow-hidden animate-in slide-in-from-top-2">
                     <button 
+                      data-cy={agentStatus === 'HIBERNATING' ? 'agent-wake-btn' : 'agent-hibernate-btn'}
                       onClick={handleToggleHibernate} 
                       className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-primary/20 hover:text-primary transition-colors border-b border-surface-border flex items-center gap-2"
                     >
                       {agentStatus === 'HIBERNATING' ? (
-                        <><Sun className="w-4 h-4" /> Despertar</>
+                        <><Sun className="w-4 h-4" /> {t("wakeUp")}</>
                       ) : (
-                        <><PauseCircle className="w-4 h-4" /> Hibernar</>
+                        <><PauseCircle className="w-4 h-4" /> {t("hibernate")}</>
                       )}
                     </button>
                     <button 
+                      data-cy="agent-unlink-btn"
                       onClick={handleUnlink} 
                       className="w-full text-left px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2"
                     >
-                      <Unplug className="w-4 h-4" /> Desvincular
+                      <Unplug className="w-4 h-4" /> {t("unlink")}
                     </button>
                   </div>
                 </>
@@ -172,8 +181,8 @@ function Header({ hideLinkButton, isLinked, agentStatus, onStatusChange, onUnlin
           )}
           {!hideLinkButton && (
             <Link href={agentStatus === 'HIBERNATING' ? "#" : "/servers/new-server"} className={`w-full sm:w-auto ${agentStatus === 'HIBERNATING' ? 'pointer-events-none opacity-50' : ''}`}>
-              <Button variant="primary" className="w-full sm:w-auto" disabled={agentStatus === 'HIBERNATING'}>
-                <Plus className="w-5 h-5 mr-2 inline-block" /> Crear Servidor
+              <Button data-cy="dashboard-create-server-button" variant="primary" className="w-full sm:w-auto" disabled={agentStatus === 'HIBERNATING'}>
+                <Plus className="w-5 h-5 mr-2 inline-block" /> {t("createServer")}
               </Button>
             </Link>
           )}
@@ -185,13 +194,14 @@ function Header({ hideLinkButton, isLinked, agentStatus, onStatusChange, onUnlin
 }
 
 function EmptyState({ agentStatus }) {
+  const t = useTranslations("ServersPage");
   return (
     <div className="bg-surface p-10 rounded-blocky border-2 border-dashed border-surface-border text-center flex flex-col items-center gap-4 mx-4 sm:mx-0">
       <Server className="w-16 h-16 text-foreground/30" />
-      <h2 className="text-xl font-bold">No tienes servidores</h2>
-      <p className="text-foreground/60 text-sm sm:text-base">Aún no has creado ningún servidor. ¡Empieza tu aventura ahora!</p>
+      <h2 data-cy="dashboard-empty-title" className="text-xl font-bold">{t("noServersTitle")}</h2>
+      <p className="text-foreground/60 text-sm sm:text-base">{t("noServersSubtitle")}</p>
       <Link href={agentStatus === 'HIBERNATING' ? "#" : "/servers/new-server"} className={agentStatus === 'HIBERNATING' ? 'pointer-events-none opacity-50' : ''}>
-        <Button variant="primary" className="mt-2" disabled={agentStatus === 'HIBERNATING'}>Crear mi primer servidor</Button>
+        <Button data-cy="dashboard-create-server-empty" variant="primary" className="mt-2" disabled={agentStatus === 'HIBERNATING'}>{t("createFirstServer")}</Button>
       </Link>
     </div>
   );
@@ -213,6 +223,7 @@ function ServerGrid({ servers, serverSizes, formatSize, agentStatus }) {
 }
 
 function ServerCard({ server, size, formatSize }) {
+  const t = useTranslations("ServersPage");
   const isOnline = server.status === "ONLINE";
   const isStarting = server.status === "STARTING";
   const isOffline = server.status === "OFFLINE";
@@ -232,8 +243,8 @@ function ServerCard({ server, size, formatSize }) {
           <span className="px-2 py-1 bg-surface-border rounded-full text-xs font-bold uppercase truncate max-w-[100px]">{server.type}</span>
         </div>
         <h3 className="font-bold text-xl group-hover:text-primary transition-colors truncate">{server.name}</h3>
-        <p className="text-sm text-foreground/60 mt-1 truncate">Versión: {server.version}</p>
-        <p className="text-sm text-foreground/60">RAM: {server.memory} MB</p>
+        <p className="text-sm text-foreground/60 mt-1 truncate">{t("versionLabel", { version: server.version })}</p>
+        <p className="text-sm text-foreground/60">{t("ramLabel", { memory: server.memory })}</p>
         <div className="flex items-center gap-1 text-sm text-foreground/60 mt-2">
           <HardDrive className="w-4 h-4 shrink-0" />
           <span className="truncate">{formatSize(size)}</span>

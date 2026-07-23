@@ -19,7 +19,7 @@ export default class LocalDaemonController {
       
       this.server.on('error', async (err) => {
         if (err.code === 'EADDRINUSE') {
-          console.error(`[ERROR] No se pudo liberar el puerto ${this.port}. Forzando salida.`);
+          console.error(`[ERROR] Could not free port ${this.port}. Forcing exit.`);
           process.exit(1);
         }
         reject(err);

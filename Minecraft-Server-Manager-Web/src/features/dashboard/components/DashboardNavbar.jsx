@@ -4,10 +4,13 @@ import Link from "next/link";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useRouter, useParams } from "next/navigation";
 import { ThemeToggle } from "@/shared/theme/ThemeToggle";
+import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
 import { useState, useEffect } from "react";
 import { useUIStore } from "@/core/store/uiStore";
+import { useTranslations } from "next-intl";
 
 export function DashboardNavbar() {
+  const t = useTranslations("DashboardNavbar");
   const user = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
   const router = useRouter();
@@ -47,6 +50,7 @@ export function DashboardNavbar() {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
+        <LanguageSwitcher />
         <ThemeToggle />
         
         {mounted && (
@@ -55,7 +59,7 @@ export function DashboardNavbar() {
               <User className="w-4 h-4" />
             </div>
             <span className="font-bold hidden sm:block text-sm sm:text-base">
-              {user?.username || "Mi Perfil"}
+              {user?.username || t("myProfile")}
             </span>
           </Link>
         )}
@@ -63,7 +67,7 @@ export function DashboardNavbar() {
         <button 
           onClick={handleLogout}
           className="p-2 text-danger hover:bg-danger/10 rounded-blocky transition-colors"
-          title="Cerrar Sesión"
+          title={t("logout")}
         >
           <LogOut className="w-5 h-5" />
         </button>

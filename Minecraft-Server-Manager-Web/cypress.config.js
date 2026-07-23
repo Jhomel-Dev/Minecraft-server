@@ -31,7 +31,7 @@ export default defineConfig({
               const handleOutput = (data) => {
                 const str = data.toString();
                 console.log(str); // log in cypress terminal
-                const match = str.match(/PIN de seguridad:\s*([A-Z0-9]+)/);
+                const match = str.match(/security PIN:\s*([A-Z0-9]+)/i);
                 if (match) {
                   resolve(match[1]); // Resolve task with PIN
                 }

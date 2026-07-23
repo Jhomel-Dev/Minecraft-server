@@ -12,8 +12,8 @@ const httpServer = createServer(app);
 
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: process.env.NODE_ENV === 'test' ? 10000 : 300, 
-  message: { error: 'Demasiadas peticiones. Has superado el límite de 300 por minuto. Por favor, espera.' }
+  max: process.env.NODE_ENV === 'production' ? 300 : 10000, 
+  message: { error: 'Too many requests. You have exceeded the limit of 300 per minute. Please wait.' }
 });
 
 app.use('/api/', apiLimiter);
@@ -40,9 +40,9 @@ const startServer = async (currentPort) => {
         await prisma.server.updateMany({
             data: { status: 'OFFLINE', tunnelIp: null }
         });
-        console.log('[System] Servidores reseteados a OFFLINE (Cold Start fix).');
+        console.log('[System] Servers reset to OFFLINE (Cold Start fix).');
     } catch (e) {
-        console.error('Error reseteando estado de servidores:', e);
+        console.error('Error resetting servers state:', e);
     }
 
     httpServer.listen(currentPort, () => {
@@ -52,14 +52,14 @@ const startServer = async (currentPort) => {
 
 httpServer.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-        console.error(` ERROR: Puerto ${port} ya está en uso, intentando el siguiente...`);
+        console.error(` ERROR: Port ${port} is already in use, trying the next one...`);
         port++;
         startServer(port);
     } else if (err.code === 'EACCES') {
-        console.error(` ERROR: Sin permisos para usar puerto ${port}`);
+        console.error(` ERROR: No permission to use port ${port}`);
         process.exit(1);
     } else {
-        console.error(' ERROR del servidor HTTP:', err);
+        console.error(' HTTP server ERROR:', err);
         process.exit(1);
     }
 });
@@ -76,9 +76,9 @@ io.engine.on('connection_error', (err) => {
 });
 
 process.on('uncaughtException', (error) => {
-    console.error('\n[CRÍTICO] Uncaught Exception atrapada:', error);
+    console.error('\n[CRITICAL] Uncaught Exception caught:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('\n[CRÍTICO] Unhandled Rejection atrapada:', reason);
+    console.error('\n[CRITICAL] Unhandled Rejection caught:', reason);
 });

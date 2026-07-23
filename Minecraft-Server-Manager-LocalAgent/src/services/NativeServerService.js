@@ -75,7 +75,7 @@ export default class NativeServerService extends EventEmitter {
             if (requestedBytes > os.freemem()) {
                 const requestedStr = (requestedBytes / (1024*1024*1024)).toFixed(1) + 'GB';
                 const freeStr = (os.freemem() / (1024*1024*1024)).toFixed(1) + 'GB';
-                const msg = `[System] Arranque cancelado: Intentas asignar ${requestedStr} pero la máquina solo tiene ${freeStr} libres.`;
+                const msg = `[System] Start cancelled: Trying to allocate ${requestedStr} but the machine only has ${freeStr} free.`;
                 this.emit('log', msg);
                 throw new Error(msg);
             }
@@ -85,7 +85,7 @@ export default class NativeServerService extends EventEmitter {
     async preparePort(port) {
         try {
             freePort(port);
-            this.emit('log', `[System] Liberado el puerto ${port} de procesos anteriores.`);
+            this.emit('log', `[System] Freed port ${port} from previous processes.`);
             await new Promise(r => setTimeout(r, 1000));
         } catch (e) {}
     }
@@ -99,7 +99,7 @@ export default class NativeServerService extends EventEmitter {
         if (!config.compatibilityMode) return;
         if (softwareConfig.type !== 'jar') return;
         
-        this.emit('log', '[Compatibility Mode] Copiando servidor localmente para evitar conflictos...');
+        this.emit('log', '[Compatibility Mode] Copying server locally to avoid conflicts...');
         const fileName = path.basename(softwareConfig.path);
         const localJarPath = path.join(config.dataDir, fileName);
         

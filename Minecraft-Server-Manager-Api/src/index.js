@@ -11,7 +11,8 @@ import versionRoutes from './modules/versions/routes/version.routes.js';
 import userRoutes from './modules/users/routes/user.routes.js';
 import agentRoutes from './modules/agent/routes/agent.routes.js';
 import { globalErrorHandler } from './middlewares/errorHandler.middleware.js';
-
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './core/docs/swagger.js';
 const app = express();
 
 app.use(helmet());
@@ -39,8 +40,8 @@ app.use(morgan('dev'));
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'test' ? 1000 : 5,
-  message: { error: 'Demasiados intentos. Por favor, espera 15 minutos antes de volver a intentar.' },
+  max: process.env.NODE_ENV === 'production' ? 5 : 1000,
+  message: { error: 'Too many attempts. Please wait 15 minutes before trying again.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -56,6 +57,8 @@ app.use('/api/agent', agentRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(globalErrorHandler);
 

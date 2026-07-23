@@ -3,21 +3,21 @@ import { io } from 'socket.io-client';
 export default class PairingService {
   static async performDeviceFlow(apiUrl) {
     console.error('\n=================================================');
-    console.error('   Iniciando Vinculación de Nuevo Agente');
+    console.error('   Starting New Agent Pairing');
     console.error('=================================================\n');
 
     const { pin } = await this._requestPairingPin(apiUrl);
     
-    console.error(`Paso 1: Ve a tu panel web en la sección "Vincular PC"`);
-    console.error(`Paso 2: Ingresa el siguiente PIN de seguridad: ${pin}`);
-    console.error(`Esperando confirmación en la nube...\n`);
+    console.error(`Step 1: Go to your web panel in the "Link PC" section`);
+    console.error(`Step 2: Enter the following security PIN: ${pin}`);
+    console.error(`Waiting for cloud confirmation...\n`);
 
     global.currentPairingPin = pin;
 
     const finalToken = await this._waitForSocketPairing(apiUrl, pin);
     
     global.currentPairingPin = null;
-    console.error('¡Vinculación Exitosa! Guardando credenciales...');
+    console.error('Pairing Successful! Saving credentials...');
     return finalToken;
   }
 
@@ -34,7 +34,7 @@ export default class PairingService {
         throw new Error('PairingRequestFailed');
       }
       
-      console.error(`[WARN] Nube dormida o inaccesible. Reintentando en ${Math.round(delayMs / 1000)}s...`);
+      console.error(`[WARN] Cloud sleeping or unreachable. Retrying in ${Math.round(delayMs / 1000)}s...`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
       delayMs *= 1.5;
     }
