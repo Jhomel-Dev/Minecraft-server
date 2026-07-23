@@ -138,7 +138,22 @@ pub fn run() {
         ])
         .setup(|app| {
             start_agent_polling_loop(app.handle().clone());
+            spawn_detached_agent(app.handle());
             Ok(())
+        })
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                api.prevent_close();
+                let window_clone = window.clone();
+                tauri::async_runtime::spawn(async move {
+                    let _ = reqwest::Client::new()
+                        .post("http://127.0.0.1:45987/shutdown")
+                        .send()
+                        .await;
+                    let _ = window_clone.destroy();
+                });
+            }
+            _ => {}
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
