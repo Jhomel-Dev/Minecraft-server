@@ -207,21 +207,23 @@ function EmptyState({ agentStatus }) {
 }
 
 function ServerGrid({ servers, serverSizes, formatSize, agentStatus }) {
+  const isInactive = agentStatus === 'HIBERNATING' || agentStatus === 'OFFLINE';
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${agentStatus === 'HIBERNATING' ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${isInactive ? 'opacity-50 pointer-events-none' : ''}`}>
       {servers.map(server => (
         <ServerCard 
           key={server.id} 
           server={server} 
           size={serverSizes[server.id]} 
           formatSize={formatSize} 
+          agentStatus={agentStatus}
         />
       ))}
     </div>
   );
 }
 
-function ServerCard({ server, size, formatSize }) {
+function ServerCard({ server, size, formatSize, agentStatus }) {
   const t = useTranslations("ServersPage");
   const isOnline = server.status === "ONLINE";
   const isStarting = server.status === "STARTING";
@@ -246,7 +248,7 @@ function ServerCard({ server, size, formatSize }) {
         <p className="text-sm text-foreground/60">{t("ramLabel", { memory: server.memory })}</p>
         <div className="flex items-center gap-1 text-sm text-foreground/60 mt-2">
           <HardDrive className="w-4 h-4 shrink-0" />
-          <span className="truncate">{formatSize(size)}</span>
+          <span className="truncate">{agentStatus === 'OFFLINE' ? t("agentDisconnected") : formatSize(size)}</span>
         </div>
       </div>
     </Link>
