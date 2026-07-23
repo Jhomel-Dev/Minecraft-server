@@ -44,7 +44,7 @@ $VbsPath = Join-Path $StartupFolder "CraftControlAgent.vbs"
 
 $VbsContent = "Set WshShell = CreateObject(`"WScript.Shell`")`r`n"
 $VbsContent += "WshShell.Run `"cmd /c cd `"" + $InstallDir + "`" && node index.js > agent.log 2>&1`", 0, False"
-Set-Content -Path $VbsPath -Value $VbsContent -Encoding UTF8
+Set-Content -Path $VbsPath -Value $VbsContent -Encoding Ascii
 
 Write-Host "Arrancando Agente en segundo plano por primera vez..."
 Start-Process -FilePath "wscript.exe" -ArgumentList "`"$VbsPath`""
@@ -55,12 +55,12 @@ $DesktopFolder = [Environment]::GetFolderPath("Desktop")
 # Reiniciar_Agente.bat
 $RestartBat = Join-Path $DesktopFolder "Reiniciar_Agente.bat"
 $RestartContent = "@echo off`r`ntaskkill /F /IM node.exe >nul 2>&1`r`nwscript.exe `"" + $VbsPath + "`"`r`necho Agente CraftControl reiniciado correctamente.`r`ntimeout /t 3"
-Set-Content -Path $RestartBat -Value $RestartContent -Encoding UTF8
+Set-Content -Path $RestartBat -Value $RestartContent -Encoding Ascii
 
 # Ver_Logs_Agente.bat
 $LogsBat = Join-Path $DesktopFolder "Ver_Logs_Agente.bat"
 $LogsContent = "@echo off`r`ncd /d `"" + $InstallDir + "`"`r`npowershell -Command `"Get-Content agent.log -Wait -Tail 20`""
-Set-Content -Path $LogsBat -Value $LogsContent -Encoding UTF8
+Set-Content -Path $LogsBat -Value $LogsContent -Encoding Ascii
 
 Write-Host "=========================================="
 Write-Host " ✅ ¡Instalación Completada con Éxito!    "

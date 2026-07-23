@@ -1,6 +1,6 @@
 import prisma from '../../../core/database/prisma.client.js';
 import crypto from 'crypto';
-import { agentStateMap } from '../gateways/agent.gateway.js';
+import { agentStateMap, agentHardwareMap } from '../gateways/agent.gateway.js';
 
 const ALPHANUMERIC_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const PAIRING_CODE_VALIDITY_MINUTES = 15;
@@ -103,8 +103,10 @@ export const checkAgentStatus = async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: 'UserNotFound' });
     
+    const isOnline = agentHardwareMap.has(userId) || agentHardwareMap.has('LEGACY');
+    
     let status = 'OFFLINE';
-    if (user.agentToken) {
+    if (user.agentToken && isOnline) {
       status = agentStateMap.get(userId) || 'ACTIVE';
     }
     
