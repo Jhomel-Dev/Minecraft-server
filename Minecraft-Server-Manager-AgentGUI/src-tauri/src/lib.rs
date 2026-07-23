@@ -5,11 +5,10 @@ use std::time::Duration;
 
 #[tauri::command]
 async fn request_shutdown(app_handle: tauri::AppHandle) -> Result<(), String> {
-    reqwest::Client::new()
+    let _ = reqwest::Client::new()
         .post("http://127.0.0.1:45987/shutdown")
         .send()
-        .await
-        .map_err(|e| e.to_string())?;
+        .await;
     
     app_handle.exit(0);
     Ok(())
