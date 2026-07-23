@@ -1,6 +1,6 @@
 {
   "name": "minecraft-server-manager-localagent",
-  "version": "2.7.3",
+  "version": "2.7.4",
   "description": "",
   "main": "dist/agent.cjs",
   "bin": "dist/agent.cjs",

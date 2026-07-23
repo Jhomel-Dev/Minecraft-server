@@ -1,3 +1,10 @@
+## [2.7.4](https://github.com/Jhomel-Dev/Minecraft-server/compare/v2.7.3...v2.7.4) (2026-07-23)
+
+
+### Bug Fixes
+
+* **api,agent-gui:** allow dynamic vercel cors and ensure tauri closes cleanly on shutdown ([e3c1b42](https://github.com/Jhomel-Dev/Minecraft-server/commit/e3c1b424ad6c4686ed7a22ccef3bb9c751ba4d5d))
+
 ## [2.7.3](https://github.com/Jhomel-Dev/Minecraft-server/compare/v2.7.2...v2.7.3) (2026-07-23)
 
 
